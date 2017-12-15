@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.controllers
+package uk.gov.hmrc.apinotificationqueue.controller
 
 import javax.inject.Singleton
 
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import play.api.mvc._
 
 import scala.concurrent.Future
