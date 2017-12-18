@@ -16,18 +16,31 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
+import java.util.UUID
 import javax.inject.Singleton
 
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import play.api.http.HttpEntity
 import play.api.mvc._
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.Future
 
 @Singleton()
-class MicroserviceHelloWorld extends BaseController {
+class QueueController extends BaseController {
 
-	def hello() = Action.async { implicit request =>
-		Future.successful(Ok("Hello world"))
-	}
+  def save() = Action.async { implicit request =>
+
+    Future.successful(Result(ResponseHeader(CREATED, Map(LOCATION -> routes.Queue.get(UUID.randomUUID()).url)), HttpEntity.NoEntity))
+  }
+
+  def getAll() = Action.async {
+
+    Future.successful(Result(ResponseHeader(OK), HttpEntity.NoEntity))
+  }
+
+  def get(id: UUID) = Action.async {
+
+    Future.successful(Result(ResponseHeader(OK, Map(LOCATION -> routes.Queue.get(id).url)), HttpEntity.NoEntity))
+  }
 
 }

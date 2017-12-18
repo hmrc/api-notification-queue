@@ -18,21 +18,32 @@ package uk.gov.hmrc.apinotificationqueue.controller
 
 import play.api.http.Status
 import play.api.test.FakeRequest
-import play.api.http.Status
-import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.play.test.WithFakeApplication
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
-class MicroserviceHelloWorldControllerSpec extends UnitSpec with WithFakeApplication{
+class QueueControllerSpec extends UnitSpec with WithFakeApplication {
 
-  val fakeRequest = FakeRequest("GET", "/")
 
-  "GET /" should {
+  "GET /messages" should {
     "return 200" in {
-      val controller = new MicroserviceHelloWorld()
-      val result = controller.hello()(fakeRequest)
+      val controller = new QueueController()
+      val result = controller.getAll()(FakeRequest("GET", "/messages"))
       status(result) shouldBe Status.OK
+    }
+  }
+
+  "GET /message/:id" should {
+    "return 200" in {
+      val controller = new QueueController()
+      val uuid = java.util.UUID.randomUUID()
+      val result = controller.get(uuid)(FakeRequest("GET", s"/message/$uuid"))
+      status(result) shouldBe Status.OK
+    }
+  }
+  "POST /queue" should {
+    "return 201" in {
+      val controller = new QueueController()
+      val result = controller.save()(FakeRequest("POST", "/queue"))
+      status(result) shouldBe Status.CREATED
     }
   }
 
