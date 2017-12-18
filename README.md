@@ -1,4 +1,4 @@
-# api-notification-queue
+# API Notification Queue
 
 [![Build Status](https://travis-ci.org/hmrc/api-notification-queue.svg)](https://travis-ci.org/hmrc/api-notification-queue) [ ![Download](https://api.bintray.com/packages/hmrc/releases/api-notification-queue/images/download.svg) ](https://bintray.com/hmrc/releases/api-notification-queue/_latestVersion)
 
