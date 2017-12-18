@@ -26,9 +26,9 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import scala.concurrent.Future
 
 @Singleton()
-class Queue extends BaseController {
+class QueueController extends BaseController {
 
-  def save() = Action.async {
+  def save() = Action.async { implicit request =>
 
     Future.successful(Result(ResponseHeader(CREATED, Map(LOCATION -> routes.Queue.get(UUID.randomUUID()).url)), HttpEntity.NoEntity))
   }
@@ -40,7 +40,7 @@ class Queue extends BaseController {
 
   def get(id: UUID) = Action.async {
 
-    Future.successful(Result(ResponseHeader(OK, Map(LOCATION -> routes.Queue.get(UUID.randomUUID()).url)), HttpEntity.NoEntity))
+    Future.successful(Result(ResponseHeader(OK, Map(LOCATION -> routes.Queue.get(id).url)), HttpEntity.NoEntity))
   }
 
 }

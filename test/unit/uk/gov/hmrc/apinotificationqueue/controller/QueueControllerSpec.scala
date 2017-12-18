@@ -25,7 +25,7 @@ class QueueControllerSpec extends UnitSpec with WithFakeApplication {
 
   "GET /messages" should {
     "return 200" in {
-      val controller = new Queue()
+      val controller = new QueueController()
       val result = controller.getAll()(FakeRequest("GET", "/messages"))
       status(result) shouldBe Status.OK
     }
@@ -33,7 +33,7 @@ class QueueControllerSpec extends UnitSpec with WithFakeApplication {
 
   "GET /message/:id" should {
     "return 200" in {
-      val controller = new Queue()
+      val controller = new QueueController()
       val uuid = java.util.UUID.randomUUID()
       val result = controller.get(uuid)(FakeRequest("GET", s"/message/$uuid"))
       status(result) shouldBe Status.OK
@@ -41,7 +41,7 @@ class QueueControllerSpec extends UnitSpec with WithFakeApplication {
   }
   "POST /queue" should {
     "return 201" in {
-      val controller = new Queue()
+      val controller = new QueueController()
       val result = controller.save()(FakeRequest("POST", "/queue"))
       status(result) shouldBe Status.CREATED
     }

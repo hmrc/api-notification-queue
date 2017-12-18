@@ -21,11 +21,11 @@ import java.util.UUID
 import scala.concurrent.Future
 
 trait MessageRepository {
-  def save(clientId: UUID, message: Message): Future[Message]
+  def save(clientId: String, message: Message): Future[Message]
 
-  def fetch(clientId: UUID, messageId: UUID): Future[Option[Message]]
+  def fetch(clientId: String, messageId: UUID): Future[Option[Message]]
 
-  def fetch(clientId: UUID): Future[Option[List[Message]]]
+  def fetch(clientId: String): Future[Option[List[Message]]]
 
-  def delete(clientId: UUID, messageId: UUID): Future[Boolean]
+  def delete(clientId: String, messageId: UUID): Future[Boolean]
 }
