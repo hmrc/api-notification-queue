@@ -18,4 +18,5 @@ package uk.gov.hmrc.apinotificationqueue.repository
 
 import java.util.UUID
 
-case class Message(messageId: UUID, clientId: String, subscriptionFieldsId: String)
+
+case class Message(messageId: UUID, headers: Map[String, String], payload: String, dateReceived: String)
