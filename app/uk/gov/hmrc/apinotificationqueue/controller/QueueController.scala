@@ -30,17 +30,17 @@ class QueueController extends BaseController {
 
   def save() = Action.async { implicit request =>
 
-    Future.successful(Result(ResponseHeader(CREATED, Map(LOCATION -> routes.Queue.get(UUID.randomUUID()).url)), HttpEntity.NoEntity))
+    Future.successful(Result(ResponseHeader(CREATED, Map(LOCATION -> routes.QueueController.get(UUID.randomUUID()).url)), HttpEntity.NoEntity))
   }
 
-  def getAll() = Action.async {
+  def getAll = Action.async {
 
     Future.successful(Result(ResponseHeader(OK), HttpEntity.NoEntity))
   }
 
   def get(id: UUID) = Action.async {
 
-    Future.successful(Result(ResponseHeader(OK, Map(LOCATION -> routes.Queue.get(id).url)), HttpEntity.NoEntity))
+    Future.successful(Result(ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url)), HttpEntity.NoEntity))
   }
 
 }

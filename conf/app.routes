@@ -1,6 +1,6 @@
 # microservice specific routes
 
-POST        /queue              @uk.gov.hmrc.apinotificationqueue.controller.Queue.save
+POST        /queue              @uk.gov.hmrc.apinotificationqueue.controller.QueueController.save
 
-GET         /message/:id        @uk.gov.hmrc.apinotificationqueue.controller.Queue.get(id: java.util.UUID)
-GET         /messages           @uk.gov.hmrc.apinotificationqueue.controller.Queue.getAll
+GET         /message/:id        @uk.gov.hmrc.apinotificationqueue.controller.QueueController.get(id: java.util.UUID)
+GET         /messages           @uk.gov.hmrc.apinotificationqueue.controller.QueueController.getAll
