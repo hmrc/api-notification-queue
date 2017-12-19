@@ -17,20 +17,38 @@
 package uk.gov.hmrc.apinotificationqueue.controller
 
 import java.util.UUID
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
 
+import org.joda.time.DateTime
 import play.api.http.HttpEntity
 import play.api.mvc._
+import uk.gov.hmrc.apinotificationqueue.repository.Message
+import uk.gov.hmrc.apinotificationqueue.service.QueueService
+import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.Future
 
 @Singleton()
-class QueueController extends BaseController {
+class QueueController @Inject()(queueService: QueueService) extends BaseController {
+  val CLIENT_ID_HEADER_NAME = "x-client-id"
 
-  def save() = Action.async { implicit request =>
-
-    Future.successful(Result(ResponseHeader(CREATED, Map(LOCATION -> routes.QueueController.get(UUID.randomUUID()).url)), HttpEntity.NoEntity))
+  def save() = Action.async {
+    implicit request => {
+      val headers = request.headers
+      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw new BadRequestException("x-client-id required"))
+      val messageId = UUID.randomUUID()
+      queueService.save(
+        clientId,
+        Message(
+          messageId,
+          headers.remove(CLIENT_ID_HEADER_NAME).toSimpleMap,
+          request.body.asXml.getOrElse(throw new BadRequestException("no body included")).toString(),
+          DateTime.now()
+        )
+      )
+      Future.successful(Result(ResponseHeader(CREATED, Map(LOCATION -> routes.QueueController.get(messageId).url)), HttpEntity.NoEntity))
+    }
   }
 
   def getAll = Action.async {

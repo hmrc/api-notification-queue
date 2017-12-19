@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.repository
+package uk.gov.hmrc.apinotificationqueue.service
 
-import java.util.UUID
+import javax.inject.{Inject, Singleton}
 
-import play.api.libs.json.Json
-import org.joda.time.DateTime
+import uk.gov.hmrc.apinotificationqueue.repository.{Message, MessageRepository}
 
-case class Message(messageId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime)
+import scala.concurrent.Future
 
-object Message {
-  implicit val MessageJF = Json.format[Message]
+@Singleton()
+class QueueService @Inject()(messageRepository: MessageRepository) {
+
+
+  def save(clientId: String, message: Message): Future[Message] = {
+    messageRepository.save(clientId, message)
+  }
 }
