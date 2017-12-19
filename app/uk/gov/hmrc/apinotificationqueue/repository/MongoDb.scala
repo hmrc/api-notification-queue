@@ -16,8 +16,18 @@
 
 package uk.gov.hmrc.apinotificationqueue.repository
 
-import java.sql.Date
-import java.util.UUID
+import javax.inject.Singleton
 
-// TODO: maybe move this to models.scala
-case class Message(messageId: UUID, headers: Map[String, String], payload: String, dateReceived: Date)
+import com.google.inject.ImplementedBy
+import play.modules.reactivemongo.MongoDbConnection
+import reactivemongo.api.DB
+
+@ImplementedBy(classOf[MongoDb])
+trait MongoDbProvider {
+  def mongo: () => DB
+}
+
+@Singleton
+class MongoDb extends MongoDbConnection with MongoDbProvider {
+  override val mongo: () => DB = db
+}

@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.apinotificationqueue.repository
 
-import java.sql.Date
-import java.util.UUID
+import play.api.libs.json.Json
 
-// TODO: maybe move this to models.scala
-case class Message(messageId: UUID, headers: Map[String, String], payload: String, dateReceived: Date)
+trait MongoFormatters {
+  implicit val MessageJF = Json.format[Message]
+  implicit val ClientMessagesJF = Json.format[ClientMessages]
+}

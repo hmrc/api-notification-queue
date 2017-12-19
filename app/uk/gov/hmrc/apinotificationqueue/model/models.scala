@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.repository
+package uk.gov.hmrc.apinotificationqueue.model
 
-import java.sql.Date
-import java.util.UUID
-
-// TODO: maybe move this to models.scala
-case class Message(messageId: UUID, headers: Map[String, String], payload: String, dateReceived: Date)
+//Placeholder for model classes used above the repository layer
