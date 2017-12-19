@@ -31,18 +31,18 @@ import scala.concurrent.Future
 
 @Singleton()
 class QueueController @Inject()(queueService: QueueService) extends BaseController {
-  val CLIENT_ID = "x-client-id"
+  val CLIENT_ID_HEADER_NAME = "x-client-id"
 
   def save() = Action.async {
     implicit request => {
       val headers = request.headers
-      val clientId = headers.get(CLIENT_ID).getOrElse(throw new BadRequestException("x-client-id required"))
+      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw new BadRequestException("x-client-id required"))
       val messageId = UUID.randomUUID()
       queueService.save(
         clientId,
         Message(
           messageId,
-          headers.remove(CLIENT_ID).toSimpleMap,
+          headers.remove(CLIENT_ID_HEADER_NAME).toSimpleMap,
           request.body.asXml.getOrElse(throw new BadRequestException("no body included")).toString(),
           DateTime.now()
         )

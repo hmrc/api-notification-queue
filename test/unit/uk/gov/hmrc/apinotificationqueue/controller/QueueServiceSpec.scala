@@ -29,7 +29,7 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
   trait Setup {
     val mockRepo = mock[MessageRepository]
-    val underTest = new QueueService(mockRepo)
+    val serviceUnderTest = new QueueService(mockRepo)
 
     val clientId = "clientId"
     val message = Message(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
@@ -39,7 +39,7 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
   "Save" should {
     "Save in the repo" in new Setup {
-      underTest.save(clientId, message)
+      serviceUnderTest.save(clientId, message)
       verify(mockRepo).save(clientId, message)
     }
   }

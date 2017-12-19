@@ -30,36 +30,36 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   trait Setup {
     val mockQueueService = mock[QueueService]
-    val underTest = new QueueController(mockQueueService)
+    val controllerUnderTest = new QueueController(mockQueueService)
   }
 
 
   "POST /queue" should {
     "throw exception if x-client-id not present" in new Setup {
       intercept[BadRequestException] {
-        underTest.save()(FakeRequest("POST", "/queue"))
+        controllerUnderTest.save()(FakeRequest("POST", "/queue"))
       }
     }
     "throw exception if no payload" in new Setup {
       private val request = FakeRequest("POST", "/queue", Headers("x-client-id" -> "a"), AnyContentAsEmpty)
       intercept[BadRequestException] {
-        val result: Future[Result] = underTest.save()(request)
+        val result: Future[Result] = controllerUnderTest.save()(request)
       }
     }
-    "return 201 if body and headers" in new Setup {
+    "return 201 if body and headers are present" in new Setup {
       private val request = FakeRequest("POST", "/queue", Headers("x-client-id" -> "a", "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(
         <xml>
           <node>Stuff</node>
         </xml>
       )
-      val result = underTest.save()(request)
+      val result = controllerUnderTest.save()(request)
       status(result) shouldBe Status.CREATED
     }
   }
 
   "GET /messages" should {
     "return 200" in new Setup {
-      val result = underTest.getAll()(FakeRequest("GET", "/messages"))
+      val result = controllerUnderTest.getAll()(FakeRequest("GET", "/messages"))
       status(result) shouldBe Status.OK
     }
   }
@@ -67,7 +67,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   "GET /message/:id" should {
     "return 200" in new Setup {
       val uuid = java.util.UUID.randomUUID()
-      val result = underTest.get(uuid)(FakeRequest("GET", s"/message/$uuid"))
+      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/message/$uuid"))
       status(result) shouldBe Status.OK
     }
   }
