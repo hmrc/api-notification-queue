@@ -44,6 +44,7 @@ lazy val test = Seq(
   "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
   "org.scalatest" %% "scalatest" % "2.2.6" % scope,
   "org.pegdown" % "pegdown" % "1.6.0" % scope,
+  "org.mockito" % "mockito-core" % "2.10.0" % scope,
   "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
   "uk.gov.hmrc" %% "reactivemongo-test" % "3.0.0" % scope
 )
