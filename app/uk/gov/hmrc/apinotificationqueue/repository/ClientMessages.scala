@@ -16,4 +16,10 @@
 
 package uk.gov.hmrc.apinotificationqueue.repository
 
+import play.api.libs.json.Json
+
 case class ClientMessages(clientId: String, messages: Seq[Message])
+
+object ClientMessages {
+  implicit val ClientMessagesJF = Json.format[ClientMessages]
+}

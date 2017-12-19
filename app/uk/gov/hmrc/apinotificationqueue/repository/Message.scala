@@ -19,5 +19,10 @@ package uk.gov.hmrc.apinotificationqueue.repository
 import java.sql.Date
 import java.util.UUID
 
-// TODO: maybe move this to models.scala
+import play.api.libs.json.Json
+
 case class Message(messageId: UUID, headers: Map[String, String], payload: String, dateReceived: Date)
+
+object Message {
+  implicit val MessageJF = Json.format[Message]
+}
