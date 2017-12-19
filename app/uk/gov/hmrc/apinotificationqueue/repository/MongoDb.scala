@@ -16,13 +16,18 @@
 
 package uk.gov.hmrc.apinotificationqueue.repository
 
-import java.util.UUID
+import javax.inject.Singleton
 
-import play.api.libs.json.Json
-import org.joda.time.DateTime
+import com.google.inject.ImplementedBy
+import play.modules.reactivemongo.MongoDbConnection
+import reactivemongo.api.DB
 
-case class Message(messageId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime)
+@ImplementedBy(classOf[MongoDb])
+trait MongoDbProvider {
+  def mongo: () => DB
+}
 
-object Message {
-  implicit val MessageJF = Json.format[Message]
+@Singleton
+class MongoDb extends MongoDbConnection with MongoDbProvider {
+  override val mongo: () => DB = db
 }

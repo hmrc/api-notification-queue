@@ -16,13 +16,10 @@
 
 package uk.gov.hmrc.apinotificationqueue.repository
 
-import java.util.UUID
-
 import play.api.libs.json.Json
-import org.joda.time.DateTime
 
-case class Message(messageId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime)
+case class ClientMessages(clientId: String, messages: Seq[Message])
 
-object Message {
-  implicit val MessageJF = Json.format[Message]
+object ClientMessages {
+  implicit val ClientMessagesJF = Json.format[ClientMessages]
 }
