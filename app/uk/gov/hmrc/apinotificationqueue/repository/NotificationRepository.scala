@@ -43,7 +43,8 @@ trait NotificationRepository {
 class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
   extends ReactiveRepository[ClientNotification, BSONObjectID]("notifications", mongoDbProvider.mongo,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
-    with NotificationRepository {
+    with NotificationRepository
+    with NotificationRepositoryErrorHandler {
 
   private implicit val format = ClientNotification.ClientNotificationJF
 
@@ -58,13 +59,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
     val clientNotification = ClientNotification(clientId, notification)
 
     collection.insert(clientNotification).map {
-      writeResult =>
-        lazy val recordNotInsertedError = s"Notification not inserted for client $clientId"
-        writeResult.writeConcernError.fold(databaseAltered(writeResult, notification, recordNotInsertedError)){ writeConcernError =>
-          val errMsg = s"Error inserting notification for clientId $clientId : ${writeConcernError.errmsg}"
-          Logger.error(errMsg)
-          throw new RuntimeException(errMsg)
-        }
+      writeResult => handleError(clientId, writeResult, notification)
     }
   }
 
