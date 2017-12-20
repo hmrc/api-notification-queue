@@ -21,22 +21,31 @@ import reactivemongo.api.commands.WriteResult
 
 trait NotificationRepositoryErrorHandler {
 
-  def handleError(clientId: String, writeResult: WriteResult, notification: Notification): Notification = {
-    lazy val recordNotInsertedError = s"Notification not inserted for client $clientId"
+  def handleDeleteError(result: WriteResult, exceptionMsg: => String): Boolean = {
+    handleError(result, databaseAltered, exceptionMsg)
+  }
 
-    writeResult.writeConcernError.fold(databaseAltered(writeResult, notification, recordNotInsertedError)){ writeConcernError =>
-      val dbErrMsg = s"Error inserting notification for clientId $clientId : ${writeConcernError.errmsg}"
-      Logger.error(dbErrMsg)
-      throw new RuntimeException(dbErrMsg)
+  def handleSaveError(writeResult: WriteResult, exceptionMsg: => String, notification: => Notification): Notification = {
+
+    def handleSaveError(result: WriteResult): Notification =
+      if (databaseAltered(result))
+        notification
+      else
+        throw new RuntimeException(exceptionMsg)
+
+    handleError(writeResult, handleSaveError, exceptionMsg)
+  }
+
+  private def handleError[T](result: WriteResult, f: WriteResult => T, exceptionMsg: => String): T = {
+    result.writeConcernError.fold(f(result)) {
+      errMsg => {
+        val errorMsg = s"$exceptionMsg. $errMsg"
+        Logger.error(errorMsg)
+        throw new RuntimeException(errorMsg)
+      }
     }
   }
 
-  private def databaseAltered(writeResult: WriteResult, notification: Notification, errMsg: => String): Notification = {
-    if (writeResult.n > 0) {
-      notification
-    } else {
-      throw new RuntimeException(errMsg)
-    }
-  }
+  private def databaseAltered(writeResult: WriteResult): Boolean = writeResult.n > 0
 
 }
