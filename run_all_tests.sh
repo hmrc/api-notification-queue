@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sbt coverage test it:test coverageOff coverageReport
+sbt clean coverage test it:test coverageOff coverageReport
