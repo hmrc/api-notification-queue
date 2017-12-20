@@ -59,8 +59,10 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
 
     val clientNotification = ClientNotification(clientId, notification)
 
+    lazy val errorMsg = s"Notification not saved for client $clientId"
+
     collection.insert(clientNotification).map {
-      writeResult => handleError(clientId, writeResult, notification)
+      writeResult => handleSaveError(writeResult, errorMsg, notification)
     }
   }
 
@@ -71,6 +73,11 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
 
   //TODO
   override def fetch(clientId: String): Future[Option[List[Notification]]] = ???
-  override def delete(clientId: String, notificationId: UUID): Future[Boolean] = ???
+
+  override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
+    val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
+    lazy val errorMsg = s"Could not delete entity for selector: $selector"
+    collection.remove(selector).map(handleDeleteError(_, errorMsg))
+  }
 
 }

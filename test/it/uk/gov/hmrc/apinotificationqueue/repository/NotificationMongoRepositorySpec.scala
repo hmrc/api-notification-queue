@@ -13,7 +13,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class MessageMongoRepositorySpec extends UnitSpec
+class NotificationMongoRepositorySpec extends UnitSpec
   with BeforeAndAfterAll
   with BeforeAndAfterEach
   with MongoSpecSupport  { self =>
@@ -57,8 +57,8 @@ class MessageMongoRepositorySpec extends UnitSpec
   }
 
   "repository" can {
-    "save" should {
-      "single notification" in {
+    "save a single notification" should {
+      "be successful" in {
         val actualMessage = await(repository.save(clientId1, notification1))
 
         collectionSize shouldBe 1
@@ -66,7 +66,7 @@ class MessageMongoRepositorySpec extends UnitSpec
         await(repository.collection.find(selector(clientId1)).one[ClientNotification]).get shouldBe client1Notification1
       }
 
-      "multiple notification for a client" in {
+      "be successful when called multiple times" in {
         await(repository.save(clientId1, notification1))
         await(repository.save(clientId1, notification2))
         await(repository.save(clientId2, notification3))
@@ -80,7 +80,7 @@ class MessageMongoRepositorySpec extends UnitSpec
     }
 
     "fetch by clientId and notificationId" should {
-      "and return a single record when found" in {
+      "return a single record when found" in {
         await(repository.save(clientId1, notification1))
         await(repository.save(clientId1, notification2))
 
@@ -89,7 +89,7 @@ class MessageMongoRepositorySpec extends UnitSpec
         maybeNotification.get shouldBe notification1
       }
 
-      "and return None when not found" in {
+      "return None when not found" in {
         await(repository.save(clientId1, notification1))
         await(repository.save(clientId1, notification2))
         val nonExistentNotificationId = notification3.notificationId
@@ -97,6 +97,28 @@ class MessageMongoRepositorySpec extends UnitSpec
         val maybeNotification = await(repository.fetch(clientId1, nonExistentNotificationId))
 
         maybeNotification shouldBe None
+      }
+    }
+
+    "delete by clientId and notificationId" should {
+      "return true when record found and deleted" in {
+        await(repository.save(clientId1, notification1))
+
+        collectionSize shouldBe 1
+
+        val isDelete = await(repository.delete(clientId1, notification1.notificationId))
+        collectionSize shouldBe 0
+        isDelete shouldBe true
+      }
+
+      "return false when record not found" in {
+        await(repository.save(clientId1, notification1))
+        await(repository.save(clientId1, notification2))
+        collectionSize shouldBe 2
+
+        val isDelete = await(repository.delete("DOES_NOT_EXIST_CLIENT_ID", notification1.notificationId))
+        collectionSize shouldBe 2
+        isDelete shouldBe false
       }
     }
   }

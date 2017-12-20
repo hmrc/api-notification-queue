@@ -22,37 +22,61 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar {
 
-  private val clientId = "clientId"
   private val errorHandler = new NotificationRepositoryErrorHandler {}
   private val notification = mock[Notification]
 
-  "NotificationRepositoryErrorHandler" should {
+  "NotificationRepositoryErrorHandler" can {
 
-    "return notification if there are no database errors and at least one record inserted" in {
-      val successfulWriteResult = writeResult(alteredRecords = 1)
+    "handle save" should {
 
-      errorHandler.handleError(clientId, successfulWriteResult, notification) shouldBe notification
+      "return notification if there are no database errors and at least one record inserted" in {
+        val successfulWriteResult = writeResult(alteredRecords = 1)
+
+        errorHandler.handleSaveError(successfulWriteResult, "ERROR_MSG", notification) shouldBe notification
+      }
+
+      "throw a RuntimeException if there are no database errors but no record inserted" in {
+        val noRecordsWriteResult = writeResult(alteredRecords = 0)
+
+        val caught = intercept[RuntimeException](errorHandler.handleSaveError(noRecordsWriteResult, "ERROR_MSG", notification))
+
+        caught.getMessage shouldBe "ERROR_MSG"
+      }
+
+      "throw a RuntimeException if there is a database error" in {
+        val writeConcernError = Some(WriteConcernError(1, "ERROR"))
+        val errorWriteResult = writeResult(alteredRecords = 0, writeConcernError = writeConcernError)
+
+        val caught = intercept[RuntimeException](errorHandler.handleSaveError(errorWriteResult, "ERROR_MSG", notification))
+
+        caught.getMessage shouldBe "ERROR_MSG. WriteConcernError(1,ERROR)"
+      }
+
     }
 
-    "throw a RuntimeException if there are no database errors but no record inserted" in {
-      val noRecordsWriteResult = writeResult(alteredRecords = 0)
+    "handle Delete" should {
+      "return true if there are no database errors and at least one record deleted" in {
+        val successfulWriteResult = writeResult(alteredRecords = 1)
 
-      val caught = intercept[RuntimeException](errorHandler.handleError(clientId, noRecordsWriteResult, notification))
+        errorHandler.handleDeleteError(successfulWriteResult, "ERROR_MSG") shouldBe true
+      }
 
-      caught.getMessage shouldBe "Notification not inserted for client clientId"
+      "return false if there are no database errors and no record deleted" in {
+        val noDeletedRecordsWriteResult = writeResult(alteredRecords = 0)
+
+        errorHandler.handleDeleteError(noDeletedRecordsWriteResult, "ERROR_MSG") shouldBe false
+      }
+
+      "throw a RuntimeException if there is a database error" in {
+        val writeConcernError = Some(WriteConcernError(1, "ERROR"))
+        val errorWriteResult = writeResult(alteredRecords = 0, writeConcernError = writeConcernError)
+
+        val caught = intercept[RuntimeException](errorHandler.handleDeleteError(errorWriteResult, "ERROR_MSG"))
+
+        caught.getMessage shouldBe "ERROR_MSG. WriteConcernError(1,ERROR)"
+      }
     }
-
-    "throw a RuntimeException if there is a database error" in {
-      val writeConcernError = Some(WriteConcernError(1, "ERROR"))
-      val errorWriteResult = writeResult(alteredRecords = 0, writeConcernError = writeConcernError)
-
-      val caught = intercept[RuntimeException](errorHandler.handleError(clientId, errorWriteResult, notification))
-
-      caught.getMessage shouldBe "Error inserting notification for clientId clientId : ERROR"
-    }
-
   }
-
 
   private def writeResult(alteredRecords: Int, writeErrors: Seq[WriteError] = Nil,
                           writeConcernError: Option[WriteConcernError] = None) = {
