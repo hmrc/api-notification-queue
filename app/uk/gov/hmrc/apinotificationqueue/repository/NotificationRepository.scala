@@ -20,9 +20,10 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import play.api.Logger
-import reactivemongo.api.commands.WriteResult
+import play.api.libs.json.Json
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.BSONObjectID
+import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
@@ -63,17 +64,13 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
     }
   }
 
+  override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
+    val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
+    collection.find(selector).one[ClientNotification].map(_.map(cn => cn.notification))
+  }
+
   //TODO
-  override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = ???
   override def fetch(clientId: String): Future[Option[List[Notification]]] = ???
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = ???
-
-  private def databaseAltered(writeResult: WriteResult, notification: Notification, errMsg: => String): Notification = {
-    if (writeResult.n > 0) {
-      notification
-    } else {
-      throw new RuntimeException(errMsg)
-    }
-  }
 
 }
