@@ -18,8 +18,8 @@ package uk.gov.hmrc.apinotificationqueue.repository
 
 import play.api.libs.json.Json
 
-case class ClientNotification(clientId: String, notifications: Seq[Notification])
+case class ClientNotification(clientId: String, notification: Notification)
 
 object ClientNotification {
-  implicit val ClientMessagesJF = Json.format[ClientNotification]
+  implicit val ClientNotificationJF = Json.format[ClientNotification]
 }
