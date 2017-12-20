@@ -18,15 +18,15 @@ package uk.gov.hmrc.apinotificationqueue.service
 
 import javax.inject.{Inject, Singleton}
 
-import uk.gov.hmrc.apinotificationqueue.repository.{Message, MessageRepository}
+import uk.gov.hmrc.apinotificationqueue.repository.{Notification, NotificationRepository}
 
 import scala.concurrent.Future
 
 @Singleton()
-class QueueService @Inject()(messageRepository: MessageRepository) {
+class QueueService @Inject()(messageRepository: NotificationRepository) {
 
 
-  def save(clientId: String, message: Message): Future[Message] = {
+  def save(clientId: String, message: Notification): Future[Notification] = {
     messageRepository.save(clientId, message)
   }
 }

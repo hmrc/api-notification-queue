@@ -59,7 +59,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   "GET /messages" should {
     "return 200" in new Setup {
-      val result = controllerUnderTest.getAll()(FakeRequest("GET", "/messages"))
+      val result = controllerUnderTest.getAll()(FakeRequest("GET", "/notifications"))
       status(result) shouldBe Status.OK
     }
   }
@@ -67,7 +67,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   "GET /message/:id" should {
     "return 200" in new Setup {
       val uuid = java.util.UUID.randomUUID()
-      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/message/$uuid"))
+      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid"))
       status(result) shouldBe Status.OK
     }
   }

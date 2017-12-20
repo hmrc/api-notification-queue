@@ -21,18 +21,18 @@ import java.util.UUID
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.apinotificationqueue.repository.{Message, MessageRepository}
+import uk.gov.hmrc.apinotificationqueue.repository.{Notification, NotificationRepository}
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.play.test.UnitSpec
 
 class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
   trait Setup {
-    val mockRepo = mock[MessageRepository]
+    val mockRepo = mock[NotificationRepository]
     val serviceUnderTest = new QueueService(mockRepo)
 
     val clientId = "clientId"
-    val message = Message(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
+    val message = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
 
   }
 
