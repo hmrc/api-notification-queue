@@ -18,14 +18,11 @@ package uk.gov.hmrc.apinotificationqueue.repository
 
 import java.util.UUID
 
-import scala.concurrent.Future
+import play.api.libs.json.Json
+import org.joda.time.DateTime
 
-trait MessageRepository {
-  def save(clientId: String, message: Message): Future[Message]
+case class Notification(notificationId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime)
 
-  def fetch(clientId: String, messageId: UUID): Future[Option[Message]]
-
-  def fetch(clientId: String): Future[Option[List[Message]]]
-
-  def delete(clientId: String, messageId: UUID): Future[Boolean]
+object Notification {
+  implicit val notificationJF = Json.format[Notification]
 }
