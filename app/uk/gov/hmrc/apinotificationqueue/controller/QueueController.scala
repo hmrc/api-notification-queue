@@ -19,6 +19,7 @@ package uk.gov.hmrc.apinotificationqueue.controller
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
+import akka.util.ByteString
 import org.joda.time.DateTime
 import play.api.http.HttpEntity
 import play.api.mvc._
@@ -26,6 +27,7 @@ import uk.gov.hmrc.apinotificationqueue.repository.Notification
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
 
@@ -57,8 +59,19 @@ class QueueController @Inject()(queueService: QueueService) extends BaseControll
   }
 
   def get(id: UUID) = Action.async {
-
-    Future.successful(Result(ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url)), HttpEntity.NoEntity))
+    implicit request => {
+      val headers = request.headers
+      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw new BadRequestException("x-client-id required"))
+      val notification = queueService.get(clientId, id)
+      notification.map(opt =>
+        opt.fold(NotFound("NOT FOUND"))(
+          n => Result(
+            ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
+            HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE))
+          )
+        )
+      )
+    }
   }
 
 }

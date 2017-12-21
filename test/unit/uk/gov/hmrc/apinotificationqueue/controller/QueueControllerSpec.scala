@@ -16,10 +16,17 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
+import java.util.concurrent.TimeUnit
+
+import akka.util.Timeout
+import org.joda.time.DateTime
+import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.mvc.{AnyContentAsEmpty, Headers, Result}
 import play.api.test.FakeRequest
+import play.api.test.Helpers.contentAsString
+import uk.gov.hmrc.apinotificationqueue.repository.Notification
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -27,7 +34,7 @@ import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import scala.concurrent.Future
 
 class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
-
+  implicit val timeout = Timeout(1, TimeUnit.SECONDS)
   trait Setup {
     val mockQueueService = mock[QueueService]
     val controllerUnderTest = new QueueController(mockQueueService)
@@ -65,10 +72,20 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   }
 
   "GET /message/:id" should {
+    val uuid = java.util.UUID.randomUUID()
+
+    "throw exception if x-client-id not present" in new Setup {
+      intercept[BadRequestException] {
+        controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid"))
+      }
+    }
+
     "return 200" in new Setup {
-      val uuid = java.util.UUID.randomUUID()
-      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid"))
+      private val payload = "<xml>a</xml>"
+      when(mockQueueService.get("a", uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map("content-type" -> "application/xml"), payload, DateTime.now()))))
+      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid", Headers("x-client-id" -> "a"), AnyContentAsEmpty))
       status(result) shouldBe Status.OK
+      contentAsString(result) shouldBe (payload)
     }
   }
 
