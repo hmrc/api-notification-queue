@@ -106,19 +106,18 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(clientId1, notification2))
         await(repository.save(clientId2, notification3))
 
-        val maybeNotifications: Option[List[Notification]] = await(repository.fetch(clientId1))
+        val notifications: List[Notification] = await(repository.fetch(clientId1))
 
-        maybeNotifications.isDefined shouldBe true
-        maybeNotifications.get.size shouldBe 2
-        maybeNotifications.get should contain(notification1)
-        maybeNotifications.get should contain(notification2)
+        notifications.size shouldBe 2
+        notifications should contain(notification1)
+        notifications should contain(notification2)
       }
 
       "return None when not found" in {
         await(repository.save(clientId1, notification1))
         await(repository.save(clientId1, notification2))
 
-        await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID")) shouldBe None
+        await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID")) shouldBe Nil
       }
     }
 

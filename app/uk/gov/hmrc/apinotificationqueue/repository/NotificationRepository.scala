@@ -36,7 +36,7 @@ trait NotificationRepository {
 
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
-  def fetch(clientId: String): Future[Option[List[Notification]]]
+  def fetch(clientId: String): Future[List[Notification]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
 }
@@ -80,18 +80,9 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
     collection.find(selector).one[ClientNotification].map(_.map(cn => cn.notification))
   }
 
-  override def fetch(clientId: String): Future[Option[List[Notification]]] = {
+  override def fetch(clientId: String): Future[List[Notification]] = {
     val selector = Json.obj("clientId" -> clientId)
-    val notifications: Future[Option[List[Notification]]] =
-      collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{
-        list =>
-          if (list.isEmpty) {
-            None
-          } else {
-            Some(list.map(cn => cn.notification))
-          }
-      }
-    notifications
+    collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{_.map(cn => cn.notification)}
   }
 
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
