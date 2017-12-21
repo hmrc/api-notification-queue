@@ -72,10 +72,10 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(clientId2, notification3))
 
         collectionSize shouldBe 3
-        val foundList = await(repository.collection.find(selector(clientId1)).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()))
-        foundList.size shouldBe 2
-        foundList should contain(client1Notification1)
-        foundList should contain(client1Notification2)
+        val clientNotifications = await(repository.collection.find(selector(clientId1)).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()))
+        clientNotifications.size shouldBe 2
+        clientNotifications should contain(client1Notification1)
+        clientNotifications should contain(client1Notification2)
       }
     }
 
@@ -100,15 +100,36 @@ class NotificationMongoRepositorySpec extends UnitSpec
       }
     }
 
+    "fetch by clientId" should {
+      "return multiple record when found" in {
+        await(repository.save(clientId1, notification1))
+        await(repository.save(clientId1, notification2))
+        await(repository.save(clientId2, notification3))
+
+        val notifications: List[Notification] = await(repository.fetch(clientId1))
+
+        notifications.size shouldBe 2
+        notifications should contain(notification1)
+        notifications should contain(notification2)
+      }
+
+      "return None when not found" in {
+        await(repository.save(clientId1, notification1))
+        await(repository.save(clientId1, notification2))
+
+        await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID")) shouldBe Nil
+      }
+    }
+
     "delete by clientId and notificationId" should {
       "return true when record found and deleted" in {
         await(repository.save(clientId1, notification1))
 
         collectionSize shouldBe 1
 
-        val isDelete = await(repository.delete(clientId1, notification1.notificationId))
+        await(repository.delete(clientId1, notification1.notificationId)) shouldBe true
+
         collectionSize shouldBe 0
-        isDelete shouldBe true
       }
 
       "return false when record not found" in {
@@ -116,9 +137,9 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(clientId1, notification2))
         collectionSize shouldBe 2
 
-        val isDelete = await(repository.delete("DOES_NOT_EXIST_CLIENT_ID", notification1.notificationId))
+        await(repository.delete("DOES_NOT_EXIST_CLIENT_ID", notification1.notificationId)) shouldBe false
+
         collectionSize shouldBe 2
-        isDelete shouldBe false
       }
     }
   }
