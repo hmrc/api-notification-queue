@@ -16,10 +16,14 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
+import org.joda.time.DateTime
+import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.mvc.{AnyContentAsEmpty, Headers, Result}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import uk.gov.hmrc.apinotificationqueue.repository.Notification
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -65,10 +69,29 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   }
 
   "GET /message/:id" should {
+    val uuid = java.util.UUID.randomUUID()
+
+    "throw exception if x-client-id not present" in new Setup {
+      intercept[BadRequestException] {
+        controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid"))
+      }
+    }
+
     "return 200" in new Setup {
-      val uuid = java.util.UUID.randomUUID()
-      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid"))
+      private val payload = "<xml>a</xml>"
+      private val clientId = "abc123"
+      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map("content-type" -> "application/xml", "conversation-id" -> "5"), payload, DateTime.now()))))
+      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid", Headers(controllerUnderTest.CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty))
       status(result) shouldBe Status.OK
+      contentAsString(result) shouldBe payload
+      header("conversation-id", result) shouldBe Some("5")
+      header(controllerUnderTest.CLIENT_ID_HEADER_NAME, result) shouldBe None
+    }
+
+    "return 404 if not found" in new Setup {
+      when(mockQueueService.get("a", uuid)).thenReturn(Future.successful(None))
+      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid", Headers("x-client-id" -> "a"), AnyContentAsEmpty))
+      status(result) shouldBe Status.NOT_FOUND
     }
   }
 

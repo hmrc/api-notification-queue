@@ -19,6 +19,7 @@ package uk.gov.hmrc.apinotificationqueue.repository
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
+import com.google.inject.ImplementedBy
 import play.api.Logger
 import play.api.libs.json.Json
 import reactivemongo.api.Cursor
@@ -30,7 +31,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
+@ImplementedBy(classOf[NotificationMongoRepository])
 trait NotificationRepository {
   def save(clientId: String, notification: Notification): Future[Notification]
 
