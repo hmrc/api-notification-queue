@@ -21,6 +21,7 @@ import javax.inject.{Inject, Singleton}
 
 import play.api.Logger
 import play.api.libs.json.Json
+import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
@@ -50,8 +51,16 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
   private implicit val format = ClientNotification.ClientNotificationJF
 
   override def indexes: Seq[Index] = Seq(
-    Index(key = Seq("clientId" -> IndexType.Ascending), name = Some("clientId-Index"), unique = false),
-    Index(key = Seq("clientId" -> IndexType.Ascending, "notification.notificationId" -> IndexType.Ascending), name = Some("clientId-notificationId-Index"), unique = true)
+    Index(
+      key = Seq("clientId" -> IndexType.Ascending),
+      name = Some("clientId-Index"),
+      unique = false
+    ),
+    Index(
+      key = Seq("clientId" -> IndexType.Ascending, "notification.notificationId" -> IndexType.Ascending),
+      name = Some("clientId-notificationId-Index"),
+      unique = true
+    )
   )
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
@@ -71,8 +80,19 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
     collection.find(selector).one[ClientNotification].map(_.map(cn => cn.notification))
   }
 
-  //TODO
-  override def fetch(clientId: String): Future[Option[List[Notification]]] = ???
+  override def fetch(clientId: String): Future[Option[List[Notification]]] = {
+    val selector = Json.obj("clientId" -> clientId)
+    val notifications: Future[Option[List[Notification]]] =
+      collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{
+        list =>
+          if (list.isEmpty) {
+            None
+          } else {
+            Some(list.map(cn => cn.notification))
+          }
+      }
+    notifications
+  }
 
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
     val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
