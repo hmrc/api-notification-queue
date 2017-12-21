@@ -8,6 +8,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
 class QueueSpec extends FeatureSpec with GivenWhenThen with Matchers with GuiceOneAppPerSuite {
+
+
   feature("Post and retrieve a message from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist a notification")
