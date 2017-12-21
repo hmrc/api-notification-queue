@@ -32,14 +32,14 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import scala.concurrent.Future
 
 @Singleton()
-class QueueController @Inject()(queueService: QueueService) extends BaseController {
+class QueueController @Inject()(queueService: QueueService, idGenerator: NotificationIdGenerator) extends BaseController {
   val CLIENT_ID_HEADER_NAME = "x-client-id"
 
   def save() = Action.async {
     implicit request => {
       val headers = request.headers
       val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw new BadRequestException("x-client-id required"))
-      val notificationId = UUID.randomUUID()
+      val notificationId = idGenerator.generateId()
       queueService.save(
         clientId,
         Notification(
@@ -74,4 +74,11 @@ class QueueController @Inject()(queueService: QueueService) extends BaseControll
     }
   }
 
+}
+
+@Singleton
+class NotificationIdGenerator {
+  def generateId(): UUID = {
+    UUID.randomUUID()
+  }
 }

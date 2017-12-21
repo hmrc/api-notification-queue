@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
+import java.util.UUID
+
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -33,8 +35,16 @@ import scala.concurrent.Future
 class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 
   trait Setup {
+    val staticUUID = "a2a432bd-8819-44b6-b270-e3ec880a0e7f"
+
+    class StaticIDGenerator extends NotificationIdGenerator {
+      override def generateId(): UUID = {
+        UUID.fromString(staticUUID)
+      }
+    }
+
     val mockQueueService = mock[QueueService]
-    val controllerUnderTest = new QueueController(mockQueueService)
+    val controllerUnderTest = new QueueController(mockQueueService, new StaticIDGenerator)
   }
 
 
@@ -44,26 +54,32 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
         controllerUnderTest.save()(FakeRequest("POST", "/queue"))
       }
     }
+
     "throw exception if no payload" in new Setup {
       private val request = FakeRequest("POST", "/queue", Headers("x-client-id" -> "a"), AnyContentAsEmpty)
       intercept[BadRequestException] {
         val result: Future[Result] = controllerUnderTest.save()(request)
       }
     }
+
     "return 201 if body and headers are present" in new Setup {
       private val request = FakeRequest("POST", "/queue", Headers("x-client-id" -> "a", "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(
         <xml>
           <node>Stuff</node>
         </xml>
       )
+
       val result = controllerUnderTest.save()(request)
+
       status(result) shouldBe Status.CREATED
+      header("location", result) shouldBe Some(s"/notification/$staticUUID")
     }
   }
 
   "GET /messages" should {
     "return 200" in new Setup {
       val result = controllerUnderTest.getAll()(FakeRequest("GET", "/notifications"))
+
       status(result) shouldBe Status.OK
     }
   }
@@ -81,7 +97,9 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       private val payload = "<xml>a</xml>"
       private val clientId = "abc123"
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map("content-type" -> "application/xml", "conversation-id" -> "5"), payload, DateTime.now()))))
+
       val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid", Headers(controllerUnderTest.CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty))
+
       status(result) shouldBe Status.OK
       contentAsString(result) shouldBe payload
       header("conversation-id", result) shouldBe Some("5")
@@ -90,7 +108,9 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
     "return 404 if not found" in new Setup {
       when(mockQueueService.get("a", uuid)).thenReturn(Future.successful(None))
+
       val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid", Headers("x-client-id" -> "a"), AnyContentAsEmpty))
+
       status(result) shouldBe Status.NOT_FOUND
     }
   }
