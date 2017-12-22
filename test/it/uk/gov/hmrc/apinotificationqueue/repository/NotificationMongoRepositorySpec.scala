@@ -7,6 +7,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.libs.json.Json
 import reactivemongo.api.{Cursor, DB}
 import reactivemongo.play.json._
+import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec

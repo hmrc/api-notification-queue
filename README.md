@@ -26,7 +26,7 @@ curl -v -X POST \
 
 #### Response
 
-201 Created status and the Location header will contain the `/notification/[id]` URL.
+201 Created status and the Location header will contain the URL eg `/notification/ba544f92-b2dd-413e-becf-874b35eb3724`.
 
 ### GET `/notification/[id]`
 
@@ -42,6 +42,20 @@ curl -v -X GET "http://localhost:9000/notification/ba544f92-b2dd-413e-becf-874b3
 
 #### Response
 200 OK code. Note that all headers in the above `POST` are replayed in the response with the exception of `X-Client-ID`.
+
+### DELETE `/notification/[id]`
+
+Deletes the notification stored by the above post. 
+
+Required header: X-Client-ID.
+
+```  
+curl -v -X DELETE "http://localhost:9000/notification/ba544f92-b2dd-413e-becf-874b35eb3724" \
+  -H "x-client-id: 200b01f9-ec3b-4ede-b263-61b626dde232"   
+```
+
+#### Response
+204 OK code on successful delete, otherwise 404 Not Found. 
 
 
 ### License

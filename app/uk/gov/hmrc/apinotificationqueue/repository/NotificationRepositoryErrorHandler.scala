@@ -18,6 +18,7 @@ package uk.gov.hmrc.apinotificationqueue.repository
 
 import play.api.Logger
 import reactivemongo.api.commands.WriteResult
+import uk.gov.hmrc.apinotificationqueue.model.Notification
 
 trait NotificationRepositoryErrorHandler {
 

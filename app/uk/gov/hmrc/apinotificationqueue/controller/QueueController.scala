@@ -23,7 +23,7 @@ import akka.util.ByteString
 import org.joda.time.DateTime
 import play.api.http.HttpEntity
 import play.api.mvc._
-import uk.gov.hmrc.apinotificationqueue.repository.Notification
+import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
