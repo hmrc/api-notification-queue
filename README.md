@@ -4,7 +4,7 @@
 
 # Introduction
 
-This service provides a means to persist and retrieve notifications. The upstream client is the `ap-notificaion-pull` service.  
+This service provides a means to persist and retrieve notifications. The upstream client is the `api-notification-pull` service.  
 
 ## Endpoints
 
@@ -12,8 +12,7 @@ This service provides a means to persist and retrieve notifications. The upstrea
 
 Payload must be text based, e.g. XML
 When each message is put onto the queue database, a unique id will be generated. This id is used later for deleting the message once forwarded.
-Either the X-Client-ID or subscription-fields-id header must be included in the request. If the subscription-fields-id is supplied, 
-the client-id will be retrieved from the api-subscription-fields service.
+Either the X-Client-ID or subscription-fields-id header must be included in the request. If the subscription-fields-id is supplied, the client-id will be retrieved from the api-subscription-fields service.
 
 ```
 curl -v -X POST \
