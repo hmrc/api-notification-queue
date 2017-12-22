@@ -74,6 +74,21 @@ class QueueController @Inject()(queueService: QueueService, idGenerator: Notific
     }
   }
 
+  def delete(id: UUID) = Action.async {
+    implicit request => {
+      val headers = request.headers
+      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw new BadRequestException("x-client-id required"))
+      val futureDeleted = queueService.delete(clientId, id)
+      futureDeleted.map(deleted =>
+        if (deleted) {
+          NoContent
+        } else {
+          NotFound("NOT FOUND")
+        }
+      )
+    }
+  }
+
 }
 
 @Singleton

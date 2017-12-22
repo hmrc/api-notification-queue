@@ -124,12 +124,14 @@ class NotificationMongoRepositorySpec extends UnitSpec
     "delete by clientId and notificationId" should {
       "return true when record found and deleted" in {
         await(repository.save(clientId1, notification1))
+        await(repository.save(clientId1, notification2))
 
-        collectionSize shouldBe 1
+        collectionSize shouldBe 2
 
         await(repository.delete(clientId1, notification1.notificationId)) shouldBe true
 
-        collectionSize shouldBe 0
+        collectionSize shouldBe 1
+        await(repository.fetch(clientId1)).head shouldBe notification2
       }
 
       "return false when record not found" in {
