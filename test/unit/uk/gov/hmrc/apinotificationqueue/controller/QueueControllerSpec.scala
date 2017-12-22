@@ -51,19 +51,19 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   "POST /queue" should {
     "throw exception if x-client-id not present" in new Setup {
       intercept[BadRequestException] {
-        controllerUnderTest.save()(FakeRequest("POST", "/queue"))
+        controllerUnderTest.save()(FakeRequest(POST, "/queue"))
       }
     }
 
     "throw exception if no payload" in new Setup {
-      private val request = FakeRequest("POST", "/queue", Headers("x-client-id" -> "a"), AnyContentAsEmpty)
+      private val request = FakeRequest(POST, "/queue", Headers("x-client-id" -> "a"), AnyContentAsEmpty)
       intercept[BadRequestException] {
         val result: Future[Result] = controllerUnderTest.save()(request)
       }
     }
 
     "return 201 if body and headers are present" in new Setup {
-      private val request = FakeRequest("POST", "/queue", Headers("x-client-id" -> "a", "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(
+      private val request = FakeRequest(POST, "/queue", Headers("x-client-id" -> "a", "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(
         <xml>
           <node>Stuff</node>
         </xml>
@@ -76,20 +76,20 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     }
   }
 
-  "GET /messages" should {
+  "GET /notifications" should {
     "return 200" in new Setup {
-      val result = controllerUnderTest.getAll()(FakeRequest("GET", "/notifications"))
+      val result = controllerUnderTest.getAll()(FakeRequest(GET, "/notifications"))
 
       status(result) shouldBe Status.OK
     }
   }
 
-  "GET /message/:id" should {
+  "GET /notification/:id" should {
     val uuid = java.util.UUID.randomUUID()
 
     "throw exception if x-client-id not present" in new Setup {
       intercept[BadRequestException] {
-        controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid"))
+        controllerUnderTest.get(uuid)(FakeRequest(GET, s"/notification/$uuid"))
       }
     }
 
@@ -98,7 +98,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       private val clientId = "abc123"
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map("content-type" -> "application/xml", "conversation-id" -> "5"), payload, DateTime.now()))))
 
-      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid", Headers(controllerUnderTest.CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty))
+      val result = controllerUnderTest.get(uuid)(FakeRequest(GET, s"/notification/$uuid", Headers(controllerUnderTest.CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty))
 
       status(result) shouldBe Status.OK
       contentAsString(result) shouldBe payload
@@ -109,7 +109,33 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     "return 404 if not found" in new Setup {
       when(mockQueueService.get("a", uuid)).thenReturn(Future.successful(None))
 
-      val result = controllerUnderTest.get(uuid)(FakeRequest("GET", s"/notification/$uuid", Headers("x-client-id" -> "a"), AnyContentAsEmpty))
+      val result = controllerUnderTest.get(uuid)(FakeRequest(GET, s"/notification/$uuid", Headers("x-client-id" -> "a"), AnyContentAsEmpty))
+
+      status(result) shouldBe Status.NOT_FOUND
+    }
+  }
+
+  "DELETE /notification/:id" should {
+    val uuid = java.util.UUID.randomUUID()
+
+    "throw exception if x-client-id not present" in new Setup {
+      intercept[BadRequestException] {
+        controllerUnderTest.delete(uuid)(FakeRequest(DELETE, s"/notification/$uuid"))
+      }
+    }
+
+    "return 204 if deleted" in new Setup {
+      when(mockQueueService.delete("a", uuid)).thenReturn(Future.successful(true))
+
+      val result = controllerUnderTest.delete(uuid)(FakeRequest(DELETE, s"/notification/$uuid", Headers("x-client-id" -> "a"), AnyContentAsEmpty))
+
+      status(result) shouldBe Status.NO_CONTENT
+    }
+
+    "return 404 if not found" in new Setup {
+      when(mockQueueService.delete("a", uuid)).thenReturn(Future.successful(false))
+
+      val result = controllerUnderTest.delete(uuid)(FakeRequest(DELETE, s"/notification/$uuid", Headers("x-client-id" -> "a"), AnyContentAsEmpty))
 
       status(result) shouldBe Status.NOT_FOUND
     }

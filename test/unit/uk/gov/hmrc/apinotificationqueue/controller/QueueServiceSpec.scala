@@ -32,8 +32,8 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
     val serviceUnderTest = new QueueService(mockRepo)
 
     val clientId = "clientId"
+    val notificationId = UUID.randomUUID()
     val message = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
-
   }
 
 
@@ -41,6 +41,16 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
     "Save in the repo" in new Setup {
       serviceUnderTest.save(clientId, message)
       verify(mockRepo).save(clientId, message)
+    }
+
+    "Get in the repo" in new Setup {
+      serviceUnderTest.get(clientId, notificationId)
+      verify(mockRepo).fetch(clientId, notificationId)
+    }
+
+    "Delete in the repo" in new Setup {
+      serviceUnderTest.delete(clientId, notificationId)
+      verify(mockRepo).delete(clientId, notificationId)
     }
   }
 }
