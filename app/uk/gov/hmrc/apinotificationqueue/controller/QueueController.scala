@@ -33,19 +33,21 @@ import scala.concurrent.Future
 
 @Singleton()
 class QueueController @Inject()(queueService: QueueService, idGenerator: NotificationIdGenerator) extends BaseController {
-  val CLIENT_ID_HEADER_NAME = "x-client-id"
+
+  val CLIENT_ID_HEADER_NAME = "X-Client-ID"
+  private val CLIENT_ID_REQUIRED_ERROR = new BadRequestException(s"$CLIENT_ID_HEADER_NAME required.")
 
   def save() = Action.async {
     implicit request => {
       val headers = request.headers
-      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw new BadRequestException("x-client-id required"))
+      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw CLIENT_ID_REQUIRED_ERROR)
       val notificationId = idGenerator.generateId()
       queueService.save(
         clientId,
         Notification(
           notificationId,
           headers.remove(CLIENT_ID_HEADER_NAME).toSimpleMap,
-          request.body.asXml.getOrElse(throw new BadRequestException("no body included")).toString(),
+          request.body.asXml.getOrElse(throw new BadRequestException("No body included.")).toString,
           DateTime.now()
         )
       )
@@ -54,14 +56,13 @@ class QueueController @Inject()(queueService: QueueService, idGenerator: Notific
   }
 
   def getAll = Action.async {
-
     Future.successful(Result(ResponseHeader(OK), HttpEntity.NoEntity))
   }
 
   def get(id: UUID) = Action.async {
     implicit request => {
       val headers = request.headers
-      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw new BadRequestException("x-client-id required"))
+      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw CLIENT_ID_REQUIRED_ERROR)
       val notification = queueService.get(clientId, id)
       notification.map(opt =>
         opt.fold(NotFound("NOT FOUND"))(
@@ -77,7 +78,7 @@ class QueueController @Inject()(queueService: QueueService, idGenerator: Notific
   def delete(id: UUID) = Action.async {
     implicit request => {
       val headers = request.headers
-      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw new BadRequestException("x-client-id required"))
+      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw CLIENT_ID_REQUIRED_ERROR)
       val futureDeleted = queueService.delete(clientId, id)
       futureDeleted.map(deleted =>
         if (deleted) {
