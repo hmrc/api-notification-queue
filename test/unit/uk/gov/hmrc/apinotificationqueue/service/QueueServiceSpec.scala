@@ -25,37 +25,46 @@ import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.play.test.UnitSpec
 
+import scala.concurrent.Future
+
 class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
   trait Setup {
-    val mockRepo = mock[NotificationRepository]
-    val serviceUnderTest = new QueueService(mockRepo)
+    val mockNotificationRepository = mock[NotificationRepository]
+    val queueService = new QueueService(mockNotificationRepository)
 
     val clientId = "clientId"
-    val notificationId = UUID.randomUUID()
-    val notification = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
+
+    val notification1 = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
+    val notification2 = notification1.copy(notificationId = UUID.randomUUID())
   }
 
   "QueueService" should {
 
     "Save the notification in the mongo repository" in new Setup {
-      serviceUnderTest.save(clientId, notification)
-      verify(mockRepo).save(clientId, notification)
+      when(mockNotificationRepository.save(clientId, notification1)).thenReturn(Future.successful(notification1))
+      await(queueService.save(clientId, notification1)) shouldBe notification1
+      verify(mockNotificationRepository).save(clientId, notification1)
     }
 
     "Retrieve all the notifications (by client id) from the mongo repository" in new Setup {
-      serviceUnderTest.get(clientId)
-      verify(mockRepo).fetch(clientId)
+      when(mockNotificationRepository.fetch(clientId)).thenReturn(Future.successful(List(notification1, notification2)))
+      await(queueService.get(clientId)) shouldBe List(notification1, notification2)
+      verify(mockNotificationRepository).fetch(clientId)
     }
 
     "Retrieve the expected notification from the mongo repository" in new Setup {
-      serviceUnderTest.get(clientId, notificationId)
-      verify(mockRepo).fetch(clientId, notificationId)
+      when(mockNotificationRepository.fetch(clientId, notification1.notificationId)).thenReturn(Future.successful(Some(notification1)))
+      await(queueService.get(clientId, notification1.notificationId)) shouldBe Some(notification1)
+      verify(mockNotificationRepository).fetch(clientId, notification1.notificationId)
     }
 
     "Delete the expected notification from the mongo repository" in new Setup {
-      serviceUnderTest.delete(clientId, notificationId)
-      verify(mockRepo).delete(clientId, notificationId)
+      when(mockNotificationRepository.delete(clientId, notification1.notificationId)).thenReturn(Future.successful(true))
+      await(queueService.delete(clientId, notification1.notificationId)) shouldBe true
+      verify(mockNotificationRepository).delete(clientId, notification1.notificationId)
     }
+
   }
+
 }

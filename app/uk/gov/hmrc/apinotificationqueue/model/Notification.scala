@@ -26,3 +26,9 @@ case class Notification(notificationId: UUID, headers: Map[String, String], payl
 object Notification {
   implicit val notificationJF = Json.format[Notification]
 }
+
+case class Notifications(notifications: List[String])
+
+object Notifications {
+  implicit val notificationsJF = Json.format[Notifications]
+}
