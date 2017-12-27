@@ -63,13 +63,13 @@ class QueueController @Inject()(queueService: QueueService, idGenerator: Notific
     implicit request => {
       val clientId = request.headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw CLIENT_ID_REQUIRED_ERROR)
 
-      val notificationIds: Future[List[String]] = for {
+      val notificationIdPaths: Future[List[String]] = for {
         notifications <- queueService.get(clientId)
       } yield notifications.map("/notification/" + _.notificationId)
 
-      notificationIds map {
+      notificationIdPaths map {
         case Nil => NotFound("NOT FOUND")
-        case nIds: List[String] => Ok(Json.toJson(Notifications(nIds)))
+        case idPaths: List[String] => Ok(Json.toJson(Notifications(idPaths)))
       }
     }
   }
