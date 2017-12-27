@@ -25,7 +25,7 @@ import play.api.http.Status
 import play.api.mvc.{AnyContentAsEmpty, Headers, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.apinotificationqueue.repository.Notification
+import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}

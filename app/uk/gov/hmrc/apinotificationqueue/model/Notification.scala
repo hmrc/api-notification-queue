@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.repository
+package uk.gov.hmrc.apinotificationqueue.model
 
 import java.util.UUID
 
-import play.api.libs.json.Json
 import org.joda.time.DateTime
+import play.api.libs.json.Json
 
 case class Notification(notificationId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime)
 

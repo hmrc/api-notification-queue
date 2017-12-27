@@ -21,7 +21,8 @@ import java.util.UUID
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.apinotificationqueue.repository.{Notification, NotificationRepository}
+import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.play.test.UnitSpec
 

@@ -18,6 +18,7 @@ package uk.gov.hmrc.apinotificationqueue.repository
 
 import org.scalatest.mockito.MockitoSugar
 import reactivemongo.api.commands.{DefaultWriteResult, WriteConcernError, WriteError}
+import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.play.test.UnitSpec
 
 class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar {

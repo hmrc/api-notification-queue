@@ -17,6 +17,7 @@
 package uk.gov.hmrc.apinotificationqueue.repository
 
 import play.api.libs.json.Json
+import uk.gov.hmrc.apinotificationqueue.model.Notification
 
 case class ClientNotification(clientId: String, notification: Notification)
 
