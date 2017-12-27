@@ -27,6 +27,10 @@ import scala.concurrent.Future
 @Singleton()
 class QueueService @Inject()(notificationRepo: NotificationRepository) {
 
+  def get(clientId: String): Future[List[Notification]] = {
+    notificationRepo.fetch(clientId)
+  }
+
   def get(clientId: String, id: UUID): Future[Option[Notification]] = {
     notificationRepo.fetch(clientId, id)
   }

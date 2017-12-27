@@ -32,6 +32,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 @ImplementedBy(classOf[NotificationMongoRepository])
 trait NotificationRepository {
   def save(clientId: String, notification: Notification): Future[Notification]

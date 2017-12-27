@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.controller
+package uk.gov.hmrc.apinotificationqueue.service
 
 import java.util.UUID
 
@@ -23,7 +23,6 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
-import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.play.test.UnitSpec
 
 class QueueServiceSpec extends UnitSpec with MockitoSugar {
@@ -34,22 +33,27 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
     val clientId = "clientId"
     val notificationId = UUID.randomUUID()
-    val message = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
+    val notification = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
   }
 
+  "QueueService" should {
 
-  "Save" should {
-    "Save in the repo" in new Setup {
-      serviceUnderTest.save(clientId, message)
-      verify(mockRepo).save(clientId, message)
+    "Save the notification in the mongo repository" in new Setup {
+      serviceUnderTest.save(clientId, notification)
+      verify(mockRepo).save(clientId, notification)
     }
 
-    "Get in the repo" in new Setup {
+    "Retrieve all the notifications (by client id) from the mongo repository" in new Setup {
+      serviceUnderTest.get(clientId)
+      verify(mockRepo).fetch(clientId)
+    }
+
+    "Retrieve the expected notification from the mongo repository" in new Setup {
       serviceUnderTest.get(clientId, notificationId)
       verify(mockRepo).fetch(clientId, notificationId)
     }
 
-    "Delete in the repo" in new Setup {
+    "Delete the expected notification from the mongo repository" in new Setup {
       serviceUnderTest.delete(clientId, notificationId)
       verify(mockRepo).delete(clientId, notificationId)
     }
