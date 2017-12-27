@@ -38,7 +38,7 @@ Required header: `X-Client-ID`.
 
 ```  
 curl -v -X GET "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-874b35eb3724" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"    
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b" \
   -H "Accept: application/xml"   
 ```
 
@@ -54,7 +54,7 @@ Required header: `X-Client-ID`.
 
 ```  
 curl -v -X GET "http://localhost:9648/notifications" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"    
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b" \
   -H "Accept: application/xml"   
 ```
 
