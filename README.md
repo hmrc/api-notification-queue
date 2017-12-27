@@ -25,7 +25,7 @@ curl -v -X POST \
 
 #### Response
 
-201 Created status and the Location header will contain the URL eg `/notification/ba544f92-b2dd-413e-becf-874b35eb3724`.
+201 Created status and the Location header will contain the URL, e.g. `/notification/ba544f92-b2dd-413e-becf-874b35eb3724`.
 
 ### GET `/notification/[id]`
 
