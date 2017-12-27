@@ -24,7 +24,7 @@ curl -v -X POST \
   -H 'Content-Type: application/xml' \
   -H 'X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b' \
   -d '<xml>foo</xml>'
-``` 
+```
 
 #### Response
 
@@ -36,10 +36,9 @@ Retrieves a specific notification.
 
 Required header: `X-Client-ID`.
 
-```  
+```
 curl -v -X GET "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-874b35eb3724" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b" \
-  -H "Accept: application/xml"   
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
 ```
 
 #### Response
@@ -52,10 +51,9 @@ Gets all notifications of a specific third-party application.
 
 Required header: `X-Client-ID`.
 
-```  
+```
 curl -v -X GET "http://localhost:9648/notifications" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b" \
-  -H "Accept: application/xml"   
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
 ```
 
 #### Response
@@ -67,7 +65,7 @@ Deletes a specific notification.
 
 Required header: `X-Client-ID`.
 
-```  
+```
 curl -v -X DELETE "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-874b35eb3724" \
   -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"   
 ```
