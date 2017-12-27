@@ -9,7 +9,6 @@ import play.api.test.Helpers._
 
 class QueueSpec extends FeatureSpec with GivenWhenThen with Matchers with GuiceOneAppPerSuite {
 
-
   feature("Post, retrieve and delete a message from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist a notification")
@@ -25,7 +24,7 @@ class QueueSpec extends FeatureSpec with GivenWhenThen with Matchers with GuiceO
       val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location = queueResponse.header.headers("Location")
 
-      When("you make a get based on the location header")
+      When("you make a GET based on the location header")
       val result = route(app = app, FakeRequest(GET, location, Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
 
       Then("you will receive a 200 response")
