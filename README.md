@@ -21,7 +21,7 @@ If the `Subscription-Fields-Id` is supplied, the Client ID will be retrieved fro
 curl -v -X POST \
   http://localhost:9648/queue \
   -H 'Accept: application/xml' \
-  -H 'Content-Yype: application/xml' \
+  -H 'Content-Type: application/xml' \
   -H 'X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b' \
   -d '<xml>foo</xml>'
 ``` 
