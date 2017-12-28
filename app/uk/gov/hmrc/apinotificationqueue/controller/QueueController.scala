@@ -35,7 +35,7 @@ import scala.concurrent.Future
 @Singleton()
 class QueueController @Inject()(queueService: QueueService, idGenerator: NotificationIdGenerator) extends BaseController {
 
-  val CLIENT_ID_HEADER_NAME = "X-Client-ID"
+  private val CLIENT_ID_HEADER_NAME = "X-Client-ID"
   private val CLIENT_ID_REQUIRED_ERROR = new BadRequestException(s"$CLIENT_ID_HEADER_NAME required.")
 
   def save() = Action.async {
