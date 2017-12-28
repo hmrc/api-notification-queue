@@ -19,6 +19,7 @@ package uk.gov.hmrc.apinotificationqueue.controller
 import java.util.UUID
 
 import org.joda.time.DateTime
+import org.mockito.ArgumentMatchers.{eq => mockEq, _}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.ContentTypes.XML
@@ -28,8 +29,7 @@ import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.model.Notification
-import uk.gov.hmrc.apinotificationqueue.service.QueueService
-import uk.gov.hmrc.http.BadRequestException
+import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.Future
@@ -51,31 +51,57 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     }
 
     val mockQueueService = mock[QueueService]
-    val queueController = new QueueController(mockQueueService, new StaticIDGenerator)
+    val mockFieldsService = mock[ApiSubscriptionFieldsService]
+    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator)
   }
 
   "POST /queue" should {
-    "throw exception when then X-Client-ID header is not sent in the request" in new Setup {
-      intercept[BadRequestException] {
-        await(queueController.save()(FakeRequest(POST, "/queue")))
-      }
+    "return 400 when none of the `X-Client-ID` and `api-subscription-fields-id` headers are sent in the request" in new Setup {
+      val result = await(queueController.save()(FakeRequest(POST, "/queue")))
+
+      status(result) shouldBe Status.BAD_REQUEST
     }
 
-    "throw exception if no payload" in new Setup {
+    "return 400 when the `fieldsId` does not exist in the `api-subscription-fields` service" in new Setup {
+      when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(None)
+
+      val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> uuid.toString), AnyContentAsEmpty)))
+
+      status(result) shouldBe Status.BAD_REQUEST
+    }
+
+    "return 400 if no payload" in new Setup {
       val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
-      intercept[BadRequestException] {
-        await(queueController.save()(request))
-      }
-    }
-
-    "return 201 if body and headers are sent" in new Setup {
-      private val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(
-        <xml>
-          <node>Stuff</node>
-        </xml>
-      )
 
       val result = await(queueController.save()(request))
+
+      status(result) shouldBe Status.BAD_REQUEST
+
+    }
+
+    "return 201 if body and headers are present with no call out" in new Setup {
+      private val xml = <xml>
+        <node>Stuff</node>
+      </xml>
+      private val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(xml)
+      private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now())
+      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
+      val result = await(queueController.save()(request))
+
+      verify(mockFieldsService, never()).getClientId(any())(any())
+      status(result) shouldBe Status.CREATED
+      header("location", result) shouldBe Some(s"/notification/$uuid")
+    }
+
+    "return 201 when getting client id via subscription fields id" in new Setup {
+      private val xml = <xml>
+        <node>Stuff</node>
+      </xml>
+      private val request = FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> uuid.toString, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xml)
+      private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now())
+      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
+      when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Some(clientId))
+      val result = queueController.save()(request)
 
       status(result) shouldBe Status.CREATED
       header(LOCATION, result) shouldBe Some(s"/notification/$uuid")
@@ -84,10 +110,11 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   "GET /notifications" should {
 
-    "throw exception when then X-Client-ID header is not sent in the request" in new Setup {
-      intercept[BadRequestException] {
-        await(queueController.getAllByClientId()(FakeRequest(GET, "/notifications")))
-      }
+    "return 400 when then X-Client-ID header is not sent in the request" in new Setup {
+      val result = await(queueController.getAllByClientId()(FakeRequest(GET, "/notifications")))
+
+      status(result) shouldBe Status.BAD_REQUEST
+
     }
 
     "return 200" in new Setup {
@@ -115,10 +142,10 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   "GET /notification/:id" should {
 
-    "throw exception when then X-Client-ID header is not sent in the request" in new Setup {
-      intercept[BadRequestException] {
-        await(queueController.get(uuid)(FakeRequest(GET, s"/notification/$uuid")))
-      }
+    "return 400 when then X-Client-ID header is not sent in the request" in new Setup {
+      val result = await(queueController.get(uuid)(FakeRequest(GET, s"/notification/$uuid")))
+
+      status(result) shouldBe Status.BAD_REQUEST
     }
 
     "return 200" in new Setup {
@@ -148,10 +175,10 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   "DELETE /notification/:id" should {
 
-    "throw exception when then X-Client-ID header is not sent in the request" in new Setup {
-      intercept[BadRequestException] {
-        await(queueController.delete(uuid)(FakeRequest(DELETE, s"/notification/$uuid")))
-      }
+    "return 400 when then X-Client-ID header is not sent in the request" in new Setup {
+      val result = await(queueController.delete(uuid)(FakeRequest(DELETE, s"/notification/$uuid")))
+
+      status(result) shouldBe Status.BAD_REQUEST
     }
 
     "return 204 if deleted" in new Setup {

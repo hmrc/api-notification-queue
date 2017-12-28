@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import scala.util.Properties.envOrElse
-import play.sbt.PlayImport._
-import play.core.PlayVersion
-import sbt.Tests.{SubProcess, Group}
-import play.routes.compiler.StaticRoutesGenerator
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-import uk.gov.hmrc._
-import DefaultBuildSettings._
-import uk.gov.hmrc.SbtAutoBuildPlugin
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import uk.gov.hmrc.versioning.SbtGitVersioning
 import _root_.play.sbt.routes.RoutesKeys.routesGenerator
+import play.core.PlayVersion
+import play.routes.compiler.StaticRoutesGenerator
+import play.sbt.PlayImport._
+import sbt.Tests.{Group, SubProcess}
+import uk.gov.hmrc.DefaultBuildSettings._
+import uk.gov.hmrc.{SbtAutoBuildPlugin, _}
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+import uk.gov.hmrc.versioning.SbtGitVersioning
+
+import scala.util.Properties.envOrElse
 
 lazy val appName = "api-notification-queue"
 lazy val appVersion = envOrElse("API_NOTIFICATION_QUEUE_VERSION", "999-SNAPSHOT")
@@ -35,6 +35,7 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test
 lazy val compile = Seq(
   ws,
   "uk.gov.hmrc" %% "bootstrap-play-25" % "1.2.0",
+  "uk.gov.hmrc" %% "http-metrics" % "1.1.0",
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0"
 )
 
@@ -47,6 +48,7 @@ lazy val test = Seq(
   "org.mockito" % "mockito-core" % "2.10.0" % scope,
   "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope,
   "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
+  "com.github.tomakehurst" % "wiremock" % "2.8.0" % scope,
   "uk.gov.hmrc" %% "reactivemongo-test" % "3.0.0" % scope
 )
 
