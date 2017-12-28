@@ -37,7 +37,9 @@ import scala.concurrent.Future
 class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 
   private implicit lazy val materializer = fakeApplication.materializer
+
   private val CLIENT_ID_HEADER_NAME = "x-client-id"
+  private val SUBSCRIPTION_FIELDS_ID_HEADER_NAME = "api-subscription-fields-id"
 
   trait Setup {
     val clientId = "abc123"
@@ -65,21 +67,20 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     "return 400 when the `fieldsId` does not exist in the `api-subscription-fields` service" in new Setup {
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(None)
 
-      val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> uuid.toString), AnyContentAsEmpty)))
+      val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString), AnyContentAsEmpty)))
 
       status(result) shouldBe Status.BAD_REQUEST
     }
 
-    "return 400 if no payload" in new Setup {
+    "return 400 if the request has no payload" in new Setup {
       val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
 
       val result = await(queueController.save()(request))
 
       status(result) shouldBe Status.BAD_REQUEST
-
     }
 
-    "return 201 if body and headers are present with no call out" in new Setup {
+    "return 201, without calling `api-subscription-fields`, when the X-Client-ID header is sent to the request" in new Setup {
       private val xml = <xml>
         <node>Stuff</node>
       </xml>
@@ -90,14 +91,14 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
       verify(mockFieldsService, never()).getClientId(any())(any())
       status(result) shouldBe Status.CREATED
-      header("location", result) shouldBe Some(s"/notification/$uuid")
+      header(LOCATION, result) shouldBe Some(s"/notification/$uuid")
     }
 
     "return 201 when getting client id via subscription fields id" in new Setup {
       private val xml = <xml>
         <node>Stuff</node>
       </xml>
-      private val request = FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> uuid.toString, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xml)
+      private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now())
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Some(clientId))
@@ -110,7 +111,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   "GET /notifications" should {
 
-    "return 400 when then X-Client-ID header is not sent in the request" in new Setup {
+    "return 400 when the X-Client-ID header is not sent to the request" in new Setup {
       val result = await(queueController.getAllByClientId()(FakeRequest(GET, "/notifications")))
 
       status(result) shouldBe Status.BAD_REQUEST
@@ -142,7 +143,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   "GET /notification/:id" should {
 
-    "return 400 when then X-Client-ID header is not sent in the request" in new Setup {
+    "return 400 when the X-Client-ID header is not sent to the request" in new Setup {
       val result = await(queueController.get(uuid)(FakeRequest(GET, s"/notification/$uuid")))
 
       status(result) shouldBe Status.BAD_REQUEST
@@ -162,7 +163,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
     }
 
-    "return 404 if not found" in new Setup {
+    "return 404 if the notification is not found" in new Setup {
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(None))
 
       val request = FakeRequest(GET, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
@@ -175,13 +176,13 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   "DELETE /notification/:id" should {
 
-    "return 400 when then X-Client-ID header is not sent in the request" in new Setup {
+    "return 400 when the X-Client-ID header is not sent in the request" in new Setup {
       val result = await(queueController.delete(uuid)(FakeRequest(DELETE, s"/notification/$uuid")))
 
       status(result) shouldBe Status.BAD_REQUEST
     }
 
-    "return 204 if deleted" in new Setup {
+    "return 204 if the notification is deleted" in new Setup {
       when(mockQueueService.delete(clientId, uuid)).thenReturn(Future.successful(true))
 
       val request = FakeRequest(DELETE, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
@@ -190,7 +191,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       status(result) shouldBe Status.NO_CONTENT
     }
 
-    "return 404 if not found" in new Setup {
+    "return 404 if the notification is not found" in new Setup {
       when(mockQueueService.delete(clientId, uuid)).thenReturn(Future.successful(false))
 
       val request = FakeRequest(DELETE, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
