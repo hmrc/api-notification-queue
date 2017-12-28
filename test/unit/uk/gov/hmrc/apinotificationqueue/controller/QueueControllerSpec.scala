@@ -132,7 +132,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       bodyOf(result) shouldBe payload
 
       header("conversation-id", result) shouldBe Some("5")
-      header(queueController.CLIENT_ID_HEADER_NAME, result) shouldBe None
+      header(CLIENT_ID_HEADER_NAME, result) shouldBe None
     }
 
     "return 404 if not found" in new Setup {
