@@ -35,8 +35,8 @@ import scala.concurrent.Future
 @Singleton()
 class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSubscriptionFieldsService, idGenerator: NotificationIdGenerator) extends BaseController {
 
-  val SUBSCRIPTION_FIELD_HEADER_NAME = "api-subscription-fields-id"
-  val CLIENT_ID_HEADER_NAME = "X-Client-ID"
+  private val SUBSCRIPTION_FIELD_HEADER_NAME = "api-subscription-fields-id"
+  private val CLIENT_ID_HEADER_NAME = "X-Client-ID"
 
   private val MISSING_CLIENT_ID_ERROR = s"$CLIENT_ID_HEADER_NAME required."
   private val MISSING_BODY_ERROR = s"Body required."
