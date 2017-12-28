@@ -67,10 +67,7 @@ class QueueController @Inject()(queueService: QueueService, idGenerator: Notific
         notifications <- queueService.get(clientId)
       } yield notifications.map("/notification/" + _.notificationId)
 
-      notificationIdPaths map {
-        case Nil => NotFound("NOT FOUND")
-        case idPaths: List[String] => Ok(Json.toJson(Notifications(idPaths)))
-      }
+      notificationIdPaths.map(idPaths => Ok(Json.toJson(Notifications(idPaths))))
     }
   }
 
