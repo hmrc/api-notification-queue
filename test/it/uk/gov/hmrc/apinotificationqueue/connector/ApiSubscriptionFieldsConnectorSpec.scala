@@ -82,7 +82,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec with ScalaFutures with
       intercept[Upstream5xxResponse](await(connector.lookupClientId(fieldsId)))
     }
 
-    "throw a DocumentationNotFound exception if service is not available in API Subscription Fields" in new Setup {
+    "throw a NotFoundException if the fieldsId does not exist in the API Subscription Fields service" in new Setup {
       stubFor(get(urlEqualTo(s"/fields/$fieldsId")).willReturn(aResponse().withStatus(404)))
       intercept[NotFoundException](await(connector.lookupClientId(fieldsId)))
     }

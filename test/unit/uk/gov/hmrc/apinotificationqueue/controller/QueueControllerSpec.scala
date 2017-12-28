@@ -56,13 +56,13 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   }
 
   "POST /queue" should {
-    "return 400 when then X-Client-ID header is not sent in the request" in new Setup {
+    "return 400 when none of the `X-Client-ID` and `api-subscription-fields-id` headers are sent in the request" in new Setup {
       val result = await(queueController.save()(FakeRequest(POST, "/queue")))
 
       status(result) shouldBe Status.BAD_REQUEST
     }
 
-    "return 400 if api-subscription-fields not there in fieldsService" in new Setup {
+    "return 400 when the `fieldsId` does not exist in the `api-subscription-fields` service" in new Setup {
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(None)
 
       val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> uuid.toString), AnyContentAsEmpty)))
