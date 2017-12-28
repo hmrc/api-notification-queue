@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.apinotificationqueue.connector
 
-;
+
 
 import java.util.UUID
 
