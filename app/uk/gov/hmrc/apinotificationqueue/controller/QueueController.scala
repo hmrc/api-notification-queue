@@ -22,8 +22,9 @@ import javax.inject.{Inject, Singleton}
 import akka.util.ByteString
 import org.joda.time.DateTime
 import play.api.http.HttpEntity
+import play.api.libs.json.Json
 import play.api.mvc._
-import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.http.BadRequestException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -34,7 +35,7 @@ import scala.concurrent.Future
 @Singleton()
 class QueueController @Inject()(queueService: QueueService, idGenerator: NotificationIdGenerator) extends BaseController {
 
-  val CLIENT_ID_HEADER_NAME = "X-Client-ID"
+  private val CLIENT_ID_HEADER_NAME = "X-Client-ID"
   private val CLIENT_ID_REQUIRED_ERROR = new BadRequestException(s"$CLIENT_ID_HEADER_NAME required.")
 
   def save() = Action.async {
@@ -51,24 +52,34 @@ class QueueController @Inject()(queueService: QueueService, idGenerator: Notific
           DateTime.now()
         )
       )
-      Future.successful(Result(ResponseHeader(CREATED, Map(LOCATION -> routes.QueueController.get(notificationId).url)), HttpEntity.NoEntity))
+      Future.successful(Result(
+        header = ResponseHeader(status = CREATED, headers = Map(LOCATION -> routes.QueueController.get(notificationId).url)),
+        body = HttpEntity.NoEntity
+      ))
     }
   }
 
-  def getAll = Action.async {
-    Future.successful(Result(ResponseHeader(OK), HttpEntity.NoEntity))
+  def getAllByClientId = Action.async {
+    implicit request => {
+      val clientId = request.headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw CLIENT_ID_REQUIRED_ERROR)
+
+      val notificationIdPaths: Future[List[String]] = for {
+        notifications <- queueService.get(clientId)
+      } yield notifications.map("/notification/" + _.notificationId)
+
+      notificationIdPaths.map(idPaths => Ok(Json.toJson(Notifications(idPaths))))
+    }
   }
 
   def get(id: UUID) = Action.async {
     implicit request => {
-      val headers = request.headers
-      val clientId = headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw CLIENT_ID_REQUIRED_ERROR)
+      val clientId = request.headers.get(CLIENT_ID_HEADER_NAME).getOrElse(throw CLIENT_ID_REQUIRED_ERROR)
       val notification = queueService.get(clientId, id)
       notification.map(opt =>
         opt.fold(NotFound("NOT FOUND"))(
           n => Result(
-            ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
-            HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE))
+            header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
+            body = HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE))
           )
         )
       )

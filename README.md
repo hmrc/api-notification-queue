@@ -7,7 +7,10 @@
 This service provides a means to persist and retrieve notifications.
 The upstream client is the `api-notification-pull` service.  
 
+---
+
 ## Endpoints
+
 
 ### POST `/queue`
 
@@ -30,6 +33,8 @@ curl -v -X POST \
 
 201 Created status and the Location header will contain the URL, e.g. `/notification/ba544f92-b2dd-413e-becf-874b35eb3724`.
 
+---
+
 ### GET `/notification/[id]`
 
 Retrieves a specific notification.
@@ -45,6 +50,8 @@ curl -v -X GET "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-874b3
 200 OK code on successful get, otherwise 404 Not Found.
 Note that all headers in the above `POST` are replayed in the response with the exception of `X-Client-ID`.
 
+---
+
 ### GET `/notifications`
 
 Gets all notifications of a specific third-party application. 
@@ -58,6 +65,8 @@ curl -v -X GET "http://localhost:9648/notifications" \
 
 #### Response
 200 OK code.
+
+---
 
 ### DELETE `/notification/[id]`
 
@@ -73,6 +82,7 @@ curl -v -X DELETE "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-87
 #### Response
 204 No Content on successful delete, otherwise 404 Not Found.
 
+---
 
 ### License
 

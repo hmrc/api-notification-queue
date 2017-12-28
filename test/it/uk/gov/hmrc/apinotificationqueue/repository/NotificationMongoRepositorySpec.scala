@@ -102,7 +102,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
     }
 
     "fetch by clientId" should {
-      "return multiple record when found" in {
+      "return all notifications when found by clientId" in {
         await(repository.save(clientId1, notification1))
         await(repository.save(clientId1, notification2))
         await(repository.save(clientId2, notification3))
