@@ -37,7 +37,7 @@ import scala.concurrent.Future
 class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 
   private implicit lazy val materializer = fakeApplication.materializer
-  private val CLIENT_ID_HEADER_NAME = "X-Client-ID"
+  private val CLIENT_ID_HEADER_NAME = "x-client-id"
 
   trait Setup {
     val clientId = "abc123"

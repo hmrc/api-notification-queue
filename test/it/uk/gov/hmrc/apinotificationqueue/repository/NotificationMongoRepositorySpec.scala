@@ -118,7 +118,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(clientId1, notification1))
         await(repository.save(clientId1, notification2))
 
-        await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID")) shouldBe List()
+        await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID")) shouldBe Nil
       }
     }
 
