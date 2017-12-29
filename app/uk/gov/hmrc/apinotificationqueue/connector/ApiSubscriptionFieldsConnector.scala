@@ -39,7 +39,7 @@ class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient, config: Service
   val serviceBaseUrl = config.baseUrl("api-subscription-fields")
 
   def lookupClientId(subscriptionFieldsId: UUID)(implicit hc: HeaderCarrier): Future[ApiSubscriptionFieldResponse] = {
-    http.GET[ApiSubscriptionFieldResponse](s"$serviceBaseUrl/fields/$subscriptionFieldsId")
+    http.GET[ApiSubscriptionFieldResponse](s"$serviceBaseUrl/field/$subscriptionFieldsId")
   }
 
 }
