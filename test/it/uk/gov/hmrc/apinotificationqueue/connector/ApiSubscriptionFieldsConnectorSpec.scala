@@ -68,7 +68,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec with ScalaFutures with
 
     "return details for the fields" in new Setup {
       val clientId = "abc123"
-      stubFor(get(urlEqualTo(s"/fields/$fieldsId"))
+      stubFor(get(urlEqualTo(s"/field/$fieldsId"))
         .willReturn(aResponse().withStatus(200)
           .withBody( s"""{"clientId":"$clientId","apiContext":"context","fieldsId":"$fieldsId","apiVersion":"1.0"}""")))
 
@@ -78,12 +78,12 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec with ScalaFutures with
     }
 
     "throw an http-verbs Upstream5xxResponse exception if the API Subscription Fields responds with an error" in new Setup {
-      stubFor(get(urlEqualTo(s"/fields/$fieldsId")).willReturn(aResponse().withStatus(500)))
+      stubFor(get(urlEqualTo(s"/field/$fieldsId")).willReturn(aResponse().withStatus(500)))
       intercept[Upstream5xxResponse](await(connector.lookupClientId(fieldsId)))
     }
 
     "throw a NotFoundException if the fieldsId does not exist in the API Subscription Fields service" in new Setup {
-      stubFor(get(urlEqualTo(s"/fields/$fieldsId")).willReturn(aResponse().withStatus(404)))
+      stubFor(get(urlEqualTo(s"/field/$fieldsId")).willReturn(aResponse().withStatus(404)))
       intercept[NotFoundException](await(connector.lookupClientId(fieldsId)))
     }
   }
