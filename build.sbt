@@ -65,8 +65,7 @@ lazy val microservice = (project in file("."))
     name := appName,
     scalaVersion := "2.11.11",
     libraryDependencies ++= appDependencies,
-    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-    routesGenerator := StaticRoutesGenerator
+    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
   )
   .settings(
     Keys.fork in Test := false,
