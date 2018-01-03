@@ -73,7 +73,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     }
 
     "return 400 when the `api-subscription-fields-id` isn't a UUID" in new Setup {
-      when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(None)
 
       val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> "NOT-A_UUID"), AnyContentAsEmpty)))
 

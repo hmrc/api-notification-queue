@@ -31,6 +31,7 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 @Singleton()
 class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSubscriptionFieldsService, idGenerator: NotificationIdGenerator) extends BaseController {
@@ -40,7 +41,6 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
 
   private val MISSING_CLIENT_ID_ERROR = s"$CLIENT_ID_HEADER_NAME required."
   private val MISSING_BODY_ERROR = s"Body required."
-  private val UUID_REGEX = "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$".r
 
   def save() = Action.async {
     implicit request => {
@@ -67,7 +67,10 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
   private def getClientId(headers: Headers)(implicit hc: HeaderCarrier): Future[Option[String]] = {
     def getClientIdFromSubId(headers: Headers) = {
       val noResponse: Future[Option[String]] = Future.successful(None)
-      headers.get(SUBSCRIPTION_FIELD_HEADER_NAME).fold(noResponse)(id => UUID_REGEX.findFirstIn(id).fold(noResponse)(_ => fieldsService.getClientId(UUID.fromString(id))))
+      Try(headers.get(SUBSCRIPTION_FIELD_HEADER_NAME).fold(noResponse)(id => fieldsService.getClientId(UUID.fromString(id)))) match {
+        case Success(v) => v
+        case Failure(_) => noResponse
+      }
     }
 
     headers.get(CLIENT_ID_HEADER_NAME).fold(getClientIdFromSubId(headers))(id => Future.successful(Some(id)))
