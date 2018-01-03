@@ -72,6 +72,13 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       status(result) shouldBe Status.BAD_REQUEST
     }
 
+    "return 400 when the `api-subscription-fields-id` isn't a UUID" in new Setup {
+
+      val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> "NOT-A_UUID"), AnyContentAsEmpty)))
+
+      status(result) shouldBe Status.BAD_REQUEST
+    }
+
     "return 400 if the request has no payload" in new Setup {
       val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
 
