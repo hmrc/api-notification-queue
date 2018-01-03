@@ -33,7 +33,7 @@ class ApiSubscriptionFieldsServicesSpec extends UnitSpec with MockitoSugar {
     val clientId = "abc123"
     val mockConnector = mock[ApiSubscriptionFieldsConnector]
     val apiSubscriptionFieldsService = new ApiSubscriptionFieldsService(mockConnector)
-    val hc: HeaderCarrier = new HeaderCarrier()
+    val hc = HeaderCarrier()
   }
 
   "ApiSubscriptionFieldsService" should {
