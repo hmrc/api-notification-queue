@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.apinotificationqueue.connector
 
-
-
 import java.util.UUID
 
 import com.github.tomakehurst.wiremock.WireMockServer
@@ -37,12 +35,12 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 class ApiSubscriptionFieldsConnectorSpec extends UnitSpec with ScalaFutures with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar {
 
-  val apiSubscriptionFieldsPort = sys.env.getOrElse("WIREMOCK", "11112").toInt
-  var apiSubscriptionFieldsHost = "localhost"
-  val apiSubscriptionFieldsUrl = s"http://$apiSubscriptionFieldsHost:$apiSubscriptionFieldsPort"
-  val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(apiSubscriptionFieldsPort))
+  private val apiSubscriptionFieldsPort = sys.env.getOrElse("WIREMOCK", "11112").toInt
+  private val apiSubscriptionFieldsHost = "localhost"
+  private val apiSubscriptionFieldsUrl = s"http://$apiSubscriptionFieldsHost:$apiSubscriptionFieldsPort"
+  private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(apiSubscriptionFieldsPort))
 
-  class TestHttpClient extends HttpClient with WSHttp {
+  private class TestHttpClient extends HttpClient with WSHttp {
     override val hooks = Seq.empty
   }
 
@@ -64,7 +62,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec with ScalaFutures with
     wireMockServer.stop()
   }
 
-  "ApiSubscriptionFieldsConnector" should {
+  "ApiSubscriptionFieldsConnector.lookupClientId()" should {
 
     "return details for the fields" in new Setup {
       val clientId = "abc123"
