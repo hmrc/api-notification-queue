@@ -17,8 +17,8 @@ The upstream client is the `api-notification-pull` service.
 Payload must be text based, e.g. XML.
 When each notification is put onto the queue database, a unique id will be generated.
 This id will be used later for deleting the notification once forwarded.
-Either the `X-Client-ID` or the `Subscription-Fields-Id` header must be included in the request.
-If the `Subscription-Fields-Id` is supplied, the Client ID will be retrieved from the `api-subscription-fields` service.
+Either the `X-Client-ID` or the `api-subscription-fields-id` header must be included in the request.
+If the `api-subscription-fields-id` is supplied, the Client ID will be retrieved from the `api-subscription-fields` service.
 
 ```
 curl -v -X POST \
