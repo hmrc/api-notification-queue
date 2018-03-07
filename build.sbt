@@ -35,7 +35,7 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test
 lazy val compile = Seq(
   ws,
   "uk.gov.hmrc" %% "bootstrap-play-25" % "1.4.0",
-  "uk.gov.hmrc" %% "play-reactivemongo" % "6.1.0"
+  "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0"
 )
 
 lazy val scope: String = "test, it"
@@ -48,7 +48,7 @@ lazy val test = Seq(
   "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope,
   "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
   "com.github.tomakehurst" % "wiremock" % "2.8.0" % scope,
-  "uk.gov.hmrc" %% "reactivemongo-test" % "3.0.0" % scope
+  "uk.gov.hmrc" %% "reactivemongo-test" % "3.1.0" % scope
 )
 
 lazy val plugins: Seq[Plugins] = Seq.empty
