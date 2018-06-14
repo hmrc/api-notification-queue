@@ -28,7 +28,6 @@ import uk.gov.hmrc.versioning.SbtGitVersioning
 import scala.util.Properties.envOrElse
 
 lazy val appName = "api-notification-queue"
-lazy val appVersion = envOrElse("API_NOTIFICATION_QUEUE_VERSION", "999-SNAPSHOT")
 
 lazy val appDependencies: Seq[ModuleID] = compile ++ test
 
