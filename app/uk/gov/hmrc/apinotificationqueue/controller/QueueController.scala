@@ -42,7 +42,7 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
   private val MISSING_CLIENT_ID_ERROR = s"$CLIENT_ID_HEADER_NAME required."
   private val MISSING_BODY_ERROR = s"Body required."
 
-  def save() = Action.async {
+  def save(): Action[AnyContent] = Action.async {
     implicit request => {
       val headers = request.headers
       getClientId(headers).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
@@ -65,7 +65,8 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
   }
 
   private def getClientId(headers: Headers)(implicit hc: HeaderCarrier): Future[Option[String]] = {
-    def getClientIdFromSubId(headers: Headers) = {
+
+    def getClientIdFromSubId(headers: Headers): Future[Option[String]] = {
       val noResponse: Future[Option[String]] = Future.successful(None)
       Try(headers.get(SUBSCRIPTION_FIELD_HEADER_NAME).fold(noResponse)(id => fieldsService.getClientId(UUID.fromString(id)))) match {
         case Success(v) => v
@@ -76,7 +77,7 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
     headers.get(CLIENT_ID_HEADER_NAME).fold(getClientIdFromSubId(headers))(id => Future.successful(Some(id)))
   }
 
-  def getAllByClientId = Action.async {
+  def getAllByClientId: Action[AnyContent] = Action.async {
     implicit request =>
       request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
 
@@ -88,7 +89,7 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
       }
   }
 
-  def get(id: UUID) = Action.async { implicit request =>
+  def get(id: UUID): Action[AnyContent] = Action.async { implicit request =>
     request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
       val notification = queueService.get(clientId, id)
       notification.map(opt =>
@@ -102,7 +103,7 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
     }
   }
 
-  def delete(id: UUID) = Action.async { implicit request =>
+  def delete(id: UUID): Action[AnyContent] = Action.async { implicit request =>
     request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
       val futureDeleted = queueService.delete(clientId, id)
       futureDeleted.map(deleted =>
