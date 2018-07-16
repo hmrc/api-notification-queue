@@ -17,10 +17,11 @@
 package uk.gov.hmrc.apinotificationqueue.controller
 
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
 
 import akka.util.ByteString
+import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
+import play.api.Logger
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -45,6 +46,7 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
   def save(): Action[AnyContent] = Action.async {
     implicit request => {
       val headers = request.headers
+      Logger.debug(s"[QueueController] Request received. Headers=$headers")
       getClientId(headers).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
         clientId =>
           request.body.asXml.fold(Future.successful(BadRequest(MISSING_BODY_ERROR))) { body =>
