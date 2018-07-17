@@ -40,6 +40,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
   private val CLIENT_ID_HEADER_NAME = "x-client-id"
   private val SUBSCRIPTION_FIELDS_ID_HEADER_NAME = "api-subscription-fields-id"
+  private val CONVERSATION_ID_HEADER_NAME = "X-Conversation-ID"
 
   trait Setup {
     val clientId = "abc123"
@@ -105,7 +106,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       private val xml = <xml>
         <node>Stuff</node>
       </xml>
-      private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(xml)
+      private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now())
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Some(clientId))
@@ -158,7 +159,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
     "return 200" in new Setup {
       val payload = "<xml>a</xml>"
-      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map(CONTENT_TYPE -> XML, "conversation-id" -> "5"), payload, DateTime.now()))))
+      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now()))))
 
       val request = FakeRequest(GET, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(queueController.get(uuid)(request))
@@ -166,7 +167,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       status(result) shouldBe Status.OK
       bodyOf(result) shouldBe payload
 
-      header("conversation-id", result) shouldBe Some("5")
+      header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
     }
 
