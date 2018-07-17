@@ -46,7 +46,8 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
   def save(): Action[AnyContent] = Action.async {
     implicit request => {
       val headers = request.headers
-      Logger.debug(s"[QueueController] Request received. Headers=$headers")
+      val message = headers.get("X-Conversation-ID").fold(s"[conversationId not found] Headers=$headers"){ cid => s"[conversationId=$cid]"}
+      Logger.debug(s"[QueueController]$message Request received")
       getClientId(headers).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
         clientId =>
           request.body.asXml.fold(Future.successful(BadRequest(MISSING_BODY_ERROR))) { body =>
