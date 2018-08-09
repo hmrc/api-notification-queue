@@ -26,6 +26,7 @@ import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
+import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -41,11 +42,13 @@ trait NotificationRepository {
 
   def fetch(clientId: String): Future[List[Notification]]
 
+  def fetchOverThreshold(): Future[List[NotificationOverThreshold]]
+
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
 }
 
 @Singleton
-class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
+class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider, config: ServiceConfiguration)
   extends ReactiveRepository[ClientNotification, BSONObjectID]("notifications", mongoDbProvider.mongo,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
     with NotificationRepository
@@ -86,6 +89,27 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
   override def fetch(clientId: String): Future[List[Notification]] = {
     val selector = Json.obj("clientId" -> clientId)
     collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{_.map(cn => cn.notification)}
+  }
+
+  override def fetchOverThreshold(): Future[List[NotificationOverThreshold]] = {
+    import collection.BatchCommands.AggregationFramework.{
+    Group, Project, Match, MinField, MaxField, SumAll
+    }
+    val threshold = config.getInt("notification.email.threshold")
+
+    collection.aggregate(
+      Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,
+                                                 "oldestNotification" -> MinField("notification.dateReceived"),
+                                                 "latestNotification" -> MaxField("notification.dateReceived")
+      ),
+      List(Match(Json.obj("notificationTotal" -> Json.obj("$gte" -> threshold))),
+           Project(Json.obj("_id" -> 0,
+                            "clientId" -> "$_id.clientId",
+                            "notificationTotal" -> "$notificationTotal",
+                            "oldestNotification" -> "$oldestNotification",
+                            "latestNotification" -> "$latestNotification"
+           ))))
+        .map(_.head[NotificationOverThreshold])
   }
 
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
