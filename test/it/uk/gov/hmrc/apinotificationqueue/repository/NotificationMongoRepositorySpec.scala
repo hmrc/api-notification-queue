@@ -62,7 +62,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
   private val client1Notification1 = ClientNotification(clientId1, notification1)
   private val client1Notification2 = ClientNotification(clientId1, notification2)
 
-  private val notificationOverThreshold1 = NotificationOverThreshold(clientId1, 2, timeReceived.getMillis, latestReceived.getMillis)
+  private val notificationOverThreshold1 = NotificationOverThreshold(clientId1, 2, timeReceived, latestReceived)
 
   private val mongoDbProvider = new MongoDbProvider {
     override val mongo: () => DB = self.mongo
@@ -188,7 +188,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
       excessive.size shouldBe 1
       excessive should contain(notificationOverThreshold1)
-      excessive.head.latestNotification should be > excessive.head.oldestNotification
+      excessive.head.latestNotification.isAfter(excessive.head.oldestNotification) shouldBe true
     }
   }
 
