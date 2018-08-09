@@ -42,13 +42,13 @@ trait NotificationRepository {
 
   def fetch(clientId: String): Future[List[Notification]]
 
-  def fetchOverThreshold(): Future[List[NotificationOverThreshold]]
+  def fetchOverThreshold(threshold: Int): Future[List[NotificationOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
 }
 
 @Singleton
-class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider, config: ServiceConfiguration)
+class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
   extends ReactiveRepository[ClientNotification, BSONObjectID]("notifications", mongoDbProvider.mongo,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
     with NotificationRepository
@@ -91,11 +91,10 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider, co
     collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{_.map(cn => cn.notification)}
   }
 
-  override def fetchOverThreshold(): Future[List[NotificationOverThreshold]] = {
+  override def fetchOverThreshold(threshold: Int): Future[List[NotificationOverThreshold]] = {
     import collection.BatchCommands.AggregationFramework.{
     Group, Project, Match, MinField, MaxField, SumAll
     }
-    val threshold = config.getInt("notification.email.threshold")
 
     collection.aggregate(
       Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,

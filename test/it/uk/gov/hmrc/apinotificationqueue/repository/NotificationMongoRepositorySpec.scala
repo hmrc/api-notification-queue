@@ -39,7 +39,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
   with MockitoSugar
   with MongoSpecSupport  { self =>
 
-  private val mockConfig = mock[ServiceConfiguration]
   private val clientId1 = "clientId1"
   private val clientId2 = "clientId2"
   private val notificationId1 = UUID.randomUUID()
@@ -68,7 +67,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
     override val mongo: () => DB = self.mongo
   }
 
-  private val repository = new NotificationMongoRepository(mongoDbProvider, mockConfig)
+  private val repository = new NotificationMongoRepository(mongoDbProvider)
 
   override def beforeEach() {
     super.beforeEach()
@@ -178,13 +177,11 @@ class NotificationMongoRepositorySpec extends UnitSpec
     }
 
     "fetch only those notifications whose total by clientId is over threshold" in {
-      when(mockConfig.getInt("notification.email.threshold")).thenReturn(2)
-
       await(repository.save(clientId1, notification1))
       await(repository.save(clientId1, notification2))
       await(repository.save(clientId2, notification1))
 
-      val excessive = await(repository.fetchOverThreshold())
+      val excessive = await(repository.fetchOverThreshold(2))
 
       excessive.size shouldBe 1
       excessive should contain(notificationOverThreshold1)
