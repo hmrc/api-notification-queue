@@ -34,17 +34,16 @@ class EmailConnector @Inject()(http: HttpClient, config: ServiceConfiguration) {
   private val emailUrl = config.baseUrl("email")
   private implicit val hc = HeaderCarrier()
 
-  def send(email: SendEmailRequest): Future[HttpResponse] = {
+  def send(sendEmailRequest: SendEmailRequest): Future[Unit] = {
 
-    Logger.info(s"sending notification warnings email: ${Json.toJson(email)}")
+    Logger.info(s"sending notification warnings email: ${Json.toJson(sendEmailRequest)}")
 
-    http.POST[SendEmailRequest, HttpResponse](s"$emailUrl/hmrc/email", email)
-      .recoverWith {
-        case e: Throwable =>
-          Logger.error(s"call to email service failed. url=$emailUrl", e)
-          Future.failed(e)
-      }
-
+    http.POST[SendEmailRequest, HttpResponse](s"$emailUrl/hmrc/email", sendEmailRequest).map { response =>
+      Logger.debug(s"response status from email service was ${response.status}")
+    }
+    .recover {
+      case e: Throwable =>
+        Logger.error(s"call to email service failed. url=$emailUrl", e)
+    }
   }
-
 }

@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.apinotificationqueue.service
 
+import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 
+import akka.actor.ActorSystem
 import org.joda.time.format.ISODateTimeFormat
 import play.api.Logger
 import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
@@ -25,32 +27,30 @@ import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.duration._
 
 @Singleton
-class WarningEmailService @Inject()(notificationRepo: NotificationRepository,
-                                    emailConnector: EmailConnector,
-                                    config: ServiceConfiguration) {
+class WarningEmailPollingService @Inject()(notificationRepo: NotificationRepository,
+                                           emailConnector: EmailConnector,
+                                           actorSystem: ActorSystem,
+                                           config: ServiceConfiguration)(implicit executionContext: ExecutionContext) {
 
   private val templateId = "customs_pull_notifications_warning"
+  private val interval = config.getInt("notification.email.interval")
+  private val toAddress = config.getString("notification.email.address")
+  private val queueThreshold = config.getInt("notification.email.queueThreshold")
 
-  def sendEmail(): Future[Unit] = {
-    val toAddress = config.getString("notification.email.address")
-    val queueThreshold = config.getInt("notification.email.queueThreshold")
+  actorSystem.scheduler.schedule(0.seconds, Duration(interval, TimeUnit.DAYS)) {
 
-    val futureClients = notificationRepo.fetchOverThreshold(queueThreshold)
-
-    futureClients.map(results =>
-      if (results.nonEmpty) {
-        val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
-        emailConnector.send(sendEmailRequest).map { response =>
-          Logger.debug(s"response status from email service was ${response.status}")
-        }
-      } else {
-        Logger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
-      }
-    )
+    notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
+    if (results.nonEmpty) {
+      val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
+      emailConnector.send(sendEmailRequest)
+    } else {
+      Logger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
+    })
   }
 
   private def buildParameters(results: List[ClientOverThreshold], queueThreshold: Int): Map[String, String] = {
