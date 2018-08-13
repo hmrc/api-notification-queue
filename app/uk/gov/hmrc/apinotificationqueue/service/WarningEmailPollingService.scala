@@ -42,7 +42,7 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
   private val toAddress = config.getString("notification.email.address")
   private val queueThreshold = config.getInt("notification.email.queueThreshold")
 
-  actorSystem.scheduler.schedule(0.seconds, Duration(interval, TimeUnit.DAYS)) {
+  actorSystem.scheduler.schedule(0.seconds, Duration(interval, TimeUnit.MINUTES)) {
 
     notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
     if (results.nonEmpty) {
