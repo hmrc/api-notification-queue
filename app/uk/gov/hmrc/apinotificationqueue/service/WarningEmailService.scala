@@ -18,36 +18,48 @@ package uk.gov.hmrc.apinotificationqueue.service
 
 import javax.inject.{Inject, Singleton}
 
+import org.joda.time.format.ISODateTimeFormat
 import play.api.Logger
 import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
-import uk.gov.hmrc.apinotificationqueue.model.Email
-import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
+import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 @Singleton
 class WarningEmailService @Inject()(notificationRepo: NotificationRepository,
                                     emailConnector: EmailConnector,
                                     config: ServiceConfiguration) {
 
-  private val toAddress = config.getString("notification.email.address")
-  private val templateId = config.getString("notification.email.templateId")
-  private val threshold = config.getInt("notification.email.threshold")
+  private val templateId = "customs_pull_notifications_warning"
 
-  def sendEmail(): Unit = {
-    val futureClients = notificationRepo.fetchOverThreshold(threshold)
+  def sendEmail(): Future[Unit] = {
+    val toAddress = config.getString("notification.email.address")
+    val queueThreshold = config.getInt("notification.email.queueThreshold")
+
+    val futureClients = notificationRepo.fetchOverThreshold(queueThreshold)
 
     futureClients.map(results =>
       if (results.nonEmpty) {
-        Logger.info("Sending email with notification warnings")
-        val email = Email(List(toAddress), templateId, results, threshold)
-        emailConnector.send(email)
+        val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
+        emailConnector.send(sendEmailRequest).map { response =>
+          Logger.debug(s"response status from email service was ${response.status}")
+        }
       } else {
-        Logger.info(s"No notification warning email sent as no clients have more notifications than threshold of $threshold")
+        Logger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
       }
     )
-
   }
 
+  private def buildParameters(results: List[ClientOverThreshold], queueThreshold: Int): Map[String, String] = {
+    Map("queueThreshold" -> queueThreshold.toString) ++
+      results.zipWithIndex.flatMap { case (client, idx) =>
+        Map(s"clientId_$idx" -> client.clientId,
+            s"notificationTotal_$idx" -> client.notificationTotal.toString,
+            s"oldestNotification_$idx" -> client.oldestNotification.toString(ISODateTimeFormat.basicDateTime()),
+            s"latestNotification_$idx" -> client.latestNotification.toString(ISODateTimeFormat.basicDateTime()))
+      }
+  }
 }

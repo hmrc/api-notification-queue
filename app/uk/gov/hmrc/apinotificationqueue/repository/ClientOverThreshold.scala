@@ -19,8 +19,8 @@ package uk.gov.hmrc.apinotificationqueue.repository
 import org.joda.time.DateTime
 import play.api.libs.json.Json
 
-case class NotificationOverThreshold(clientId: String, notificationTotal: Int, oldestNotification: DateTime, latestNotification: DateTime)
+case class ClientOverThreshold(clientId: String, notificationTotal: Int, oldestNotification: DateTime, latestNotification: DateTime)
 
-object NotificationOverThreshold {
-  implicit val NotificationOverThresholdJF = Json.format[NotificationOverThreshold]
+object ClientOverThreshold {
+  implicit val ClientOverThresholdJF = Json.format[ClientOverThreshold]
 }

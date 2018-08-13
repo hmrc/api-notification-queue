@@ -21,12 +21,12 @@ import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json
 import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
-import uk.gov.hmrc.apinotificationqueue.model.Email
+import uk.gov.hmrc.apinotificationqueue.model.SendEmailRequest
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 @Singleton
 class EmailConnector @Inject()(http: HttpClient, config: ServiceConfiguration) {
@@ -34,11 +34,11 @@ class EmailConnector @Inject()(http: HttpClient, config: ServiceConfiguration) {
   private val emailUrl = config.baseUrl("email")
   private implicit val hc = HeaderCarrier()
 
-  def send(email: Email): Future[HttpResponse] = {
+  def send(email: SendEmailRequest): Future[HttpResponse] = {
 
-    Logger.debug(s"sending email: ${Json.toJson(email)}")
+    Logger.info(s"sending notification warnings email: ${Json.toJson(email)}")
 
-    http.POST[Email, HttpResponse](s"$emailUrl/hmrc/email", email)
+    http.POST[SendEmailRequest, HttpResponse](s"$emailUrl/hmrc/email", email)
       .recoverWith {
         case e: Throwable =>
           Logger.error(s"call to email service failed. url=$emailUrl", e)

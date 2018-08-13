@@ -42,7 +42,7 @@ trait NotificationRepository {
 
   def fetch(clientId: String): Future[List[Notification]]
 
-  def fetchOverThreshold(threshold: Int): Future[List[NotificationOverThreshold]]
+  def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
 }
@@ -91,7 +91,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
     collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{_.map(cn => cn.notification)}
   }
 
-  override def fetchOverThreshold(threshold: Int): Future[List[NotificationOverThreshold]] = {
+  override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
     import collection.BatchCommands.AggregationFramework.{
     Group, Project, Match, MinField, MaxField, SumAll
     }
@@ -108,7 +108,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
                             "oldestNotification" -> "$oldestNotification",
                             "latestNotification" -> "$latestNotification"
            ))))
-        .map(_.head[NotificationOverThreshold])
+        .map(_.head[ClientOverThreshold])
   }
 
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {

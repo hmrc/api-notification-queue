@@ -18,8 +18,11 @@ package uk.gov.hmrc.apinotificationqueue.model
 
 import play.api.libs.json.Json
 
-case class Email(value: String)
+case class SendEmailRequest(to: List[Email],
+                            templateId: String,
+                            parameters: Map[String, String],
+                            force: Boolean)
 
-object Email {
-  implicit val emailJF = Json.format[Email]
+object SendEmailRequest {
+  implicit val SendEmailRequestJF = Json.format[SendEmailRequest]
 }
