@@ -55,18 +55,18 @@ class WarningEmailSpec extends FeatureSpec
 
       Then("a warning email is sent")
       eventually(verify(1, postRequestedFor(urlEqualTo("/hmrc/email"))
-          .withRequestBody(equalToJson(Json.toJson(sendEmailRequest).toString()))))
+          .withRequestBody(equalToJson(Json.toJson(TestSendEmailRequest).toString()))))
 
       cleanup()
     }
   }
 
-  implicit val duration: Timeout = 5 seconds
-  val Port: Int = sys.env.getOrElse("WIREMOCK_SERVICE_PORT", "11111").toInt
-  val Host = "localhost"
-  val wireMockServer = new WireMockServer(wireMockConfig().port(Port))
+  private implicit val duration: Timeout = 5 seconds
+  private val Port: Int = sys.env.getOrElse("WIREMOCK_SERVICE_PORT", "11111").toInt
+  private val Host = "localhost"
+  private val wireMockServer = new WireMockServer(wireMockConfig().port(Port))
 
-  val acceptanceTestConfigs: Map[String, Any] = Map(
+  private val acceptanceTestConfigs: Map[String, Any] = Map(
     "notification.email.queueThreshold" -> 2,
     "notification.email.address" -> "some-email@domain.com",
     "notification.email.interval" -> 1,
@@ -76,7 +76,7 @@ class WarningEmailSpec extends FeatureSpec
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(acceptanceTestConfigs).build()
 
-  val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
+  private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
     collectionName = "notifications",
     mongo = app.injector.instanceOf[MongoDbProvider].mongo,
     domainFormat = ClientNotification.ClientNotificationJF) {
@@ -85,30 +85,30 @@ class WarningEmailSpec extends FeatureSpec
   private val Wait = 10
   override implicit def patienceConfig: PatienceConfig = super.patienceConfig.copy(timeout = Span(Wait, Seconds))
 
-  def setupEmailService(): Unit = {
+  private def setupEmailService(): Unit = {
     startMockServer()
     setupEmailServiceToReturn(202)
   }
 
-  def setupDatabase(): Unit = {
+  private def setupDatabase(): Unit = {
     await(repo.drop)
-    repo.insert(client1Notification1)
-    repo.insert(client1Notification2)
+    repo.insert(Client1Notification1)
+    repo.insert(Client1Notification2)
   }
 
-  def setupEmailServiceToReturn(status: Int): Unit = {
+  private def setupEmailServiceToReturn(status: Int): Unit = {
     stubFor(post(urlEqualTo("/hmrc/email")).
       willReturn(
         aResponse()
           .withStatus(status)))
   }
 
-  def startMockServer() {
+  private def startMockServer() {
     if (!wireMockServer.isRunning) wireMockServer.start()
     WireMock.configureFor(Host, Port)
   }
 
-  def cleanup(): Unit = {
+  private def cleanup(): Unit = {
     await(repo.drop)
     wireMockServer.stop()
   }

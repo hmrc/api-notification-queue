@@ -62,42 +62,42 @@ class NotificationMongoRepositorySpec extends UnitSpec
   "repository" can {
     "save a single notification" should {
       "be successful" in {
-        val actualMessage = await(repository.save(clientId1, notification1))
+        val actualMessage = await(repository.save(ClientId1, Notification1))
 
         collectionSize shouldBe 1
-        actualMessage shouldBe notification1
-        await(repository.collection.find(selector(clientId1)).one[ClientNotification]).get shouldBe client1Notification1
+        actualMessage shouldBe Notification1
+        await(repository.collection.find(selector(ClientId1)).one[ClientNotification]).get shouldBe Client1Notification1
       }
 
       "be successful when called multiple times" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
-        await(repository.save(clientId2, notification3))
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
+        await(repository.save(ClientId2, Notification3))
 
         collectionSize shouldBe 3
-        val clientNotifications = await(repository.collection.find(selector(clientId1)).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()))
+        val clientNotifications = await(repository.collection.find(selector(ClientId1)).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()))
         clientNotifications.size shouldBe 2
-        clientNotifications should contain(client1Notification1)
-        clientNotifications should contain(client1Notification2)
+        clientNotifications should contain(Client1Notification1)
+        clientNotifications should contain(Client1Notification2)
       }
     }
 
     "fetch by clientId and notificationId" should {
       "return a single record when found" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
 
-        val maybeNotification = await(repository.fetch(clientId1, notification1.notificationId))
+        val maybeNotification = await(repository.fetch(ClientId1, Notification1.notificationId))
 
-        maybeNotification.get shouldBe notification1
+        maybeNotification.get shouldBe Notification1
       }
 
       "return None when not found" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
-        val nonExistentNotificationId = notification3.notificationId
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
+        val nonExistentNotificationId = Notification3.notificationId
 
-        val maybeNotification = await(repository.fetch(clientId1, nonExistentNotificationId))
+        val maybeNotification = await(repository.fetch(ClientId1, nonExistentNotificationId))
 
         maybeNotification shouldBe None
       }
@@ -105,20 +105,20 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
     "fetch by clientId" should {
       "return all notifications when found by clientId" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
-        await(repository.save(clientId2, notification3))
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
+        await(repository.save(ClientId2, Notification3))
 
-        val notifications: List[Notification] = await(repository.fetch(clientId1))
+        val notifications: List[Notification] = await(repository.fetch(ClientId1))
 
         notifications.size shouldBe 2
-        notifications should contain(notification1)
-        notifications should contain(notification2)
+        notifications should contain(Notification1)
+        notifications should contain(Notification2)
       }
 
       "return None when not found" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
 
         await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID")) shouldBe Nil
       }
@@ -126,23 +126,23 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
     "delete by clientId and notificationId" should {
       "return true when record found and deleted" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
 
         collectionSize shouldBe 2
 
-        await(repository.delete(clientId1, notification1.notificationId)) shouldBe true
+        await(repository.delete(ClientId1, Notification1.notificationId)) shouldBe true
 
         collectionSize shouldBe 1
-        await(repository.fetch(clientId1)).head shouldBe notification2
+        await(repository.fetch(ClientId1)).head shouldBe Notification2
       }
 
       "return false when record not found" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
         collectionSize shouldBe 2
 
-        await(repository.delete("DOES_NOT_EXIST_CLIENT_ID", notification1.notificationId)) shouldBe false
+        await(repository.delete("DOES_NOT_EXIST_CLIENT_ID", Notification1.notificationId)) shouldBe false
 
         collectionSize shouldBe 2
       }
@@ -150,21 +150,21 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
     "fetch over threshold" should {
       "fetch only those notifications whose total by clientId is over threshold" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
-        await(repository.save(clientId2, notification1))
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
+        await(repository.save(ClientId2, Notification1))
 
         val excessive = await(repository.fetchOverThreshold(2))
 
         excessive.size shouldBe 1
-        excessive should contain(clientOverThreshold1)
+        excessive should contain(ClientOverThreshold1)
         excessive.head.latestNotification.isAfter(excessive.head.oldestNotification) shouldBe true
       }
 
       "return no clients when notifications don't breach threshold" in {
-        await(repository.save(clientId1, notification1))
-        await(repository.save(clientId1, notification2))
-        await(repository.save(clientId2, notification1))
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
+        await(repository.save(ClientId2, Notification1))
 
         val excessive = await(repository.fetchOverThreshold(3))
 

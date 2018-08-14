@@ -24,31 +24,31 @@ import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, ClientOv
 
 object TestData {
 
-  val clientId1 = "clientId1"
-  val clientId2 = "clientId2"
-  val notificationId1 = UUID.randomUUID()
-  val notificationId2 = UUID.randomUUID()
-  val notificationId3 = UUID.randomUUID()
-  val payload = "<foo></foo>"
+  val ClientId1 = "clientId1"
+  val ClientId2 = "clientId2"
+  val NotificationId1 = UUID.randomUUID()
+  val NotificationId2 = UUID.randomUUID()
+  val NotificationId3 = UUID.randomUUID()
+  val Payload = "<foo></foo>"
 
-  val year = 2017
-  val monthOfYear = 7
-  val dayOfMonth = 4
-  val hourOfDay = 13
-  val minuteOfHour = 45
-  val timeReceived = new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour)
-  val latestReceived = timeReceived.plus(1)
+  val Year = 2017
+  val MonthOfYear = 7
+  val DayOfMonth = 4
+  val HourOfDay = 13
+  val MinuteOfHour = 45
+  val TimeReceived = new DateTime(Year, MonthOfYear, DayOfMonth, HourOfDay, MinuteOfHour)
+  val LatestReceived = TimeReceived.plus(1)
 
-  val headers = Map("h1" -> "v1", "h2" -> "v2")
-  val notification1 = Notification(notificationId1, headers, payload, timeReceived)
-  val notification2 = Notification(notificationId2, headers, payload, latestReceived)
-  val notification3 = Notification(notificationId3, headers, payload, timeReceived)
-  val client1Notification1 = ClientNotification(clientId1, notification1)
-  val client1Notification2 = ClientNotification(clientId1, notification2)
+  val Headers = Map("h1" -> "v1", "h2" -> "v2")
+  val Notification1 = Notification(NotificationId1, Headers, Payload, TimeReceived)
+  val Notification2 = Notification(NotificationId2, Headers, Payload, LatestReceived)
+  val Notification3 = Notification(NotificationId3, Headers, Payload, TimeReceived)
+  val Client1Notification1 = ClientNotification(ClientId1, Notification1)
+  val Client1Notification2 = ClientNotification(ClientId1, Notification2)
 
-  val clientOverThreshold1 = ClientOverThreshold(clientId1, 2, timeReceived, latestReceived)
+  val ClientOverThreshold1 = ClientOverThreshold(ClientId1, 2, TimeReceived, LatestReceived)
 
-  val sendEmailRequest = SendEmailRequest(List(Email("some-email@domain.com")),
+  val TestSendEmailRequest = SendEmailRequest(List(Email("some-email@domain.com")),
     "customs_pull_notifications_warning",
     Map("clientId_0" -> "clientId1",
       "notificationTotal_0" -> "2",
