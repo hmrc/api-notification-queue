@@ -88,7 +88,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
       val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
       testActorSystem.terminate()
 
-      verify(mockEmailConnector, never())
+      verify(mockEmailConnector, never()).send(any[SendEmailRequest]())
     }
   }
 }
