@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.config
+package uk.gov.hmrc.apinotificationqueue.model
 
-import javax.inject.{Inject, Singleton}
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
-import play.api.Mode.Mode
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.config.ServicesConfig
+case class Email(value: String) extends AnyVal
 
-@Singleton
-class ServiceConfiguration @Inject()(override val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig {
-  override protected def mode: Mode = environment.mode
+object Email {
+  implicit val format: Format[Email] = implicitly[Format[String]].inmap(Email(_), _.value)
 }

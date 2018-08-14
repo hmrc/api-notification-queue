@@ -26,6 +26,7 @@ import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
+import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -40,6 +41,8 @@ trait NotificationRepository {
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
   def fetch(clientId: String): Future[List[Notification]]
+
+  def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
 }
@@ -86,6 +89,26 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
   override def fetch(clientId: String): Future[List[Notification]] = {
     val selector = Json.obj("clientId" -> clientId)
     collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{_.map(cn => cn.notification)}
+  }
+
+  override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
+    import collection.BatchCommands.AggregationFramework.{
+    Group, Project, Match, MinField, MaxField, SumAll
+    }
+
+    collection.aggregate(
+      Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,
+                                                 "oldestNotification" -> MinField("notification.dateReceived"),
+                                                 "latestNotification" -> MaxField("notification.dateReceived")
+      ),
+      List(Match(Json.obj("notificationTotal" -> Json.obj("$gte" -> threshold))),
+           Project(Json.obj("_id" -> 0,
+                            "clientId" -> "$_id.clientId",
+                            "notificationTotal" -> "$notificationTotal",
+                            "oldestNotification" -> "$oldestNotification",
+                            "latestNotification" -> "$latestNotification"
+           ))))
+        .map(_.head[ClientOverThreshold])
   }
 
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
