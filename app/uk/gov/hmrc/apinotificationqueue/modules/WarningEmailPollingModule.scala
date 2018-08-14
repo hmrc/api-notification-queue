@@ -24,3 +24,4 @@ class WarningEmailPollingModule extends AbstractModule {
     bind(classOf[WarningEmailPollingService]).asEagerSingleton()
   }
 }
+

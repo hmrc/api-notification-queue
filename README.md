@@ -95,6 +95,12 @@ In order to run them, use this command line:
 
 ---
 
+### Scheduled Email
+A warning email is sent when the scheduler finds notifications per clientId in the database that exceed a configurable threshold.
+The email is currently configured to send one per day.
+
+---
+
 
 ### License
 

@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.apinotificationqueue.model
 
-import play.api.libs.json.Json
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 case class Email(value: String)
 
 object Email {
-  implicit val emailJF = Json.format[Email]
+  implicit val format: Format[Email] = implicitly[Format[String]].inmap(Email(_), _.value)
 }

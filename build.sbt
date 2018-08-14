@@ -64,14 +64,14 @@ lazy val microservice = (project in file("."))
   )
   .settings(
     Keys.fork in Test := false,
-    unmanagedSourceDirectories in Test := Seq((baseDirectory in Test).value / "test" / "unit"),
+    unmanagedSourceDirectories in Test := baseDirectory( base => List("unit", "util") map (base / "test" / _ )).value,
     addTestReportOption(Test, "test-reports")
   )
   .configs(IntegrationTest)
   .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(
     Keys.fork in IntegrationTest := false,
-    unmanagedSourceDirectories in IntegrationTest := Seq((baseDirectory in IntegrationTest).value / "test" / "it"),
+    unmanagedSourceDirectories in IntegrationTest := baseDirectory( base => List("it", "util") map (base / "test" / _ )).value,
     addTestReportOption(IntegrationTest, "int-test-reports"),
     testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
     parallelExecution in IntegrationTest := false,

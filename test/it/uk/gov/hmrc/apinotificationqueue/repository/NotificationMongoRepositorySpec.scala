@@ -16,20 +16,16 @@
 
 package uk.gov.hmrc.apinotificationqueue.repository
 
-import java.util.UUID
-
-import org.joda.time.DateTime
-import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.libs.json.Json
 import reactivemongo.api.{Cursor, DB}
 import reactivemongo.play.json._
-import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.apinotificationqueue.TestData._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -38,30 +34,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
   with BeforeAndAfterEach
   with MockitoSugar
   with MongoSpecSupport  { self =>
-
-  private val clientId1 = "clientId1"
-  private val clientId2 = "clientId2"
-  private val notificationId1 = UUID.randomUUID()
-  private val notificationId2 = UUID.randomUUID()
-  private val notificationId3 = UUID.randomUUID()
-  private val payload = "<foo></foo>"
-
-  private val year = 2017
-  private val monthOfYear = 7
-  private val dayOfMonth = 4
-  private val hourOfDay = 13
-  private val minuteOfHour = 45
-  private val timeReceived = new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour)
-  private val latestReceived = timeReceived.plus(1)
-
-  private val headers = Map("h1" -> "v1", "h2" -> "v2")
-  private val notification1 = Notification(notificationId1, headers, payload, timeReceived)
-  private val notification2 = Notification(notificationId2, headers, payload, latestReceived)
-  private val notification3 = Notification(notificationId3, headers, payload, timeReceived)
-  private val client1Notification1 = ClientNotification(clientId1, notification1)
-  private val client1Notification2 = ClientNotification(clientId1, notification2)
-
-  private val clientOverThreshold1 = ClientOverThreshold(clientId1, 2, timeReceived, latestReceived)
 
   private val mongoDbProvider = new MongoDbProvider {
     override val mongo: () => DB = self.mongo
@@ -176,16 +148,28 @@ class NotificationMongoRepositorySpec extends UnitSpec
       }
     }
 
-    "fetch only those notifications whose total by clientId is over threshold" in {
-      await(repository.save(clientId1, notification1))
-      await(repository.save(clientId1, notification2))
-      await(repository.save(clientId2, notification1))
+    "fetch over threshold" should {
+      "fetch only those notifications whose total by clientId is over threshold" in {
+        await(repository.save(clientId1, notification1))
+        await(repository.save(clientId1, notification2))
+        await(repository.save(clientId2, notification1))
 
-      val excessive = await(repository.fetchOverThreshold(2))
+        val excessive = await(repository.fetchOverThreshold(2))
 
-      excessive.size shouldBe 1
-      excessive should contain(clientOverThreshold1)
-      excessive.head.latestNotification.isAfter(excessive.head.oldestNotification) shouldBe true
+        excessive.size shouldBe 1
+        excessive should contain(clientOverThreshold1)
+        excessive.head.latestNotification.isAfter(excessive.head.oldestNotification) shouldBe true
+      }
+
+      "return no clients when notifications don't breach threshold" in {
+        await(repository.save(clientId1, notification1))
+        await(repository.save(clientId1, notification2))
+        await(repository.save(clientId2, notification1))
+
+        val excessive = await(repository.fetchOverThreshold(3))
+
+        excessive shouldBe 'Empty
+      }
     }
   }
 
