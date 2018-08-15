@@ -21,18 +21,19 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
+import org.scalatest._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
-import org.scalatest.{FeatureSpec, GivenWhenThen, Matchers}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.await
 import reactivemongo.bson.BSONObjectID
+import uk.gov.hmrc.apinotificationqueue.TestData._
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
 import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.apinotificationqueue.TestData._
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -41,25 +42,8 @@ class WarningEmailSpec extends FeatureSpec
   with GivenWhenThen
   with Matchers
   with GuiceOneAppPerSuite
-  with Eventually {
-
-  feature("Pull notifications warning email") {
-
-    scenario("notifications breaching threshold") {
-      Given("notifications breaching threshold")
-      setupEmailService()
-      setupDatabase()
-
-      When("scheduler queries database")
-      info("automatically occurs when app starts")
-
-      Then("a warning email is sent")
-      eventually(verify(1, postRequestedFor(urlEqualTo("/hmrc/email"))
-          .withRequestBody(equalToJson(Json.toJson(TestSendEmailRequest).toString()))))
-
-      cleanup()
-    }
-  }
+  with Eventually
+  with BeforeAndAfterEach {
 
   private implicit val duration: Timeout = 5 seconds
   private val Port: Int = sys.env.getOrElse("WIREMOCK_SERVICE_PORT", "11111").toInt
@@ -70,6 +54,7 @@ class WarningEmailSpec extends FeatureSpec
     "notification.email.queueThreshold" -> 2,
     "notification.email.address" -> "some-email@domain.com",
     "notification.email.interval" -> 1,
+    "notification.email.delay" -> 3,
     "microservice.services.email.host" -> Host,
     "microservice.services.email.port" -> Port
   )
@@ -79,21 +64,44 @@ class WarningEmailSpec extends FeatureSpec
   private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
     collectionName = "notifications",
     mongo = app.injector.instanceOf[MongoDbProvider].mongo,
-    domainFormat = ClientNotification.ClientNotificationJF) {
+    domainFormat = ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats) {
   }
 
   private val Wait = 10
   override implicit def patienceConfig: PatienceConfig = super.patienceConfig.copy(timeout = Span(Wait, Seconds))
+
+  override def beforeEach() {
+    setupEmailService()
+    setupDatabase()
+  }
+
+  override def afterEach()= {
+    await(repo.drop)
+    wireMockServer.stop()
+  }
+
+  feature("Pull notifications warning email") {
+
+    scenario("notifications breaching threshold") {
+      Given("notifications breaching threshold")
+
+      When("scheduler queries database")
+      info("automatically occurs when app starts")
+
+      Then("a warning email is sent")
+      eventually(verify(1, postRequestedFor(urlEqualTo("/hmrc/email"))
+        .withRequestBody(equalToJson(Json.toJson(TestSendEmailRequest).toString()))))
+    }
+  }
 
   private def setupEmailService(): Unit = {
     startMockServer()
     setupEmailServiceToReturn(202)
   }
 
-  private def setupDatabase(): Unit = {
-    await(repo.drop)
-    repo.insert(Client1Notification1)
-    repo.insert(Client1Notification2)
+  private def startMockServer() {
+    if (!wireMockServer.isRunning) wireMockServer.start()
+    WireMock.configureFor(Host, Port)
   }
 
   private def setupEmailServiceToReturn(status: Int): Unit = {
@@ -103,13 +111,9 @@ class WarningEmailSpec extends FeatureSpec
           .withStatus(status)))
   }
 
-  private def startMockServer() {
-    if (!wireMockServer.isRunning) wireMockServer.start()
-    WireMock.configureFor(Host, Port)
-  }
-
-  private def cleanup(): Unit = {
+  private def setupDatabase(): Unit = {
     await(repo.drop)
-    wireMockServer.stop()
+    repo.insert(Client1Notification1)
+    repo.insert(Client1Notification2)
   }
 }
