@@ -20,10 +20,12 @@ import java.util.UUID
 
 import org.joda.time.DateTime
 import play.api.libs.json.Json
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 case class Notification(notificationId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime)
 
 object Notification {
+  implicit val dateTimeJF = ReactiveMongoFormats.dateTimeFormats
   implicit val notificationJF = Json.format[Notification]
 }
 

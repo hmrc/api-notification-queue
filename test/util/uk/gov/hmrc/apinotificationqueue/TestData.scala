@@ -18,7 +18,7 @@ package uk.gov.hmrc.apinotificationqueue
 
 import java.util.UUID
 
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import uk.gov.hmrc.apinotificationqueue.model.{Email, Notification, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, ClientOverThreshold}
 
@@ -36,7 +36,7 @@ object TestData {
   val DayOfMonth = 4
   val HourOfDay = 13
   val MinuteOfHour = 45
-  val TimeReceived = new DateTime(Year, MonthOfYear, DayOfMonth, HourOfDay, MinuteOfHour)
+  val TimeReceived = new DateTime(Year, MonthOfYear, DayOfMonth, HourOfDay, MinuteOfHour, DateTimeZone.UTC)
   val LatestReceived = TimeReceived.plus(1)
 
   val Headers = Map("h1" -> "v1", "h2" -> "v2")
@@ -52,8 +52,8 @@ object TestData {
     "customs_pull_notifications_warning",
     Map("clientId_0" -> "clientId1",
       "notificationTotal_0" -> "2",
-      "oldestNotification_0" -> "20170704T134500.000+0100",
-      "latestNotification_0" -> "20170704T134500.001+0100",
+      "oldestNotification_0" -> "20170704T134500.000Z",
+      "latestNotification_0" -> "20170704T134500.001Z",
       "queueThreshold" -> "2"),
     force = false)
 
