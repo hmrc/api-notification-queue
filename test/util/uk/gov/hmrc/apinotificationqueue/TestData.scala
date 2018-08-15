@@ -52,8 +52,8 @@ object TestData {
     "customs_pull_notifications_warning",
     Map("clientId_0" -> "clientId1",
       "notificationTotal_0" -> "2",
-      "oldestNotification_0" -> "20170704T134500.000+0100",
-      "latestNotification_0" -> "20170704T134500.001+0100",
+      "oldestNotification_0" -> "20170704T134500.000Z",
+      "latestNotification_0" -> "20170704T134500.001Z",
       "queueThreshold" -> "2"),
     force = false)
 
