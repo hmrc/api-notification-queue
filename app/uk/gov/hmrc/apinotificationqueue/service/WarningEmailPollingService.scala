@@ -45,9 +45,11 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
 
   actorSystem.scheduler.schedule(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
 
+    Logger.debug(s"running warning email scheduler with delay of $delay, interval of $interval and queue threshold of $queueThreshold")
     notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
     if (results.nonEmpty) {
       val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
+      Logger.debug(s"sending email with ${results.size} clientId rows")
       emailConnector.send(sendEmailRequest)
     } else {
       Logger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
