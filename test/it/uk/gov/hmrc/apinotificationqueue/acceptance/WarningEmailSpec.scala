@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.apinotificationqueue.acceptance
 
-import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
@@ -25,17 +24,13 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.await
+import play.api.{Application, Play}
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.apinotificationqueue.TestData._
-import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
-import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
-import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationRepository}
-import uk.gov.hmrc.apinotificationqueue.service.WarningEmailPollingService
+import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
@@ -45,7 +40,6 @@ import scala.concurrent.duration._
 class WarningEmailSpec extends FeatureSpec
   with GivenWhenThen
   with Matchers
-  with GuiceOneAppPerSuite
   with Eventually
   with BeforeAndAfterEach {
 
@@ -63,7 +57,7 @@ class WarningEmailSpec extends FeatureSpec
     "microservice.services.email.port" -> Port
   )
 
-  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(acceptanceTestConfigs).build()
+  val app: Application = new GuiceApplicationBuilder().configure(acceptanceTestConfigs).build()
 
   private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
     collectionName = "notifications",
@@ -77,11 +71,13 @@ class WarningEmailSpec extends FeatureSpec
   override def beforeEach() {
     setupEmailService()
     setupDatabase()
+    Play.start(app)
   }
 
   override def afterEach()= {
     await(repo.drop)
     wireMockServer.stop()
+    Play.stop(app)
   }
 
   feature("Pull notifications warning email") {
@@ -90,10 +86,7 @@ class WarningEmailSpec extends FeatureSpec
       Given("notifications breaching threshold")
 
       When("scheduler queries database")
-      new WarningEmailPollingService(app.injector.instanceOf[NotificationRepository],
-        app.injector.instanceOf[EmailConnector],
-        app.injector.instanceOf[ActorSystem],
-        app.injector.instanceOf[ServiceConfiguration])
+      info("automatically occurs when app starts")
 
       Then("a warning email is sent")
       eventually(verify(1, postRequestedFor(urlEqualTo("/hmrc/email"))
@@ -120,7 +113,7 @@ class WarningEmailSpec extends FeatureSpec
 
   private def setupDatabase(): Unit = {
     await(repo.drop)
-    repo.insert(Client1Notification1)
-    repo.insert(Client1Notification2)
+    await(repo.insert(Client1Notification1))
+    await(repo.insert(Client1Notification2))
   }
 }
