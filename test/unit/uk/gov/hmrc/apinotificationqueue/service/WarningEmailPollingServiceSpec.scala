@@ -72,6 +72,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
       val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
+      //TODO investigate a way of not requiring sleep
       Thread.sleep(1000)
       eventually(verify(mockEmailConnector).send(emailRequestCaptor.capture()))
 
@@ -87,6 +88,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
       when(mockNotificationRepository.fetchOverThreshold(200)).thenReturn(Future.successful(List.empty))
       val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
 
+      //TODO investigate a way of not requiring sleep
       Thread.sleep(1000)
       verify(mockEmailConnector, never()).send(any[SendEmailRequest]())
     }
