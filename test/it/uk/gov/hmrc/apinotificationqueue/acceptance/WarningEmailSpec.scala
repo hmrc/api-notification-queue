@@ -24,10 +24,11 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.await
-import play.api.{Application, Play}
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.apinotificationqueue.TestData._
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
@@ -40,6 +41,7 @@ import scala.concurrent.duration._
 class WarningEmailSpec extends FeatureSpec
   with GivenWhenThen
   with Matchers
+  with GuiceOneAppPerSuite
   with Eventually
   with BeforeAndAfterEach {
 
@@ -52,12 +54,12 @@ class WarningEmailSpec extends FeatureSpec
     "notification.email.queueThreshold" -> 2,
     "notification.email.address" -> "some-email@domain.com",
     "notification.email.interval" -> 1,
-    "notification.email.delay" -> 1,
+    "notification.email.delay" -> 3,
     "microservice.services.email.host" -> Host,
     "microservice.services.email.port" -> Port
   )
 
-  val app: Application = new GuiceApplicationBuilder().configure(acceptanceTestConfigs).build()
+  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(acceptanceTestConfigs).build()
 
   private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
     collectionName = "notifications",
@@ -71,13 +73,11 @@ class WarningEmailSpec extends FeatureSpec
   override def beforeEach() {
     setupEmailService()
     setupDatabase()
-    Play.start(app)
   }
 
   override def afterEach()= {
     await(repo.drop)
     wireMockServer.stop()
-    Play.stop(app)
   }
 
   feature("Pull notifications warning email") {
