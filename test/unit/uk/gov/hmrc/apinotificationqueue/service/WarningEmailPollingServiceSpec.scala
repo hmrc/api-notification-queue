@@ -27,7 +27,6 @@ import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -60,34 +59,35 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
         "latestNotification_0" -> "some-date",
         "queueThreshold" -> "some-threshold"),
       force = false)
+
+    when(mockServiceConfiguration.getString("notification.email.address")).thenReturn("some-email@address.com")
+    when(mockServiceConfiguration.getInt("notification.email.interval")).thenReturn(1)
+    when(mockServiceConfiguration.getInt("notification.email.delay")).thenReturn(0)
   }
 
-  "WarningEmailService" should {
+  "WarningEmailPollingService" should {
     "send an email" in new Setup {
       when(mockServiceConfiguration.getInt("notification.email.queueThreshold")).thenReturn(2)
-      when(mockServiceConfiguration.getString("notification.email.address")).thenReturn("some-email@address.com")
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
-      when(mockServiceConfiguration.getInt("notification.email.interval")).thenReturn(1)
       val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
+      Thread.sleep(1000)
       eventually(verify(mockEmailConnector).send(emailRequestCaptor.capture()))
 
-      val request: SendEmailRequest = emailRequestCaptor.getValue
+      val request = emailRequestCaptor.getValue
       request.to.head.value shouldBe "some-email@address.com"
       request.templateId shouldBe "customs_pull_notifications_warning"
       ((request.parameters.keySet -- sendEmailRequest.parameters.keySet)
         ++ (sendEmailRequest.parameters.keySet -- request.parameters.keySet)).size shouldBe 0
     }
 
-    "no email should be sent when no clients breach queue threshold" in new Setup {
+    "not send an email when no clients breach queue threshold" in new Setup {
       when(mockServiceConfiguration.getInt("notification.email.queueThreshold")).thenReturn(200)
-      when(mockServiceConfiguration.getString("notification.email.address")).thenReturn("some-email@address.com")
       when(mockNotificationRepository.fetchOverThreshold(200)).thenReturn(Future.successful(List.empty))
-
       val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
-      testActorSystem.terminate()
 
+      Thread.sleep(1000)
       verify(mockEmailConnector, never()).send(any[SendEmailRequest]())
     }
   }
