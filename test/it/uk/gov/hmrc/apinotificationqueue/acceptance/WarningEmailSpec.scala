@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.apinotificationqueue.acceptance
 
+import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
@@ -31,7 +32,10 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.await
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.apinotificationqueue.TestData._
-import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
+import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
+import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
+import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationRepository}
+import uk.gov.hmrc.apinotificationqueue.service.WarningEmailPollingService
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
@@ -54,7 +58,7 @@ class WarningEmailSpec extends FeatureSpec
     "notification.email.queueThreshold" -> 2,
     "notification.email.address" -> "some-email@domain.com",
     "notification.email.interval" -> 1,
-    "notification.email.delay" -> 3,
+    "notification.email.delay" -> 1,
     "microservice.services.email.host" -> Host,
     "microservice.services.email.port" -> Port
   )
@@ -86,7 +90,10 @@ class WarningEmailSpec extends FeatureSpec
       Given("notifications breaching threshold")
 
       When("scheduler queries database")
-      info("automatically occurs when app starts")
+      new WarningEmailPollingService(app.injector.instanceOf[NotificationRepository],
+        app.injector.instanceOf[EmailConnector],
+        app.injector.instanceOf[ActorSystem],
+        app.injector.instanceOf[ServiceConfiguration])
 
       Then("a warning email is sent")
       eventually(verify(1, postRequestedFor(urlEqualTo("/hmrc/email"))
