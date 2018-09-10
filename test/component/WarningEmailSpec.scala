@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.acceptance
+package component
 
 import akka.util.Timeout
 import com.github.tomakehurst.wiremock.WireMockServer
@@ -28,9 +28,9 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.test.Helpers.await
+import play.api.test.Helpers.{await, ACCEPTED}
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.apinotificationqueue.TestData._
+import util.TestData._
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -75,7 +75,7 @@ class WarningEmailSpec extends FeatureSpec
     setupDatabase()
   }
 
-  override def afterEach()= {
+  override def afterEach(): Unit = {
     await(repo.drop)
     wireMockServer.stop()
   }
@@ -96,7 +96,7 @@ class WarningEmailSpec extends FeatureSpec
 
   private def setupEmailService(): Unit = {
     startMockServer()
-    setupEmailServiceToReturn(202)
+    setupEmailServiceToReturn(ACCEPTED)
   }
 
   private def startMockServer() {

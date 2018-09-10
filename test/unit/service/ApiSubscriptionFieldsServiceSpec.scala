@@ -14,41 +14,42 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.service
+package unit.service
 
 import java.util.UUID
 
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
+import uk.gov.hmrc.apinotificationqueue.service.ApiSubscriptionFieldsService
 import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-class ApiSubscriptionFieldsServicesSpec extends UnitSpec with MockitoSugar {
+class ApiSubscriptionFieldsServiceSpec extends UnitSpec with MockitoSugar {
 
   trait Setup {
     val uuid: UUID = UUID.randomUUID()
     val clientId = "abc123"
-    val mockConnector = mock[ApiSubscriptionFieldsConnector]
+    val mockConnector: ApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
     val apiSubscriptionFieldsService = new ApiSubscriptionFieldsService(mockConnector)
-    val hc = HeaderCarrier()
+    implicit val hc = HeaderCarrier()
   }
 
   "ApiSubscriptionFieldsService" should {
     "Return the client Id" in new Setup {
-      when(mockConnector.lookupClientId(uuid)(hc)).thenReturn(Future.successful(ApiSubscriptionFieldResponse(clientId)))
+      when(mockConnector.lookupClientId(uuid)).thenReturn(Future.successful(ApiSubscriptionFieldResponse(clientId)))
 
-      val result: Option[String] = await(apiSubscriptionFieldsService.getClientId(uuid)(hc))
+      val result: Option[String] = await(apiSubscriptionFieldsService.getClientId(uuid))
 
       result shouldBe Some(clientId)
     }
 
     "Return none when NOT_FOUND" in new Setup {
-      when(mockConnector.lookupClientId(uuid)(hc)).thenReturn(Future.failed(new NotFoundException("Not Found")))
+      when(mockConnector.lookupClientId(uuid)).thenReturn(Future.failed(new NotFoundException("Not Found")))
 
-      val result: Option[String] = await(apiSubscriptionFieldsService.getClientId(uuid)(hc))
+      val result: Option[String] = await(apiSubscriptionFieldsService.getClientId(uuid))
 
       result shouldBe None
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.acceptance
+package component
 
 import org.scalatest.OptionValues._
 import org.scalatest.{FeatureSpec, GivenWhenThen, Matchers}
@@ -23,7 +23,10 @@ import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-class QueueSpec extends FeatureSpec with GivenWhenThen with Matchers with GuiceOneAppPerTest {
+class QueueSpec extends FeatureSpec
+  with GivenWhenThen
+  with Matchers
+  with GuiceOneAppPerTest {
 
   feature("Post, retrieve and delete a message from the queue") {
     info("As a 3rd Party system")

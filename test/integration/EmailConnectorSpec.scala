@@ -14,39 +14,32 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.connector
+package integration
 
-import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
-import play.api.http.Status.ACCEPTED
 import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
+import util.externalservices.EmailService
+import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
 
 class EmailConnectorSpec extends UnitSpec
   with GuiceOneAppPerSuite
-  with MockitoSugar {
-
-  private val emailPort = sys.env.getOrElse("WIREMOCK", "11111").toInt
-  private val emailHost = "localhost"
-  private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(emailPort))
+  with MockitoSugar
+  with EmailService
+  with WireMockRunner {
 
   override implicit lazy val app: Application = GuiceApplicationBuilder().configure(Map(
-      "microservice.services.email.host" -> emailHost,
-      "microservice.services.email.port" -> emailPort,
-      "microservice.services.email.context" -> "/hmrc/email"
+      "microservice.services.email.host" -> ExternalServicesConfig.Host,
+      "microservice.services.email.port" -> ExternalServicesConfig.Port,
+      "microservice.services.email.context" -> ApiNotificationQueueExternalServicesConfig.EmailContext
     )).build()
 
   trait Setup {
-    val mockHttpClient: HttpClient = mock[HttpClient]
-
     val sendEmailRequest = SendEmailRequest(List(Email("some-email@address.com")), "some-template-id",
       Map("parameters" -> "some-parameter"), force = false)
 
@@ -56,13 +49,13 @@ class EmailConnectorSpec extends UnitSpec
 
   "EmailConnector" should {
     "successfully email" in new Setup {
-      wireMockServer.start()
-      WireMock.configureFor(emailHost, emailPort)
-      stubFor(post(urlEqualTo("/hmrc/email")).willReturn(aResponse().withStatus(ACCEPTED)))
+      startMockServer()
+      startEmailService()
 
       await(connector.send(sendEmailRequest))
 
-      verify(1, postRequestedFor(urlEqualTo("/hmrc/email")))
+      verifyEmailServiceWasCalled()
+      stopMockServer()
     }
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.apinotificationqueue.service
+package unit.service
 
 import java.util.UUID
 
@@ -23,6 +23,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
+import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
@@ -43,25 +44,33 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
     "Save the notification in the mongo repository" in new Setup {
       when(mockNotificationRepository.save(clientId, notification1)).thenReturn(Future.successful(notification1))
+
       await(queueService.save(clientId, notification1)) shouldBe notification1
+
       verify(mockNotificationRepository).save(clientId, notification1)
     }
 
     "Retrieve all the notifications (by client id) from the mongo repository" in new Setup {
       when(mockNotificationRepository.fetch(clientId)).thenReturn(Future.successful(List(notification1, notification2)))
+
       await(queueService.get(clientId)) shouldBe List(notification1, notification2)
+
       verify(mockNotificationRepository).fetch(clientId)
     }
 
     "Retrieve the expected notification from the mongo repository" in new Setup {
       when(mockNotificationRepository.fetch(clientId, notification1.notificationId)).thenReturn(Future.successful(Some(notification1)))
+
       await(queueService.get(clientId, notification1.notificationId)) shouldBe Some(notification1)
+
       verify(mockNotificationRepository).fetch(clientId, notification1.notificationId)
     }
 
     "Delete the expected notification from the mongo repository" in new Setup {
       when(mockNotificationRepository.delete(clientId, notification1.notificationId)).thenReturn(Future.successful(true))
+
       await(queueService.delete(clientId, notification1.notificationId)) shouldBe true
+
       verify(mockNotificationRepository).delete(clientId, notification1.notificationId)
     }
 
