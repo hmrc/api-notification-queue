@@ -29,10 +29,12 @@ trait NotificationRepositoryErrorHandler {
   def handleSaveError(writeResult: WriteResult, exceptionMsg: => String, notification: => Notification): Notification = {
 
     def handleSaveError(result: WriteResult): Notification =
-      if (databaseAltered(result))
+      if (databaseAltered(result)) {
         notification
-      else
+      }
+      else {
         throw new RuntimeException(exceptionMsg)
+      }
 
     handleError(writeResult, handleSaveError, exceptionMsg)
   }

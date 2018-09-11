@@ -87,10 +87,10 @@ curl -v -X DELETE "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-87
 ### Tests
 Some tests require MongoDB to run. 
 Thus, remember to start up MongoDB if you want to run the tests locally.
-There are unit tests, integration tests, acceptance tests and code coverage reports.
+There are unit, integration and component tests along with code coverage reports.
 In order to run them, use this command line:
 ```
-./run_all_tests.sh
+./precheck.sh
 ```
 
 ---
