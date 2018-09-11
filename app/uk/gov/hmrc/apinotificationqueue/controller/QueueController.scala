@@ -17,16 +17,16 @@
 package uk.gov.hmrc.apinotificationqueue.controller
 
 import java.util.UUID
+import javax.inject.{Inject, Singleton}
 
 import akka.util.ByteString
-import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
-import play.api.Logger
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
@@ -35,7 +35,10 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 @Singleton()
-class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSubscriptionFieldsService, idGenerator: NotificationIdGenerator) extends BaseController {
+class QueueController @Inject()(queueService: QueueService,
+                                fieldsService: ApiSubscriptionFieldsService,
+                                idGenerator: NotificationIdGenerator,
+                                cdsLogger: CdsLogger) extends BaseController {
 
   private val SUBSCRIPTION_FIELD_HEADER_NAME = "api-subscription-fields-id"
   private val CLIENT_ID_HEADER_NAME = "X-Client-ID"
@@ -47,7 +50,7 @@ class QueueController @Inject()(queueService: QueueService, fieldsService: ApiSu
     implicit request => {
       val headers = request.headers
       val message = headers.get("X-Conversation-ID").fold(s"[conversationId not found] Headers=$headers"){ cid => s"[conversationId=$cid]"}
-      Logger.debug(s"[QueueController#save()] Request received - $message")
+      cdsLogger.debug(s"saving request - $message")
       getClientId(headers).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
         clientId =>
           request.body.asXml.fold(Future.successful(BadRequest(MISSING_BODY_ERROR))) { body =>

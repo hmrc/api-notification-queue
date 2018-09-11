@@ -30,6 +30,7 @@ import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, Notific
 import uk.gov.hmrc.apinotificationqueue.service.WarningEmailPollingService
 import uk.gov.hmrc.play.test.UnitSpec
 import play.api.test.Helpers._
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -40,6 +41,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
 
     val mockNotificationRepository = mock[NotificationRepository]
     val mockEmailConnector = mock[EmailConnector]
+    val mockCdsLogger = mock[CdsLogger]
     val mockServiceConfiguration = mock[ServiceConfiguration]
     val testActorSystem = ActorSystem("WarningEmailPollingService")
 
@@ -72,7 +74,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
     "send an email" in new Setup {
       when(mockServiceConfiguration.getInt("notification.email.queueThreshold")).thenReturn(2)
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
+      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockCdsLogger, mockServiceConfiguration)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
       //TODO investigate a way of not requiring sleep
@@ -89,7 +91,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
     "not send an email when no clients breach queue threshold" in new Setup {
       when(mockServiceConfiguration.getInt("notification.email.queueThreshold")).thenReturn(OK)
       when(mockNotificationRepository.fetchOverThreshold(OK)).thenReturn(Future.successful(List.empty))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
+      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockCdsLogger, mockServiceConfiguration)
 
       //TODO investigate a way of not requiring sleep
       Thread.sleep(oneThousand)

@@ -20,14 +20,13 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import com.google.inject.ImplementedBy
-import play.api.Logger
 import play.api.libs.json.Json
 import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.BSONObjectID
 import reactivemongo.play.json._
-import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
@@ -48,11 +47,12 @@ trait NotificationRepository {
 }
 
 @Singleton
-class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
+class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
+                                            notificationRepositoryErrorHandler: NotificationRepositoryErrorHandler,
+                                            cdsLogger: CdsLogger)
   extends ReactiveRepository[ClientNotification, BSONObjectID]("notifications", mongoDbProvider.mongo,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
-    with NotificationRepository
-    with NotificationRepositoryErrorHandler {
+    with NotificationRepository {
 
   private implicit val format = ClientNotification.ClientNotificationJF
 
@@ -70,14 +70,14 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
   )
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
-    Logger.debug(s"[save] clientId: $clientId")
+    cdsLogger.debug(s"saving clientId: $clientId")
 
     val clientNotification = ClientNotification(clientId, notification)
 
     lazy val errorMsg = s"Notification not saved for client $clientId"
 
     collection.insert(clientNotification).map {
-      writeResult => handleSaveError(writeResult, errorMsg, notification)
+      writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
     }
   }
 
@@ -114,7 +114,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider)
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
     val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
     lazy val errorMsg = s"Could not delete entity for selector: $selector"
-    collection.remove(selector).map(handleDeleteError(_, errorMsg))
+    collection.remove(selector).map(notificationRepositoryErrorHandler.handleDeleteError(_, errorMsg))
   }
 
 }

@@ -25,8 +25,4 @@ trait EmailService {
   def startEmailService(): Unit = {
     stubFor(post(urlEqualTo(ApiNotificationQueueExternalServicesConfig.EmailContext)).willReturn(aResponse().withStatus(ACCEPTED)))
   }
-
-  def verifyEmailServiceWasCalled(): Unit = {
-    verify(1, postRequestedFor(urlEqualTo(ApiNotificationQueueExternalServicesConfig.EmailContext)))
-  }
 }
