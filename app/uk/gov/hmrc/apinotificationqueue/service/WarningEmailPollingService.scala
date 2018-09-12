@@ -21,7 +21,6 @@ import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
 import org.joda.time.format.ISODateTimeFormat
-import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
@@ -36,13 +35,13 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
                                            emailConnector: EmailConnector,
                                            actorSystem: ActorSystem,
                                            cdsLogger: CdsLogger,
-                                           config: ServiceConfiguration)(implicit executionContext: ExecutionContext) {
+                                           config: ApiNotificationQueueConfigService)(implicit executionContext: ExecutionContext) {
 
   private val templateId = "customs_pull_notifications_warning"
-  private val interval = config.getInt("notification.email.interval")
-  private val delay = config.getInt("notification.email.delay")
-  private val toAddress = config.getString("notification.email.address")
-  private val queueThreshold = config.getInt("notification.email.queueThreshold")
+  private val interval = config.emailConfig.notificationEmailInterval
+  private val delay = config.emailConfig.notificationEmailDelay
+  private val toAddress = config.emailConfig.notificationEmailAddress
+  private val queueThreshold = config.emailConfig.notificationEmailQueueThreshold
 
   actorSystem.scheduler.schedule(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
 

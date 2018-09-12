@@ -25,9 +25,9 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Writes}
-import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
-import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -46,16 +46,18 @@ class EmailConnectorSpec extends UnitSpec
   with EmailService
   with WireMockRunner {
 
-  private val mockServiceConfiguration = mock[ServiceConfiguration]
+  private val mockConfig = mock[ApiNotificationQueueConfigService]
   private val mockHttpClient = mock[HttpClient]
   private val mockCdsLogger = mock[CdsLogger]
+  private val mockEmailConfig = mock[EmailConfig]
 
   override protected def beforeAll() {
     startMockServer()
   }
 
   override protected def beforeEach() {
-    when(mockServiceConfiguration.baseUrl("email")).thenReturn("http://some-url")
+    when(mockConfig.emailConfig).thenReturn(mockEmailConfig)
+    when(mockEmailConfig.emailServiceUrl).thenReturn("http://some-url/hmrc/email")
     resetMockServer()
   }
 
@@ -76,7 +78,7 @@ class EmailConnectorSpec extends UnitSpec
     implicit val hc = HeaderCarrier()
     val emulatedHttpVerbsException = new RuntimeException("an error")
 
-    val connector: EmailConnector = new EmailConnector(mockHttpClient, mockServiceConfiguration, mockCdsLogger)
+    val connector: EmailConnector = new EmailConnector(mockHttpClient, mockConfig, mockCdsLogger)
   }
 
   "EmailConnector" should {
