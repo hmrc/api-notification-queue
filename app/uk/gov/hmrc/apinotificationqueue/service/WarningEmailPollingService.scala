@@ -21,11 +21,10 @@ import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
 import org.joda.time.format.ISODateTimeFormat
-import play.api.Logger
-import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,24 +34,25 @@ import scala.concurrent.duration._
 class WarningEmailPollingService @Inject()(notificationRepo: NotificationRepository,
                                            emailConnector: EmailConnector,
                                            actorSystem: ActorSystem,
-                                           config: ServiceConfiguration)(implicit executionContext: ExecutionContext) {
+                                           cdsLogger: CdsLogger,
+                                           config: ApiNotificationQueueConfigService)(implicit executionContext: ExecutionContext) {
 
   private val templateId = "customs_pull_notifications_warning"
-  private val interval = config.getInt("notification.email.interval")
-  private val delay = config.getInt("notification.email.delay")
-  private val toAddress = config.getString("notification.email.address")
-  private val queueThreshold = config.getInt("notification.email.queueThreshold")
+  private val interval = config.emailConfig.notificationEmailInterval
+  private val delay = config.emailConfig.notificationEmailDelay
+  private val toAddress = config.emailConfig.notificationEmailAddress
+  private val queueThreshold = config.emailConfig.notificationEmailQueueThreshold
 
   actorSystem.scheduler.schedule(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
 
-    Logger.debug(s"running warning email scheduler with delay of $delay, interval of $interval and queue threshold of $queueThreshold")
+    cdsLogger.debug(s"running warning email scheduler with delay of $delay, interval of $interval and queue threshold of $queueThreshold")
     notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
     if (results.nonEmpty) {
       val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
-      Logger.debug(s"sending email with ${results.size} clientId rows")
+      cdsLogger.debug(s"sending email with ${results.size} clientId rows")
       emailConnector.send(sendEmailRequest)
     } else {
-      Logger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
+      cdsLogger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
     })
   }
 

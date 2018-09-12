@@ -16,17 +16,20 @@
 
 package integration
 
+import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.libs.json.Json
 import reactivemongo.api.{Cursor, DB}
 import reactivemongo.play.json._
-import util.TestData._
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
-import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationMongoRepository}
+import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationMongoRepository, NotificationRepositoryErrorHandler}
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
+import util.TestData._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -40,7 +43,10 @@ class NotificationMongoRepositorySpec extends UnitSpec
     override val mongo: () => DB = self.mongo
   }
 
-  private val repository = new NotificationMongoRepository(mongoDbProvider)
+  private val mockCdsLogger = mock[CdsLogger]
+  private val mockErrorHandler = mock[NotificationRepositoryErrorHandler]
+
+  private val repository = new NotificationMongoRepository(mongoDbProvider, mockErrorHandler, mockCdsLogger)
 
   override def beforeEach() {
     super.beforeEach()
@@ -63,6 +69,8 @@ class NotificationMongoRepositorySpec extends UnitSpec
   "repository" can {
     "save a single notification" should {
       "be successful" in {
+        when(mockErrorHandler.handleSaveError(any(), any(), any())).thenReturn(Notification1)
+
         val actualMessage = await(repository.save(ClientId1, Notification1))
 
         collectionSize shouldBe 1
@@ -127,6 +135,8 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
     "delete by clientId and notificationId" should {
       "return true when record found and deleted" in {
+        when(mockErrorHandler.handleDeleteError(any(), any())).thenReturn(true)
+
         await(repository.save(ClientId1, Notification1))
         await(repository.save(ClientId1, Notification2))
 
@@ -139,6 +149,8 @@ class NotificationMongoRepositorySpec extends UnitSpec
       }
 
       "return false when record not found" in {
+        when(mockErrorHandler.handleDeleteError(any(), any())).thenReturn(false)
+
         await(repository.save(ClientId1, Notification1))
         await(repository.save(ClientId1, Notification2))
         collectionSize shouldBe 2

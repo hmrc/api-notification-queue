@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.apinotificationqueue.config
 
-import javax.inject.{Inject, Singleton}
+import com.google.inject.AbstractModule
+import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
 
-import play.api.Mode.Mode
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.config.ServicesConfig
-
-@Singleton
-class ServiceConfiguration @Inject()(override val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig {
-  override protected def mode: Mode = environment.mode
+class ApiNotificationQueueModule extends AbstractModule {
+  def configure() {
+    // asEagerSingleton forces evaluation at application startup time
+    bind(classOf[ApiNotificationQueueConfigService]).asEagerSingleton()
+  }
 }

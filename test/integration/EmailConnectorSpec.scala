@@ -16,22 +16,54 @@
 
 package integration
 
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.{JsValue, Writes}
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
-import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
+import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.externalservices.EmailService
 import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
 
+import scala.concurrent.{ExecutionContext, Future}
+
 class EmailConnectorSpec extends UnitSpec
   with GuiceOneAppPerSuite
+  with BeforeAndAfterEach
+  with BeforeAndAfterAll
   with MockitoSugar
   with EmailService
   with WireMockRunner {
+
+  private val mockConfig = mock[ApiNotificationQueueConfigService]
+  private val mockHttpClient = mock[HttpClient]
+  private val mockCdsLogger = mock[CdsLogger]
+  private val mockEmailConfig = mock[EmailConfig]
+
+  override protected def beforeAll() {
+    startMockServer()
+  }
+
+  override protected def beforeEach() {
+    when(mockConfig.emailConfig).thenReturn(mockEmailConfig)
+    when(mockEmailConfig.emailServiceUrl).thenReturn("http://some-url/hmrc/email")
+    resetMockServer()
+  }
+
+  override protected def afterAll() {
+    stopMockServer()
+  }
 
   override implicit lazy val app: Application = GuiceApplicationBuilder().configure(Map(
       "microservice.services.email.host" -> ExternalServicesConfig.Host,
@@ -44,18 +76,37 @@ class EmailConnectorSpec extends UnitSpec
       Map("parameters" -> "some-parameter"), force = false)
 
     implicit val hc = HeaderCarrier()
-    lazy val connector: EmailConnector = app.injector.instanceOf[EmailConnector]
+    val emulatedHttpVerbsException = new RuntimeException("an error")
+
+    val connector: EmailConnector = new EmailConnector(mockHttpClient, mockConfig, mockCdsLogger)
   }
 
   "EmailConnector" should {
     "successfully email" in new Setup {
-      startMockServer()
+      when(mockHttpClient.POST(any[String](), any[JsValue](), any[Seq[(String, String)]]())(any[Writes[JsValue]](), any[HttpReads[HttpResponse]](), any[HeaderCarrier], any[ExecutionContext]()))
+        .thenReturn(Future.successful(mock[HttpResponse]))
+
       startEmailService()
 
       await(connector.send(sendEmailRequest))
 
-      verifyEmailServiceWasCalled()
-      stopMockServer()
+      verify(mockHttpClient).POST(ArgumentMatchers.eq("http://some-url/hmrc/email"), any[JsValue](), any[Seq[(String, String)]]())(
+        any(), any(), any(), any())
+    }
+
+    "log error when email service unavailable" in new Setup {
+      when(mockHttpClient.POST(any(), any(), any())(any[Writes[JsValue]](), any[HttpReads[HttpResponse]](), any[HeaderCarrier], any[ExecutionContext]()))
+        .thenReturn(Future.failed(emulatedHttpVerbsException))
+
+      startEmailService()
+
+      await(connector.send(sendEmailRequest))
+
+      PassByNameVerifier(mockCdsLogger, "error")
+        .withByNameParam("call to email service failed. url=http://some-url/hmrc/email")
+        .withByNameParam(emulatedHttpVerbsException)
+        .verify()
+
     }
   }
 }

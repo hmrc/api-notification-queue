@@ -23,24 +23,29 @@ import org.mockito.ArgumentMatchers.{any, eq => ameq}
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.apinotificationqueue.config.ServiceConfiguration
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
-import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
-import uk.gov.hmrc.apinotificationqueue.service.WarningEmailPollingService
+import uk.gov.hmrc.apinotificationqueue.service.{ApiNotificationQueueConfigService, WarningEmailPollingService}
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.UnitSpec
-import play.api.test.Helpers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eventually {
+class WarningEmailPollingServiceSpec extends UnitSpec
+  with MockitoSugar
+  with Eventually {
 
   trait Setup {
 
+    val emailConfig = EmailConfig("some-url", 2, "some-email@address.com", 1, 0)
+
     val mockNotificationRepository = mock[NotificationRepository]
     val mockEmailConnector = mock[EmailConnector]
-    val mockServiceConfiguration = mock[ServiceConfiguration]
+    val mockCdsLogger = mock[CdsLogger]
+    val mockConfig = mock[ApiNotificationQueueConfigService]
+    val mockEmailConfig = mock[EmailConfig]
     val testActorSystem = ActorSystem("WarningEmailPollingService")
 
     val oneThousand = 1000
@@ -63,16 +68,13 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
         "queueThreshold" -> "some-threshold"),
       force = false)
 
-    when(mockServiceConfiguration.getString("notification.email.address")).thenReturn("some-email@address.com")
-    when(mockServiceConfiguration.getInt("notification.email.interval")).thenReturn(1)
-    when(mockServiceConfiguration.getInt("notification.email.delay")).thenReturn(0)
+      when(mockConfig.emailConfig).thenReturn(emailConfig)
   }
 
   "WarningEmailPollingService" should {
     "send an email" in new Setup {
-      when(mockServiceConfiguration.getInt("notification.email.queueThreshold")).thenReturn(2)
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
+      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockCdsLogger, mockConfig)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
       //TODO investigate a way of not requiring sleep
@@ -87,9 +89,8 @@ class WarningEmailPollingServiceSpec extends UnitSpec with MockitoSugar with Eve
     }
 
     "not send an email when no clients breach queue threshold" in new Setup {
-      when(mockServiceConfiguration.getInt("notification.email.queueThreshold")).thenReturn(OK)
-      when(mockNotificationRepository.fetchOverThreshold(OK)).thenReturn(Future.successful(List.empty))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockServiceConfiguration)
+      when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List.empty))
+      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockCdsLogger, mockConfig)
 
       //TODO investigate a way of not requiring sleep
       Thread.sleep(oneThousand)

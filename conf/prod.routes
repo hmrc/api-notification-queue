@@ -1,5 +1,10 @@
-# Add all the application routes to the app.routes file
-->         /                     app.Routes
 ->         /                     health.Routes
 
 GET        /admin/metrics        @com.kenshoo.play.metrics.MetricsController.metrics
+
+POST       /queue                @uk.gov.hmrc.apinotificationqueue.controller.QueueController.save
+
+GET        /notification/:id     @uk.gov.hmrc.apinotificationqueue.controller.QueueController.get(id: java.util.UUID)
+GET        /notifications        @uk.gov.hmrc.apinotificationqueue.controller.QueueController.getAllByClientId
+
+DELETE     /notification/:id     @uk.gov.hmrc.apinotificationqueue.controller.QueueController.delete(id: java.util.UUID)

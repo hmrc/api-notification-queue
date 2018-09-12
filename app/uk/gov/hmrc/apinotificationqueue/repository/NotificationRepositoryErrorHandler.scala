@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.apinotificationqueue.repository
 
-import play.api.Logger
+import javax.inject.{Inject, Singleton}
+
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
-trait NotificationRepositoryErrorHandler {
+@Singleton
+class NotificationRepositoryErrorHandler @Inject() (cdsLogger: CdsLogger) {
 
-  def handleDeleteError(result: WriteResult, exceptionMsg: => String): Boolean = {
+  def handleDeleteError(result: WriteResult, exceptionMsg: String): Boolean = {
     handleError(result, databaseAltered, exceptionMsg)
   }
 
-  def handleSaveError(writeResult: WriteResult, exceptionMsg: => String, notification: => Notification): Notification = {
+  def handleSaveError(writeResult: WriteResult, exceptionMsg: String, notification: Notification): Notification = {
 
     def handleSaveError(result: WriteResult): Notification =
       if (databaseAltered(result)) {
@@ -43,7 +46,7 @@ trait NotificationRepositoryErrorHandler {
     result.writeConcernError.fold(f(result)) {
       errMsg => {
         val errorMsg = s"$exceptionMsg. $errMsg"
-        Logger.error(errorMsg)
+        cdsLogger.error(errorMsg)
         throw new RuntimeException(errorMsg)
       }
     }

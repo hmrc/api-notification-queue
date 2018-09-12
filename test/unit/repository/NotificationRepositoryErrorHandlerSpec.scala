@@ -20,11 +20,13 @@ import org.scalatest.mockito.MockitoSugar
 import reactivemongo.api.commands.{DefaultWriteResult, WriteConcernError, WriteError}
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepositoryErrorHandler
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.UnitSpec
 
 class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar {
 
-  private val errorHandler = new NotificationRepositoryErrorHandler {}
+  private val mockCdsLogger = mock[CdsLogger]
+  private val errorHandler = new NotificationRepositoryErrorHandler(mockCdsLogger)
   private val notification = mock[Notification]
 
   "NotificationRepositoryErrorHandler" can {

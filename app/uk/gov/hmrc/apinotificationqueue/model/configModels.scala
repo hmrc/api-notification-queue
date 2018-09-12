@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package util.externalservices
+package uk.gov.hmrc.apinotificationqueue.model
 
-import com.github.tomakehurst.wiremock.client.WireMock._
-import play.api.http.Status.ACCEPTED
-import util.ApiNotificationQueueExternalServicesConfig
+case class EmailConfig(emailServiceUrl: String,
+                       notificationEmailQueueThreshold: Int,
+                       notificationEmailAddress: String,
+                       notificationEmailInterval: Int,
+                       notificationEmailDelay: Int)
 
-trait EmailService {
-
-  def startEmailService(): Unit = {
-    stubFor(post(urlEqualTo(ApiNotificationQueueExternalServicesConfig.EmailContext)).willReturn(aResponse().withStatus(ACCEPTED)))
-  }
-}
+case class FieldsConfigHolder(apiSubscriptionFieldsServiceUrl: String)
