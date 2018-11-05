@@ -17,12 +17,12 @@
 package uk.gov.hmrc.apinotificationqueue.service
 
 import java.util.concurrent.TimeUnit
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import akka.actor.ActorSystem
 import org.joda.time.format.ISODateTimeFormat
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
-import uk.gov.hmrc.apinotificationqueue.model.{Email, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Email, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
@@ -35,7 +35,7 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
                                            emailConnector: EmailConnector,
                                            actorSystem: ActorSystem,
                                            cdsLogger: CdsLogger,
-                                           config: ApiNotificationQueueConfigService)(implicit executionContext: ExecutionContext) {
+                                           config: ApiNotificationQueueConfig)(implicit executionContext: ExecutionContext) {
 
   private val templateId = "customs_pull_notifications_warning"
   private val interval = config.emailConfig.notificationEmailInterval

@@ -17,10 +17,8 @@
 package uk.gov.hmrc.apinotificationqueue.connector
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.Json
-import uk.gov.hmrc.apinotificationqueue.model.SendEmailRequest
-import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
+import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, SendEmailRequest}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -29,10 +27,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Singleton
-class EmailConnector @Inject()(http: HttpClient, config: ApiNotificationQueueConfigService, cdsLogger: CdsLogger) {
+class EmailConnector @Inject()(http: HttpClient, config: ApiNotificationQueueConfig, cdsLogger: CdsLogger) {
 
   private val emailUrl = config.emailConfig.emailServiceUrl
-  private implicit val hc = HeaderCarrier()
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   def send(sendEmailRequest: SendEmailRequest): Future[Unit] = {
 
