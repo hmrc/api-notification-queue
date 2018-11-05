@@ -16,10 +16,17 @@
 
 package uk.gov.hmrc.apinotificationqueue.model
 
+import com.google.inject.ImplementedBy
+import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
+
 case class EmailConfig(emailServiceUrl: String,
                        notificationEmailQueueThreshold: Int,
                        notificationEmailAddress: String,
                        notificationEmailInterval: Int,
                        notificationEmailDelay: Int)
 
-case class FieldsConfigHolder(apiSubscriptionFieldsServiceUrl: String)
+@ImplementedBy(classOf[ApiNotificationQueueConfigService])
+trait ApiNotificationQueueConfig {
+  val emailConfig: EmailConfig
+  val apiSubscriptionFieldsServiceUrl: String
+}

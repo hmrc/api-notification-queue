@@ -16,55 +16,48 @@
 
 package uk.gov.hmrc.apinotificationqueue.service
 
+import cats.implicits._
 import javax.inject.{Inject, Singleton}
-
-import uk.gov.hmrc.apinotificationqueue.model.{EmailConfig, FieldsConfigHolder}
-import uk.gov.hmrc.customs.api.common.config.ConfigValidationNelAdaptor
+import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, EmailConfig}
+import uk.gov.hmrc.customs.api.common.config.{ConfigValidatedNelAdaptor, CustomsValidatedNel}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
-import scalaz.{NonEmptyList, Validation}
-import scalaz.syntax.apply._
-import scalaz.syntax.traverse._
-
 @Singleton
-class ApiNotificationQueueConfigService @Inject()(configValidationNel: ConfigValidationNelAdaptor, cdsLogger: CdsLogger) {
+class ApiNotificationQueueConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdaptor, cdsLogger: CdsLogger) extends ApiNotificationQueueConfig {
 
-  private val root = configValidationNel.root
+  private val root = configValidatedNel.root
 
-  private val apiSubscriptionFieldsServiceUrlNel = configValidationNel.service("api-subscription-fields").serviceUrl
+  private val apiSubscriptionFieldsServiceUrlNel = configValidatedNel.service("api-subscription-fields").serviceUrl
 
-  private val emailServiceUrlNel = configValidationNel.service("email").serviceUrl
+  private case class ApiNotificationQueueConfigImpl(emailConfig: EmailConfig, apiSubscriptionFieldsServiceUrl: String) extends ApiNotificationQueueConfig
+
+  private val emailServiceUrlNel = configValidatedNel.service("email").serviceUrl
   private val notificationEmailQueueThresholdNel = root.int("notification.email.queueThreshold")
   private val notificationEmailAddressNel = root.string("notification.email.address")
   private val notificationEmailIntervalNel = root.int("notification.email.interval")
   private val notificationEmailDelayNel = root.int("notification.email.delay")
 
-  private val validatedEmailConfig: Validation[NonEmptyList[String], EmailConfig] =
-    (emailServiceUrlNel |@|
-      notificationEmailQueueThresholdNel |@|
-      notificationEmailAddressNel |@|
-      notificationEmailIntervalNel |@|
+  private val validatedEmailConfig: CustomsValidatedNel[EmailConfig] =
+    (emailServiceUrlNel,
+      notificationEmailQueueThresholdNel,
+      notificationEmailAddressNel,
+      notificationEmailIntervalNel,
       notificationEmailDelayNel
-    ) (EmailConfig.apply)
+    ) mapN EmailConfig
 
-  private val validatedFieldsConfigHolder = apiSubscriptionFieldsServiceUrlNel.map(FieldsConfigHolder.apply)
+  private val validatedConfig =
+    (validatedEmailConfig, apiSubscriptionFieldsServiceUrlNel) mapN ApiNotificationQueueConfigImpl
 
-  private val queueConfigHolder = (validatedEmailConfig |@|
-    validatedFieldsConfigHolder
-    ) (QueueConfigHolder.apply) fold(
-    fail = { nel =>
-      // error case exposes nel (a NotEmptyList)
-      val errorMsg = nel.toList.mkString("\n", "\n", "")
+  private val config = validatedConfig.fold({
+    nel => // error case exposes nel (a NotEmptyList)
+      val errorMsg = "\n" + nel.toList.mkString("\n")
       cdsLogger.error(errorMsg)
       throw new IllegalStateException(errorMsg)
-    },
-    succ = identity
+      },
+    config => config // success
   )
 
-  val emailConfig = queueConfigHolder.emailConfig
+  val emailConfig: EmailConfig = config.emailConfig
 
-  val fieldsConfigHolder = queueConfigHolder.fieldsConfigHolder
-
-  private case class QueueConfigHolder(emailConfig: EmailConfig, fieldsConfigHolder: FieldsConfigHolder)
-
+  val apiSubscriptionFieldsServiceUrl: String = config.apiSubscriptionFieldsServiceUrl
 }
