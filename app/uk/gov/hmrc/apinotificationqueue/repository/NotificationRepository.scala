@@ -17,13 +17,13 @@
 package uk.gov.hmrc.apinotificationqueue.repository
 
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
 
 import com.google.inject.ImplementedBy
-import play.api.libs.json.Json
+import javax.inject.{Inject, Singleton}
+import play.api.libs.json.{Format, Json}
 import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.BSONObjectID
+import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
 import reactivemongo.play.json._
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
@@ -54,20 +54,31 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
     with NotificationRepository {
 
-  private implicit val format = ClientNotification.ClientNotificationJF
+  private implicit val format: Format[ClientNotification] = ClientNotification.ClientNotificationJF
 
-  override def indexes: Seq[Index] = Seq(
-    Index(
-      key = Seq("clientId" -> IndexType.Ascending),
-      name = Some("clientId-Index"),
-      unique = false
-    ),
-    Index(
-      key = Seq("clientId" -> IndexType.Ascending, "notification.notificationId" -> IndexType.Ascending),
-      name = Some("clientId-notificationId-Index"),
-      unique = true
+  override def indexes: Seq[Index] = {
+    val ttlValue = 600L //TODO MC should be in config
+
+    Seq(
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending),
+        name = Some("clientId-Index"),
+        unique = false
+      ),
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending, "notification.notificationId" -> IndexType.Ascending),
+        name = Some("clientId-notificationId-Index"),
+        unique = true
+      ),
+      Index(
+        key = Seq("dateReceived" -> IndexType.Descending),
+        name = Some("dateReceived-Index"),
+        unique = false,
+        options = BSONDocument("expireAfterSeconds" -> BSONLong(ttlValue))
+      )
+
     )
-  )
+  }
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
     cdsLogger.debug(s"saving clientId: $clientId")
@@ -92,9 +103,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   }
 
   override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
-    import collection.BatchCommands.AggregationFramework.{
-    Group, Project, Match, MinField, MaxField, SumAll
-    }
+    import collection.BatchCommands.AggregationFramework._
 
     collection.aggregate(
       Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,

@@ -22,7 +22,7 @@ import org.joda.time.DateTime
 import play.api.libs.json.Json
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-case class Notification(notificationId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime)
+case class Notification(notificationId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime, dateRead: Option[DateTime])
 
 object Notification {
   implicit val dateTimeJF = ReactiveMongoFormats.dateTimeFormats

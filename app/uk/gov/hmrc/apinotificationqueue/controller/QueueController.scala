@@ -60,7 +60,8 @@ class QueueController @Inject()(queueService: QueueService,
                 idGenerator.generateId(),
                 headers.remove(CLIENT_ID_HEADER_NAME, SUBSCRIPTION_FIELD_HEADER_NAME).toSimpleMap,
                 body.toString(),
-                DateTime.now()
+                DateTime.now(),
+                None
               )
             ).map(notification =>
               Result(ResponseHeader(CREATED, Map(LOCATION -> routes.QueueController.get(notification.notificationId).url)), HttpEntity.NoEntity))
