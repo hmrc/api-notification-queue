@@ -79,7 +79,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       status(result) shouldBe OK
       bodyOf(result) shouldBe payload
 
-      verify(mockQueueService).save(clientId, outputNotification)
+      verify(mockQueueService).update(clientId, outputNotification)
       header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
     }
