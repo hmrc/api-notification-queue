@@ -61,7 +61,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
                 cdsLogger.error("Notification has been read")
                 BadRequest(READ_ALREADY_ERROR)
               case None =>
-                queueService.save(clientId, n.copy(dateRead = Some(dateTimeProvider.now())))
+                queueService.update(clientId, n.copy(dateRead = Some(dateTimeProvider.now())))
                 Result(
                   header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
                   body = HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE))

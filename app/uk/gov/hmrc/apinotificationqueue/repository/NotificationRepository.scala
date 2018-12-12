@@ -37,6 +37,8 @@ import scala.concurrent.Future
 trait NotificationRepository {
   def save(clientId: String, notification: Notification): Future[Notification]
 
+  def update(clientId: String, notification: Notification): Future[Notification]
+
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
   def fetch(clientId: String): Future[List[Notification]]
@@ -89,6 +91,20 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     lazy val errorMsg = s"Notification not saved for client $clientId"
 
     collection.insert(clientNotification).map {
+      writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
+    }
+  }
+
+  override def update(clientId: String, notification: Notification): Future[Notification] = {
+    cdsLogger.debug(s"updating clientId: $clientId, notificationId: ${notification.notificationId}")
+
+    val clientNotification = ClientNotification(clientId, notification)
+
+    lazy val errorMsg = s"Notification not updated for client $clientId, notificationId: ${notification.notificationId}"
+
+    val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notification.notificationId)
+
+    collection.update(selector, clientNotification).map {
       writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
     }
   }
