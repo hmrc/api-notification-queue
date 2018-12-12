@@ -44,6 +44,7 @@ trait NotificationRepository {
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
+
 }
 
 @Singleton

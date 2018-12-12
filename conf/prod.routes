@@ -9,4 +9,4 @@ GET           /notifications                @uk.gov.hmrc.apinotificationqueue.co
 
 DELETE        /notification/:id             @uk.gov.hmrc.apinotificationqueue.controller.QueueController.delete(id: java.util.UUID)
 
-GET           /notification/unread/:id        @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.read(id: java.util.UUID)
+GET           /notifications/unread/:id        @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.read(id: java.util.UUID)

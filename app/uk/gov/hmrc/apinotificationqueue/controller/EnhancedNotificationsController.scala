@@ -20,6 +20,7 @@ import java.util.UUID
 
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
+import org.joda.time.DateTime
 import play.api.http.HttpEntity
 import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
@@ -33,25 +34,47 @@ import scala.concurrent.Future
 class EnhancedNotificationsController @Inject()(queueService: QueueService,
                                                 fieldsService: ApiSubscriptionFieldsService,
                                                 idGenerator: NotificationIdGenerator,
+                                                dateTimeProvider: DateTimeProvider,
                                                 cdsLogger: CdsLogger) extends BaseController {
 
   private val CLIENT_ID_HEADER_NAME = "X-Client-ID"
 
   private val MISSING_CLIENT_ID_ERROR = s"$CLIENT_ID_HEADER_NAME required."
 
+  private val READ_ALREADY_ERROR = "Notification has been read"
+
   //TODO MC move this to QueueController?
   def read(id: UUID): Action[AnyContent] = Action.async { implicit request =>
-    request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
+    request.headers.get(CLIENT_ID_HEADER_NAME).fold {
+      cdsLogger.error("Client id is missing")
+      Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))
+    } { clientId =>
       val notification = queueService.get(clientId, id)
       notification.map(opt =>
-        opt.fold(NotFound("NOT FOUND"))(
-          n => Result(
-            header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
-            body = HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE))
-          )
-        )
+        opt.fold {
+          cdsLogger.error("Notification not found")
+          NotFound("NOT FOUND")
+        } {
+          n =>
+            n.dateRead match {
+              case Some(_) =>
+                cdsLogger.error("Notification has been read")
+                BadRequest(READ_ALREADY_ERROR)
+              case None =>
+                queueService.save(clientId, n.copy(dateRead = Some(dateTimeProvider.now())))
+                Result(
+                  header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
+                  body = HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE))
+                )
+            }
+        }
       )
     }
   }
 
+}
+
+@Singleton
+class DateTimeProvider {
+  def now(): DateTime = DateTime.now()
 }
