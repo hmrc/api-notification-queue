@@ -65,10 +65,16 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
   "GET /notifications/unread/:id" should {
 
     "return 200" in new Setup {
+
+      override protected val mockCdsLogger: CdsLogger = mock[CdsLogger]
+
+      override protected val controller: EnhancedNotificationsController = new EnhancedNotificationsController(mockQueueService, mockFieldsService, new StaticIDGenerator,
+        mockDateTimeProvider, mockCdsLogger)
+
       private val payload = "<xml>a</xml>"
       private val inputNotification = Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), None)
       private val time = DateTime.now()
-      private val outputNotification = inputNotification.copy(dateRead = Some(time)) //TODO MC change now() to actual date
+      private val outputNotification = inputNotification.copy(dateRead = Some(time))
 
       when(mockDateTimeProvider.now()).thenReturn(time)
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(inputNotification)))

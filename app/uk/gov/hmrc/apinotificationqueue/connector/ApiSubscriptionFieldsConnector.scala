@@ -19,7 +19,7 @@ package uk.gov.hmrc.apinotificationqueue.connector
 import java.util.UUID
 
 import javax.inject.Inject
-import play.api.libs.json.{Format, Json, OFormat}
+import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.apinotificationqueue.model.ApiNotificationQueueConfig
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient

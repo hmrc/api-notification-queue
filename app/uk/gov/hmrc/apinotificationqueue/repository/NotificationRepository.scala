@@ -25,7 +25,7 @@ import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
 import reactivemongo.play.json._
-import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -52,7 +52,8 @@ trait NotificationRepository {
 @Singleton
 class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
                                             notificationRepositoryErrorHandler: NotificationRepositoryErrorHandler,
-                                            cdsLogger: CdsLogger)
+                                            cdsLogger: CdsLogger,
+                                            config: ApiNotificationQueueConfig)
   extends ReactiveRepository[ClientNotification, BSONObjectID]("notifications", mongoDbProvider.mongo,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
     with NotificationRepository {
@@ -60,8 +61,6 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   private implicit val format: Format[ClientNotification] = ClientNotification.ClientNotificationJF
 
   override def indexes: Seq[Index] = {
-    val ttlValue = 600L //TODO MC should be in config
-
     Seq(
       Index(
         key = Seq("clientId" -> IndexType.Ascending),
@@ -77,7 +76,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
         key = Seq("dateReceived" -> IndexType.Descending),
         name = Some("dateReceived-Index"),
         unique = false,
-        options = BSONDocument("expireAfterSeconds" -> BSONLong(ttlValue))
+        options = BSONDocument("expireAfterSeconds" -> BSONLong(config.ttlInSeconds))
       )
 
     )

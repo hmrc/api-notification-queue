@@ -43,7 +43,6 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
   private val READ_ALREADY_ERROR = "Notification has been read"
 
-  //TODO MC move this to QueueController?
   def read(id: UUID): Action[AnyContent] = Action.async { implicit request =>
     request.headers.get(CLIENT_ID_HEADER_NAME).fold {
       cdsLogger.error("Client id is missing")
