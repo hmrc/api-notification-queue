@@ -82,6 +82,22 @@ curl -v -X DELETE "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-87
 
 ---
 
+### GET `/notifications/unread/[id]`
+
+Retrieves a specific notification and sets `dateRead` field in MongoDb
+
+Required header: `X-Client-ID`.
+
+```
+curl -v -X GET "http://localhost:9648/notifications/unread/ba544f92-b2dd-413e-becf-874b35eb3724" \
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+```
+
+#### Response
+200 OK code on successful get, otherwise 404 Not Found.
+
+---
+
 ### Tests
 Some tests require MongoDB to run. 
 Thus, remember to start up MongoDB if you want to run the tests locally.
