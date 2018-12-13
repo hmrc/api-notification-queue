@@ -16,7 +16,7 @@
 
 package integration
 
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -95,7 +95,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
     "update a single notification" should {
       "be successful" in {
-        val time = DateTime.now()
+        val time = DateTime.now(DateTimeZone.UTC)
         val updatedNotification = Notification1.copy(dateRead = Some(time))
 
         when(mockErrorHandler.handleSaveError(any(), any(), any())).thenReturn(Notification1)
@@ -113,7 +113,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         val actualNotification = await(repository.collection.find(selector(ClientId1)).one[ClientNotification]).get
         val expectedNotification = ClientNotification(ClientId1, updatedNotification)
 
-//        actualNotification shouldBe expectedNotification //TODO MC fix this, works fine but for some reason this check fails
+        actualNotification shouldBe expectedNotification
       }
     }
 
