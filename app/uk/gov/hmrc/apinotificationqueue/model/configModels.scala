@@ -29,4 +29,5 @@ case class EmailConfig(emailServiceUrl: String,
 trait ApiNotificationQueueConfig {
   val emailConfig: EmailConfig
   val apiSubscriptionFieldsServiceUrl: String
+  val ttlInSeconds: Int
 }

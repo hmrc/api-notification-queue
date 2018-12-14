@@ -36,6 +36,7 @@ class ApiNotificationQueueConfigServiceSpec extends UnitSpec with MockitoSugar w
       |notification.email.address="some.address@domain.com"
       |notification.email.interval=1440
       |notification.email.delay=1
+      |ttlInSeconds=600
       |
       |  microservice {
       |    services {
@@ -86,7 +87,8 @@ class ApiNotificationQueueConfigServiceSpec extends UnitSpec with MockitoSugar w
                        |Could not find config key 'notification.email.interval'
                        |Could not find config key 'notification.email.delay'
                        |Could not find config api-subscription-fields.host
-                       |Service configuration not found for key: api-subscription-fields.context""".stripMargin
+                       |Service configuration not found for key: api-subscription-fields.context
+                       |Could not find config key 'ttlInSeconds'""".stripMargin
 
       val caught = intercept[IllegalStateException]{ configService(emptyServicesConfig) }
 

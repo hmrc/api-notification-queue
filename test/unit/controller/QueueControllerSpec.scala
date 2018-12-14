@@ -27,7 +27,7 @@ import play.api.http.HeaderNames.{CONTENT_TYPE, LOCATION}
 import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.apinotificationqueue.controller.{NotificationIdGenerator, QueueController}
+import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, NotificationIdGenerator, QueueController}
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
@@ -47,7 +47,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     val clientId = "abc123"
     val uuid = UUID.randomUUID()
 
-    val notification1 = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
+    val notification1 = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
     val notification2 = notification1.copy(notificationId = UUID.randomUUID())
 
     class StaticIDGenerator extends NotificationIdGenerator {
@@ -57,7 +57,8 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     val mockQueueService = mock[QueueService]
     val mockFieldsService = mock[ApiSubscriptionFieldsService]
     val mockCdsLogger = mock[CdsLogger]
-    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockCdsLogger)
+    val mockDateTimeProvider = mock[DateTimeProvider]
+    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockDateTimeProvider, mockCdsLogger)
   }
 
   "POST /queue" should {
@@ -95,7 +96,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
         <node>Stuff</node>
       </xml>
       private val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(xml)
-      private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now())
+      private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       val result = await(queueController.save()(request))
 
@@ -109,7 +110,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
         <node>Stuff</node>
       </xml>
       private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
-      private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now())
+      private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Some(clientId))
       val result = queueController.save()(request)
@@ -161,7 +162,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
     "return 200" in new Setup {
       val payload = "<xml>a</xml>"
-      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now()))))
+      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), None))))
 
       val request = FakeRequest(GET, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(queueController.get(uuid)(request))

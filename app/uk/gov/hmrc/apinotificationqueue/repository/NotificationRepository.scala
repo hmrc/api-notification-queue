@@ -17,15 +17,15 @@
 package uk.gov.hmrc.apinotificationqueue.repository
 
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
 
 import com.google.inject.ImplementedBy
-import play.api.libs.json.Json
+import javax.inject.{Inject, Singleton}
+import play.api.libs.json.{Format, Json}
 import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.BSONObjectID
+import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
 import reactivemongo.play.json._
-import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -37,6 +37,8 @@ import scala.concurrent.Future
 trait NotificationRepository {
   def save(clientId: String, notification: Notification): Future[Notification]
 
+  def update(clientId: String, notification: Notification): Future[Notification]
+
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
   def fetch(clientId: String): Future[List[Notification]]
@@ -44,30 +46,41 @@ trait NotificationRepository {
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
+
 }
 
 @Singleton
 class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
                                             notificationRepositoryErrorHandler: NotificationRepositoryErrorHandler,
-                                            cdsLogger: CdsLogger)
+                                            cdsLogger: CdsLogger,
+                                            config: ApiNotificationQueueConfig)
   extends ReactiveRepository[ClientNotification, BSONObjectID]("notifications", mongoDbProvider.mongo,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
     with NotificationRepository {
 
-  private implicit val format = ClientNotification.ClientNotificationJF
+  private implicit val format: Format[ClientNotification] = ClientNotification.ClientNotificationJF
 
-  override def indexes: Seq[Index] = Seq(
-    Index(
-      key = Seq("clientId" -> IndexType.Ascending),
-      name = Some("clientId-Index"),
-      unique = false
-    ),
-    Index(
-      key = Seq("clientId" -> IndexType.Ascending, "notification.notificationId" -> IndexType.Ascending),
-      name = Some("clientId-notificationId-Index"),
-      unique = true
+  override def indexes: Seq[Index] = {
+    Seq(
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending),
+        name = Some("clientId-Index"),
+        unique = false
+      ),
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending, "notification.notificationId" -> IndexType.Ascending),
+        name = Some("clientId-notificationId-Index"),
+        unique = true
+      ),
+      Index(
+        key = Seq("dateReceived" -> IndexType.Descending),
+        name = Some("dateReceived-Index"),
+        unique = false,
+        options = BSONDocument("expireAfterSeconds" -> BSONLong(config.ttlInSeconds))
+      )
+
     )
-  )
+  }
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
     cdsLogger.debug(s"saving clientId: $clientId")
@@ -77,6 +90,20 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     lazy val errorMsg = s"Notification not saved for client $clientId"
 
     collection.insert(clientNotification).map {
+      writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
+    }
+  }
+
+  override def update(clientId: String, notification: Notification): Future[Notification] = {
+    cdsLogger.debug(s"updating clientId: $clientId, notificationId: ${notification.notificationId}")
+
+    val clientNotification = ClientNotification(clientId, notification)
+
+    lazy val errorMsg = s"Notification not updated for client $clientId, notificationId: ${notification.notificationId}"
+
+    val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notification.notificationId)
+
+    collection.update(selector, clientNotification).map {
       writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
     }
   }
@@ -92,9 +119,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   }
 
   override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
-    import collection.BatchCommands.AggregationFramework.{
-    Group, Project, Match, MinField, MaxField, SumAll
-    }
+    import collection.BatchCommands.AggregationFramework._
 
     collection.aggregate(
       Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,

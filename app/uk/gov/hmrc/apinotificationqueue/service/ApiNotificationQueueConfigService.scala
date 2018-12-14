@@ -29,13 +29,14 @@ class ApiNotificationQueueConfigService @Inject()(configValidatedNel: ConfigVali
 
   private val apiSubscriptionFieldsServiceUrlNel = configValidatedNel.service("api-subscription-fields").serviceUrl
 
-  private case class ApiNotificationQueueConfigImpl(emailConfig: EmailConfig, apiSubscriptionFieldsServiceUrl: String) extends ApiNotificationQueueConfig
+  private case class ApiNotificationQueueConfigImpl(emailConfig: EmailConfig, apiSubscriptionFieldsServiceUrl: String, ttlInSeconds: Int) extends ApiNotificationQueueConfig
 
   private val emailServiceUrlNel = configValidatedNel.service("email").serviceUrl
   private val notificationEmailQueueThresholdNel = root.int("notification.email.queueThreshold")
   private val notificationEmailAddressNel = root.string("notification.email.address")
   private val notificationEmailIntervalNel = root.int("notification.email.interval")
   private val notificationEmailDelayNel = root.int("notification.email.delay")
+  private val ttlInSecondsNel = configValidatedNel.root.int("ttlInSeconds")
 
   private val validatedEmailConfig: CustomsValidatedNel[EmailConfig] =
     (emailServiceUrlNel,
@@ -46,7 +47,7 @@ class ApiNotificationQueueConfigService @Inject()(configValidatedNel: ConfigVali
     ) mapN EmailConfig
 
   private val validatedConfig =
-    (validatedEmailConfig, apiSubscriptionFieldsServiceUrlNel) mapN ApiNotificationQueueConfigImpl
+    (validatedEmailConfig, apiSubscriptionFieldsServiceUrlNel, ttlInSecondsNel) mapN ApiNotificationQueueConfigImpl
 
   private val config = validatedConfig.fold({
     nel => // error case exposes nel (a NotEmptyList)
@@ -57,7 +58,9 @@ class ApiNotificationQueueConfigService @Inject()(configValidatedNel: ConfigVali
     config => config // success
   )
 
-  val emailConfig: EmailConfig = config.emailConfig
+  override val emailConfig: EmailConfig = config.emailConfig
 
-  val apiSubscriptionFieldsServiceUrl: String = config.apiSubscriptionFieldsServiceUrl
+  override val apiSubscriptionFieldsServiceUrl: String = config.apiSubscriptionFieldsServiceUrl
+
+  override val ttlInSeconds: Int = config.ttlInSeconds
 }

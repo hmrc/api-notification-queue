@@ -31,13 +31,13 @@ import scala.concurrent.Future
 class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
   trait Setup {
-    val mockNotificationRepository = mock[NotificationRepository]
-    val queueService = new QueueService(mockNotificationRepository)
+    val mockNotificationRepository: NotificationRepository = mock[NotificationRepository]
+    val queueService: QueueService = new QueueService(mockNotificationRepository)
 
-    val clientId = "clientId"
+    val clientId: String = "clientId"
 
-    val notification1 = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now())
-    val notification2 = notification1.copy(notificationId = UUID.randomUUID())
+    val notification1: Notification = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
+    val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID())
   }
 
   "QueueService" should {
@@ -48,6 +48,14 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
       await(queueService.save(clientId, notification1)) shouldBe notification1
 
       verify(mockNotificationRepository).save(clientId, notification1)
+    }
+
+    "Update notification in the mongo repository" in new Setup {
+      when(mockNotificationRepository.update(clientId, notification1)).thenReturn(Future.successful(notification1))
+
+      await(queueService.update(clientId, notification1)) shouldBe notification1
+
+      verify(mockNotificationRepository).update(clientId, notification1)
     }
 
     "Retrieve all the notifications (by client id) from the mongo repository" in new Setup {

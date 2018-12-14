@@ -17,10 +17,9 @@
 package uk.gov.hmrc.apinotificationqueue.controller
 
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
 
 import akka.util.ByteString
-import org.joda.time.DateTime
+import javax.inject.{Inject, Singleton}
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -38,6 +37,7 @@ import scala.util.{Failure, Success, Try}
 class QueueController @Inject()(queueService: QueueService,
                                 fieldsService: ApiSubscriptionFieldsService,
                                 idGenerator: NotificationIdGenerator,
+                                dateTimeProvider: DateTimeProvider,
                                 cdsLogger: CdsLogger) extends BaseController {
 
   private val SUBSCRIPTION_FIELD_HEADER_NAME = "api-subscription-fields-id"
@@ -60,7 +60,8 @@ class QueueController @Inject()(queueService: QueueService,
                 idGenerator.generateId(),
                 headers.remove(CLIENT_ID_HEADER_NAME, SUBSCRIPTION_FIELD_HEADER_NAME).toSimpleMap,
                 body.toString(),
-                DateTime.now()
+                dateTimeProvider.now(),
+                None
               )
             ).map(notification =>
               Result(ResponseHeader(CREATED, Map(LOCATION -> routes.QueueController.get(notification.notificationId).url)), HttpEntity.NoEntity))

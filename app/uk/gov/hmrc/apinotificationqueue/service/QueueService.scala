@@ -17,8 +17,8 @@
 package uk.gov.hmrc.apinotificationqueue.service
 
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 
@@ -41,6 +41,10 @@ class QueueService @Inject()(notificationRepo: NotificationRepository) {
 
   def save(clientId: String, message: Notification): Future[Notification] = {
     notificationRepo.save(clientId, message)
+  }
+
+  def update(clientId: String, message: Notification): Future[Notification] = {
+    notificationRepo.update(clientId, message)
   }
 
 }
