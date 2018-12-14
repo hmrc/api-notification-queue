@@ -21,6 +21,7 @@ import java.util.UUID
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
+import org.joda.time.DateTimeZone.UTC
 import play.api.http.HttpEntity
 import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
@@ -52,7 +53,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
       notification.map(opt =>
         opt.fold {
           cdsLogger.error("Notification not found")
-          NotFound("NOT FOUND")
+          NotFound("Resource was not found")
         } {
           n =>
             n.dateRead match {
@@ -75,5 +76,5 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
 @Singleton
 class DateTimeProvider {
-  def now(): DateTime = DateTime.now()
+  def now(): DateTime = DateTime.now(UTC)
 }

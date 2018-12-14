@@ -125,7 +125,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       val result: Result = await(controller.read(uuid)(request))
 
       status(result) shouldBe NOT_FOUND
-      bodyOf(result) shouldBe "NOT FOUND"
+      bodyOf(result) shouldBe "Resource was not found"
       PassByNameVerifier(mockCdsLogger, "error")
         .withByNameParam("Notification not found")
         .verify()

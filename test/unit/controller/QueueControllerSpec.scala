@@ -27,7 +27,7 @@ import play.api.http.HeaderNames.{CONTENT_TYPE, LOCATION}
 import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.apinotificationqueue.controller.{NotificationIdGenerator, QueueController}
+import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, NotificationIdGenerator, QueueController}
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
@@ -57,7 +57,8 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     val mockQueueService = mock[QueueService]
     val mockFieldsService = mock[ApiSubscriptionFieldsService]
     val mockCdsLogger = mock[CdsLogger]
-    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockCdsLogger)
+    val mockDateTimeProvider = mock[DateTimeProvider]
+    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockDateTimeProvider, mockCdsLogger)
   }
 
   "POST /queue" should {
