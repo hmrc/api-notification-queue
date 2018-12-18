@@ -32,6 +32,8 @@ import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import util.MockitoPassByNameHelper.PassByNameVerifier
+import util.TestData._
 
 import scala.concurrent.Future
 
@@ -81,6 +83,10 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> "NOT-A_UUID"), AnyContentAsEmpty)))
 
       status(result) shouldBe BAD_REQUEST
+      PassByNameVerifier(mockCdsLogger, "error")
+        .withByNameParam("[conversationId not found] Headers=WrappedArray((api-subscription-fields-id,NOT-A_UUID)) - Invalid UUID 'NOT-A_UUID'")
+        .verify()
+
     }
 
     "return 400 if the request has no payload" in new Setup {
@@ -118,6 +124,28 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       status(result) shouldBe CREATED
       header(LOCATION, result) shouldBe Some(s"/notification/$uuid")
     }
+
+
+    // TODO: exceptions should not be propagated all to way up as they will get handled by the Play2 error handler
+    // TODO: we need to handle all exceptions and wrap them with out standard Customs error model
+    // TODO: this is a lower priority as this is a protected service ie not public facing
+    "Propagate and log exceptions thrown in subscription fields id connector" in new Setup {
+      private val xml = <xml>
+        <node>Stuff</node>
+      </xml>
+      private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
+      private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
+      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
+      when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Future.failed(emulatedServiceFailure))
+      val result = await(queueController.save()(request))
+
+      PassByNameVerifier(mockCdsLogger, "error")
+        .withByNameParam("[conversationId=test-conversation-id] - Error calling subscription fields id")
+        .withByNameParamMatcher(any[EmulatedServiceFailure])
+        .verify()
+
+    }
+
   }
 
   "GET /notifications" should {
