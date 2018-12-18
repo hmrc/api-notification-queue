@@ -86,6 +86,7 @@ class QueueSpec extends FeatureSpec
       status(unpulledResult) shouldBe OK
       And("the message will be the same")
       contentAsString(unpulledResult) shouldBe xmlBody.toString()
+      //TODO db update occurs after pulled request below without this sleep. Investigate potential for removal.
       Thread.sleep(500)
 
       When("you re-pull the message")
