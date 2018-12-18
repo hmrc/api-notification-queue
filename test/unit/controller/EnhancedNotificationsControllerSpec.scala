@@ -29,6 +29,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, EnhancedNotificationsController, NotificationIdGenerator}
 import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -80,6 +81,8 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
     protected val notification1 = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
     protected val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID())
+    protected val notification3: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(DateTime.now()))
+    protected val notification4: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(DateTime.now()))
 
     class StaticIDGenerator extends NotificationIdGenerator {
       override def generateId(): UUID = uuid
@@ -96,7 +99,8 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     protected val pulledNotification = unpulledNotification.copy(datePulled = Some(time))
 
     when(mockDateTimeProvider.now()).thenReturn(time)
-    protected val request = FakeRequest(GET, s"/notifications/unpulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+    protected val unpulledRequest = FakeRequest(GET, s"/notifications/unpulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+    protected val pulledRequest = FakeRequest(GET, s"/notifications/pulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
   }
 
   "GET /notifications/unpulled/:id" should {
@@ -104,7 +108,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     "return 200" in new Setup {
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(unpulledNotification)))
 
-      val result: Result = await(controller.unpulled(uuid)(request))
+      val result: Result = await(controller.unpulled(uuid)(unpulledRequest))
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe payload
@@ -118,7 +122,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(
         Some(Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), Some(DateTime.now().minusMinutes(minutes))))))
 
-      val result: Result = await(controller.unpulled(uuid)(request))
+      val result: Result = await(controller.unpulled(uuid)(unpulledRequest))
 
       status(result) shouldBe BAD_REQUEST
       string2xml(contentAsString(result)) shouldBe alreadyPulledError
@@ -142,7 +146,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     "return 404 if the notification is not found" in new Setup {
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(None))
 
-      val result: Result = await(controller.unpulled(uuid)(request))
+      val result: Result = await(controller.unpulled(uuid)(unpulledRequest))
 
       status(result) shouldBe NOT_FOUND
       string2xml(contentAsString(result)) shouldBe notFoundError
@@ -157,7 +161,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     "return 200" in new Setup {
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(pulledNotification)))
 
-      val result: Result = await(controller.pulled(uuid)(request))
+      val result: Result = await(controller.pulled(uuid)(pulledRequest))
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe payload
@@ -168,7 +172,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     "return 400 if requested notification is unpulled" in new Setup {
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), None))))
 
-      val result: Result = await(controller.pulled(uuid)(request))
+      val result: Result = await(controller.pulled(uuid)(pulledRequest))
 
       status(result) shouldBe BAD_REQUEST
       string2xml(contentAsString(result)) shouldBe unpulledError
@@ -192,7 +196,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     "return 404 if the notification is not found" in new Setup {
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(None))
 
-      val result: Result = await(controller.pulled(uuid)(request))
+      val result: Result = await(controller.pulled(uuid)(pulledRequest))
 
       status(result) shouldBe NOT_FOUND
       string2xml(contentAsString(result)) shouldBe notFoundError
@@ -201,4 +205,37 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
         .verify()
     }
   }
+
+  "GET /notifications/pulled" should {
+
+    "return 400 when the X-Client-ID header is not sent to the request" in new Setup {
+      val result = await(controller.getPulledByClientId()(FakeRequest(GET, "/notifications/pulled")))
+
+      status(result) shouldBe BAD_REQUEST
+
+    }
+
+    "return 200" in new Setup {
+      when(mockQueueService.get(clientId, Some(Pulled))).thenReturn(Future.successful(List(notification3, notification4)))
+
+      val request = FakeRequest(GET, "/notifications/pulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+      val result = await(controller.getPulledByClientId()(request))
+
+      status(result) shouldBe OK
+
+      val expectedJson = s"""{"notifications":["/notifications/pulled/${notification3.notificationId}","/notifications/pulled/${notification4.notificationId}"]}"""
+      bodyOf(result) shouldBe expectedJson
+    }
+
+    "return empty list if there are no notifications for a specific client id" in new Setup {
+      when(mockQueueService.get(clientId, Some(Pulled))).thenReturn(Future.successful(List()))
+
+      val request = FakeRequest(GET, "/notifications/pulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+      val result = await(controller.getPulledByClientId()(request))
+
+      status(result) shouldBe OK
+      bodyOf(result) shouldBe """{"notifications":[]}"""
+    }
+  }
+
 }

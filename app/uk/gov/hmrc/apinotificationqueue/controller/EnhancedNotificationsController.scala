@@ -23,8 +23,9 @@ import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import play.api.http.HttpEntity
+import play.api.libs.json.Json
 import play.api.mvc._
-import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus}
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, Notifications}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorNotFound, errorBadRequest}
@@ -47,6 +48,18 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
   private val badRequestPulledText = "Notification has been pulled"
   private val badRequestUnpulledText = "Notification is unpulled"
+
+  def getPulledByClientId: Action[AnyContent] = Action.async {
+    implicit request =>
+      request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(errorBadRequest(MISSING_CLIENT_ID_ERROR).XmlResult)) { clientId =>
+
+        val notificationIdPaths: Future[List[String]] = for {
+          notifications <- queueService.get(clientId, Some(Pulled))
+        } yield notifications.map("/notifications/pulled/" + _.notificationId)
+
+        notificationIdPaths.map(idPaths => Ok(Json.toJson(Notifications(idPaths))))
+      }
+  }
 
   def unpulled(id: UUID): Action[AnyContent] = pull(id, Unpulled)
   def pulled(id: UUID): Action[AnyContent] = pull(id, Pulled)

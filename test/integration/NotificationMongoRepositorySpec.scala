@@ -25,6 +25,7 @@ import play.api.libs.json.Json
 import reactivemongo.api.{Cursor, DB}
 import reactivemongo.play.json._
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification}
+import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationMongoRepository, NotificationRepositoryErrorHandler}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
@@ -144,18 +145,40 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId1, Notification2))
         await(repository.save(ClientId2, Notification3))
 
-        val notifications: List[Notification] = await(repository.fetch(ClientId1))
+        val notifications: List[Notification] = await(repository.fetch(ClientId1, None))
 
         notifications.size shouldBe 2
         notifications should contain(Notification1)
         notifications should contain(Notification2)
       }
 
+      "return all pulled notifications when found by clientId" in {
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
+        await(repository.save(ClientId2, Notification3))
+
+        val notifications: List[Notification] = await(repository.fetch(ClientId1, Some(Pulled)))
+
+        notifications.size shouldBe 1
+        notifications should contain(Notification2)
+      }
+
+      "return all unpulled notifications when found by clientId" in {
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId1, Notification2))
+        await(repository.save(ClientId2, Notification3))
+
+        val notifications: List[Notification] = await(repository.fetch(ClientId1, Some(Unpulled)))
+
+        notifications.size shouldBe 1
+        notifications should contain(Notification1)
+      }
+
       "return None when not found" in {
         await(repository.save(ClientId1, Notification1))
         await(repository.save(ClientId1, Notification2))
 
-        await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID")) shouldBe Nil
+        await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID", None)) shouldBe Nil
       }
     }
 
@@ -171,7 +194,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.delete(ClientId1, Notification1.notificationId)) shouldBe true
 
         collectionSize shouldBe 1
-        await(repository.fetch(ClientId1)).head shouldBe Notification2
+        await(repository.fetch(ClientId1, None)).head shouldBe Notification2
       }
 
       "return false when record not found" in {

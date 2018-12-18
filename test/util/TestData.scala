@@ -38,10 +38,11 @@ object TestData {
   val MinuteOfHour = 45
   val TimeReceived = new DateTime(Year, MonthOfYear, DayOfMonth, HourOfDay, MinuteOfHour, DateTimeZone.UTC)
   val LatestReceived = TimeReceived.plus(1)
+  val TimePulled = LatestReceived.plus(1)
 
   val Headers = Map("h1" -> "v1", "h2" -> "v2")
   val Notification1 = Notification(NotificationId1, Headers, Payload, TimeReceived, None)
-  val Notification2 = Notification(NotificationId2, Headers, Payload, LatestReceived, None)
+  val Notification2 = Notification(NotificationId2, Headers, Payload, LatestReceived, Some(TimePulled))
   val Notification3 = Notification(NotificationId3, Headers, Payload, TimeReceived, None)
   val Client1Notification1 = ClientNotification(ClientId1, Notification1)
   val Client1Notification2 = ClientNotification(ClientId1, Notification2)

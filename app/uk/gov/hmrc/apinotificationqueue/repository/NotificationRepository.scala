@@ -25,7 +25,8 @@ import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
 import reactivemongo.play.json._
-import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification}
+import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
+import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification, NotificationStatus}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -41,7 +42,7 @@ trait NotificationRepository {
 
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
-  def fetch(clientId: String): Future[List[Notification]]
+  def fetch(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[Notification]]
 
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
@@ -113,8 +114,14 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     collection.find(selector).one[ClientNotification].map(_.map(cn => cn.notification))
   }
 
-  override def fetch(clientId: String): Future[List[Notification]] = {
-    val selector = Json.obj("clientId" -> clientId)
+  override def fetch(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[Notification]] = {
+
+    val selector = notificationStatus match {
+      case Some(Pulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> true))
+      case Some(Unpulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> false))
+      case _ => Json.obj("clientId" -> clientId)
+    }
+
     collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{_.map(cn => cn.notification)}
   }
 
