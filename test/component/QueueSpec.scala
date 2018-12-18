@@ -17,16 +17,24 @@
 package component
 
 import org.scalatest.OptionValues._
-import org.scalatest.{FeatureSpec, GivenWhenThen, Matchers}
-import org.scalatestplus.play.guice._
+import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen, Matchers}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.{await, _}
 
 class QueueSpec extends FeatureSpec
   with GivenWhenThen
   with Matchers
-  with GuiceOneAppPerTest {
+  with GuiceOneAppPerSuite
+  with BeforeAndAfterEach {
+
+  private val componentTestConfigs: Map[String, Any] = Map(
+    "notification.email.delay" -> 30
+  )
+  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(componentTestConfigs).build()
 
   feature("Post, retrieve and delete a message from the queue") {
     info("As a 3rd Party system")
@@ -54,6 +62,39 @@ class QueueSpec extends FeatureSpec
 
       Then("you will receive a 204 response")
       status(deleteResult) shouldBe NO_CONTENT
+    }
+  }
+
+  feature("Post, pull and re-pull a message from the queue") {
+    info("As a 3rd Party system")
+    info("I want to successfully persist a notification")
+    info("So that I can pull it when needed")
+    info("And pull it again when needed")
+
+    scenario("3rd party system gets a message previously queued") {
+      Given("a message has already been queued")
+      val clientId = "aaaa"
+      val xmlBody = <xml><node>Stuff</node></xml>
+      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val location = queueResponse.header.headers("Location")
+      val notificationId = location.substring(location.length() - 36)
+
+      When("you make a GET based on the location header")
+      val unpulledResult = route(app, FakeRequest(GET, s"/notifications/unpulled/$notificationId", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+
+      Then("you will receive a 200 response")
+      status(unpulledResult) shouldBe OK
+      And("the message will be the same")
+      contentAsString(unpulledResult) shouldBe xmlBody.toString()
+      Thread.sleep(500)
+
+      When("you re-pull the message")
+      val pulledResult = route(app, FakeRequest(GET, s"/notifications/pulled/$notificationId", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+
+      Then("you will receive a 200 response")
+      status(pulledResult) shouldBe OK
+      And("you will receive the message again")
+      contentAsString(unpulledResult) shouldBe xmlBody.toString()
     }
   }
 }

@@ -96,7 +96,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
     "update a single notification" should {
       "be successful" in {
         val time = DateTime.now(DateTimeZone.UTC)
-        val updatedNotification = Notification1.copy(dateRead = Some(time))
+        val updatedNotification = Notification1.copy(datePulled = Some(time))
 
         when(mockErrorHandler.handleSaveError(any(), any(), any())).thenReturn(Notification1)
 

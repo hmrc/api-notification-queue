@@ -50,7 +50,7 @@ class WarningEmailSpec extends FeatureSpec
   private val Host = "localhost"
   private val wireMockServer = new WireMockServer(wireMockConfig().port(Port))
 
-  private val acceptanceTestConfigs: Map[String, Any] = Map(
+  private val componentTestConfigs: Map[String, Any] = Map(
     "notification.email.queueThreshold" -> 2,
     "notification.email.address" -> "some-email@domain.com",
     "notification.email.interval" -> 1,
@@ -59,7 +59,7 @@ class WarningEmailSpec extends FeatureSpec
     "microservice.services.email.port" -> Port
   )
 
-  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(acceptanceTestConfigs).build()
+  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(componentTestConfigs).build()
 
   private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
     collectionName = "notifications",
