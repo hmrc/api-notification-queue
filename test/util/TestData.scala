@@ -57,4 +57,7 @@ object TestData {
       "queueThreshold" -> "2"),
     force = false)
 
+  type EmulatedServiceFailure = UnsupportedOperationException
+  val emulatedServiceFailure = new EmulatedServiceFailure("Emulated service failure.")
+
 }

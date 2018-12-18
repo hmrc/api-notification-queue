@@ -119,7 +119,7 @@ lazy val playPublishingSettings: Seq[sbt.Setting[_]] = sbtrelease.ReleasePlugin.
 
 lazy val scoverageSettings: Seq[Setting[_]] = Seq(
   coverageExcludedPackages := "<empty>;com.kenshoo.play.metrics.*;.*definition.*;prod.*;testOnlyDoNotUseInAppConf.*;app.*;uk.gov.hmrc.BuildInfo;views.*;uk.gov.hmrc.apinotificationqueue.config.*",
-  coverageMinimum := 98,
+  coverageMinimum := 99,
   coverageFailOnMinimum := true,
   coverageHighlighting := true,
   parallelExecution in Test := false

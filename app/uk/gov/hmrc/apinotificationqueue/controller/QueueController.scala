@@ -31,8 +31,10 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
+//TODO: there needs to be a separate validation stage before main processing. At the moment validation responsibilities are sprayed throughout the code
 @Singleton()
 class QueueController @Inject()(queueService: QueueService,
                                 fieldsService: ApiSubscriptionFieldsService,
@@ -49,9 +51,9 @@ class QueueController @Inject()(queueService: QueueService,
   def save(): Action[AnyContent] = Action.async {
     implicit request => {
       val headers = request.headers
-      val message = headers.get("X-Conversation-ID").fold(s"[conversationId not found] Headers=$headers"){ cid => s"[conversationId=$cid]"}
-      cdsLogger.debug(s"saving request - $message")
-      getClientId(headers).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
+      val conversationIdMsg = headers.get("X-Conversation-ID").fold(s"[conversationId not found] Headers=$headers"){ cid => s"[conversationId=$cid]"}
+      cdsLogger.debug(s"saving request - $conversationIdMsg")
+      getClientId(headers, conversationIdMsg).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
         clientId =>
           request.body.asXml.fold(Future.successful(BadRequest(MISSING_BODY_ERROR))) { body =>
             queueService.save(
@@ -71,17 +73,33 @@ class QueueController @Inject()(queueService: QueueService,
     }
   }
 
-  private def getClientId(headers: Headers)(implicit hc: HeaderCarrier): Future[Option[String]] = {
+  private def getClientId(headers: Headers, conversationIdMsg: String)(implicit hc: HeaderCarrier): Future[Option[String]] = {
+
+    def maybeUuid(subscriptionFieldsId: String): Option[UUID] = Try(UUID.fromString(subscriptionFieldsId)) match {
+      case Success(uuid) => Some(uuid)
+      case Failure(_) => None
+    }
 
     def getClientIdFromSubId(headers: Headers): Future[Option[String]] = {
+
       val noResponse: Future[Option[String]] = Future.successful(None)
-      Try(headers.get(SUBSCRIPTION_FIELD_HEADER_NAME).fold(noResponse)(id => fieldsService.getClientId(UUID.fromString(id)))) match {
-        case Success(v) => v
-        case Failure(_) => noResponse
+      headers.get(SUBSCRIPTION_FIELD_HEADER_NAME).fold(noResponse){ subscriptionFieldsId =>
+        maybeUuid(subscriptionFieldsId).fold{
+          cdsLogger.error(s"$conversationIdMsg - Invalid UUID '$subscriptionFieldsId'")
+          noResponse
+        }
+        { uuid =>
+          fieldsService.getClientId(uuid).recoverWith{
+            case NonFatal(e) =>
+              cdsLogger.error(s"$conversationIdMsg - Error calling subscription fields id", e)
+              noResponse
+          }
+        }
       }
     }
 
-    headers.get(CLIENT_ID_HEADER_NAME).fold(getClientIdFromSubId(headers))(id => Future.successful(Some(id)))
+
+    headers.get(CLIENT_ID_HEADER_NAME).fold(getClientIdFromSubId(headers))(clientId => Future.successful(Some(clientId)))
   }
 
   def getAllByClientId: Action[AnyContent] = Action.async {
