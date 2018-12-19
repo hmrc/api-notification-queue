@@ -154,4 +154,28 @@ class QueueSpec extends FeatureSpec
       contentAsString(pulledListResult) shouldBe s"""{"notifications":["/notifications/pulled/$notificationId1","/notifications/pulled/$notificationId2"]}"""
     }
   }
+
+  feature("Post and then get a list of all unpulled messages from the queue") {
+    info("As a 3rd Party system")
+    info("I want to successfully persist notifications")
+    info("And then pull a list of all unpulled messages")
+
+    scenario("3rd party system gets a list of unpulled messages") {
+      Given("two messages have already been queued")
+      val clientId = "aaaa"
+      val xmlBody = <xml><node>Stuff</node></xml>
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val location1 = queueResponse1.header.headers("Location")
+      val notificationId1 = location1.substring(location1.length() - 36)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val location2 = queueResponse2.header.headers("Location")
+      val notificationId2 = location2.substring(location2.length() - 36)
+
+      When("you get a list of all unpulled messages")
+      val pulledListResult = route(app, FakeRequest(GET, s"/notifications/unpulled", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+
+      Then("you will receive a list of two unpulled messages")
+      contentAsString(pulledListResult) shouldBe s"""{"notifications":["/notifications/unpulled/$notificationId1","/notifications/unpulled/$notificationId2"]}"""
+    }
+  }
 }

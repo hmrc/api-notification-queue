@@ -114,6 +114,38 @@ curl -v -X GET "http://localhost:9648/notifications/pulled/ba544f92-b2dd-413e-be
 
 ---
 
+### GET `/notifications/unpulled`
+
+Retrieves a list of unpulled notifications.
+
+Required header: `X-Client-ID`.
+
+```
+curl -v -X GET "http://localhost:9648/notifications/unpulled" \
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+```
+
+#### Response
+200 OK code on successful get, otherwise an empty list.
+
+---
+
+### GET `/notifications/pulled`
+
+Retrieves a list of previously pulled notifications.
+
+Required header: `X-Client-ID`.
+
+```
+curl -v -X GET "http://localhost:9648/notifications/pulled" \
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+```
+
+#### Response
+200 OK code on successful get, otherwise an empty list.
+
+---
+
 ### Tests
 Some tests require MongoDB to run. 
 Thus, remember to start up MongoDB if you want to run the tests locally.

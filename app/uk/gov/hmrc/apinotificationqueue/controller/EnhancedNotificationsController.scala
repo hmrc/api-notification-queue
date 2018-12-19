@@ -49,13 +49,16 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
   private val badRequestPulledText = "Notification has been pulled"
   private val badRequestUnpulledText = "Notification is unpulled"
 
-  def getPulledByClientId: Action[AnyContent] = Action.async {
+  def getPulledByClientId: Action[AnyContent] = pullByClientId(Pulled)
+  def getUnpulledByClientId: Action[AnyContent] = pullByClientId(Unpulled)
+
+  private def pullByClientId(notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async {
     implicit request =>
       request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(errorBadRequest(MISSING_CLIENT_ID_ERROR).XmlResult)) { clientId =>
-
-        val notificationIdPaths: Future[List[String]] = for {
-          notifications <- queueService.get(clientId, Some(Pulled))
-        } yield notifications.map("/notifications/pulled/" + _.notificationId)
+        val notificationIdPaths: Future[List[String]] =
+          for {
+            notifications <- queueService.get(clientId, Some(notificationStatus))
+          } yield notifications.map(s"/notifications/$notificationStatus/" + _.notificationId)
 
         notificationIdPaths.map(idPaths => Ok(Json.toJson(Notifications(idPaths))))
       }
