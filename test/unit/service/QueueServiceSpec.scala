@@ -22,6 +22,7 @@ import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.play.test.UnitSpec
@@ -37,7 +38,7 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
     val clientId: String = "clientId"
 
     val notification1: Notification = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
-    val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID())
+    val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(DateTime.now()))
   }
 
   "QueueService" should {
@@ -59,11 +60,19 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
     }
 
     "Retrieve all the notifications (by client id) from the mongo repository" in new Setup {
-      when(mockNotificationRepository.fetch(clientId)).thenReturn(Future.successful(List(notification1, notification2)))
+      when(mockNotificationRepository.fetch(clientId, None)).thenReturn(Future.successful(List(notification1, notification2)))
 
-      await(queueService.get(clientId)) shouldBe List(notification1, notification2)
+      await(queueService.get(clientId, None)) shouldBe List(notification1, notification2)
 
-      verify(mockNotificationRepository).fetch(clientId)
+      verify(mockNotificationRepository).fetch(clientId, None)
+    }
+
+    "Retrieve all the pulled notifications by client id from the mongo repository" in new Setup {
+      when(mockNotificationRepository.fetch(clientId, Some(Pulled))).thenReturn(Future.successful(List(notification2)))
+
+      await(queueService.get(clientId, Some(Pulled))) shouldBe List(notification2)
+
+      verify(mockNotificationRepository).fetch(clientId, Some(Pulled))
     }
 
     "Retrieve the expected notification from the mongo repository" in new Setup {

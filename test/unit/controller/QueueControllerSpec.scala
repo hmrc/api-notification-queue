@@ -158,7 +158,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     }
 
     "return 200" in new Setup {
-      when(mockQueueService.get(clientId)).thenReturn(Future.successful(List(notification1, notification2)))
+      when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List(notification1, notification2)))
 
       val request = FakeRequest(GET, "/notifications", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(queueController.getAllByClientId()(request))
@@ -170,7 +170,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     }
 
     "return empty list if there are no notifications for a specific client id" in new Setup {
-      when(mockQueueService.get(clientId)).thenReturn(Future.successful(List()))
+      when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List()))
 
       val request = FakeRequest(GET, "/notifications", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(queueController.getAllByClientId()(request))

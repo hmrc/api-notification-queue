@@ -24,6 +24,12 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{await, _}
+import reactivemongo.bson.BSONObjectID
+import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
+import uk.gov.hmrc.mongo.ReactiveRepository
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class QueueSpec extends FeatureSpec
   with GivenWhenThen
@@ -35,6 +41,19 @@ class QueueSpec extends FeatureSpec
     "notification.email.delay" -> 30
   )
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(componentTestConfigs).build()
+  private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
+    collectionName = "notifications",
+    mongo = app.injector.instanceOf[MongoDbProvider].mongo,
+    domainFormat = ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats) {
+  }
+
+  override def beforeEach() {
+    await(repo.drop)
+  }
+
+  override def afterEach(): Unit = {
+    await(repo.drop)
+  }
 
   feature("Post, retrieve and delete a message from the queue") {
     info("As a 3rd Party system")
@@ -96,6 +115,43 @@ class QueueSpec extends FeatureSpec
       status(pulledResult) shouldBe OK
       And("you will receive the message again")
       contentAsString(unpulledResult) shouldBe xmlBody.toString()
+    }
+  }
+
+  feature("Post, pull messages and then get a list of all previously pulled messages from the queue") {
+    info("As a 3rd Party system")
+    info("I want to successfully persist notifications")
+    info("So that I can pull them when needed")
+    info("And then pull a list of all previously pulled messages")
+
+    scenario("3rd party system gets a list of previously pulled messages") {
+      Given("two messages have already been queued")
+      val clientId = "aaaa"
+      val xmlBody = <xml><node>Stuff</node></xml>
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val location1 = queueResponse1.header.headers("Location")
+      val notificationId1 = location1.substring(location1.length() - 36)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val location2 = queueResponse2.header.headers("Location")
+      val notificationId2 = location2.substring(location2.length() - 36)
+
+      When("you make a GET based on the location header for the first message")
+      val unpulledResult1 = route(app, FakeRequest(GET, s"/notifications/unpulled/$notificationId1", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+
+      Then("you will receive a 200 response")
+      status(unpulledResult1) shouldBe OK
+
+      When("you make a GET based on the location header for the second message")
+      val unpulledResult2 = route(app, FakeRequest(GET, s"/notifications/unpulled/$notificationId2", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+
+      Then("you will receive a 200 response")
+      status(unpulledResult2) shouldBe OK
+
+      When("you get a list of all previously pulled messages")
+      val pulledListResult = route(app, FakeRequest(GET, s"/notifications/pulled", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+
+      Then("you will receive a list of two previously pulled messages")
+      contentAsString(pulledListResult) shouldBe s"""{"notifications":["/notifications/pulled/$notificationId1","/notifications/pulled/$notificationId2"]}"""
     }
   }
 }

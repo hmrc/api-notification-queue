@@ -45,8 +45,8 @@ class QueueController @Inject()(queueService: QueueService,
   private val SUBSCRIPTION_FIELD_HEADER_NAME = "api-subscription-fields-id"
   private val CLIENT_ID_HEADER_NAME = "X-Client-ID"
 
-  private val MISSING_CLIENT_ID_ERROR = s"$CLIENT_ID_HEADER_NAME required."
-  private val MISSING_BODY_ERROR = s"Body required."
+  private val MISSING_CLIENT_ID_ERROR = s"$CLIENT_ID_HEADER_NAME required"
+  private val MISSING_BODY_ERROR = "Body required."
 
   def save(): Action[AnyContent] = Action.async {
     implicit request => {
@@ -107,7 +107,7 @@ class QueueController @Inject()(queueService: QueueService,
       request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
 
         val notificationIdPaths: Future[List[String]] = for {
-          notifications <- queueService.get(clientId)
+          notifications <- queueService.get(clientId, None)
         } yield notifications.map("/notification/" + _.notificationId)
 
         notificationIdPaths.map(idPaths => Ok(Json.toJson(Notifications(idPaths))))
