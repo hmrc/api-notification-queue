@@ -231,6 +231,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       when(mockQueueService.get(clientId, Some(Pulled))).thenReturn(Future.successful(List()))
 
       val request = FakeRequest(GET, "/notifications/pulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+
       val result = await(controller.getPulledByClientId()(request))
 
       status(result) shouldBe OK

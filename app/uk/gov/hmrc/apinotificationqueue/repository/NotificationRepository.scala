@@ -74,6 +74,11 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
         unique = true
       ),
       Index(
+        key = Seq("clientId" -> IndexType.Ascending, "notification.datePulled" -> IndexType.Ascending),
+        name = Some("clientId-datePulled-Index"),
+        unique = false
+      ),
+      Index(
         key = Seq("dateReceived" -> IndexType.Descending),
         name = Some("dateReceived-Index"),
         unique = false,

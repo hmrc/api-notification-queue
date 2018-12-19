@@ -118,11 +118,11 @@ class QueueSpec extends FeatureSpec
     }
   }
 
-  feature("Post, pull messages and then get a list of all pulled messages from the queue") {
+  feature("Post, pull messages and then get a list of all previously pulled messages from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist notifications")
     info("So that I can pull them when needed")
-    info("And then pull a list of all pulled messages")
+    info("And then pull a list of all previously pulled messages")
 
     scenario("3rd party system gets a list of previously pulled messages") {
       Given("two messages have already been queued")
@@ -147,10 +147,10 @@ class QueueSpec extends FeatureSpec
       Then("you will receive a 200 response")
       status(unpulledResult2) shouldBe OK
 
-      When("you get a list of all pulled messages")
+      When("you get a list of all previously pulled messages")
       val pulledListResult = route(app, FakeRequest(GET, s"/notifications/pulled", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
 
-      Then("you will receive a list of two unpulled messages")
+      Then("you will receive a list of two previously pulled messages")
       contentAsString(pulledListResult) shouldBe s"""{"notifications":["/notifications/pulled/$notificationId1","/notifications/pulled/$notificationId2"]}"""
     }
   }
