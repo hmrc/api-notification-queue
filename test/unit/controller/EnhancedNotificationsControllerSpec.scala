@@ -212,7 +212,6 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       val result = await(controller.getPulledByClientId()(FakeRequest(GET, "/notifications/pulled")))
 
       status(result) shouldBe BAD_REQUEST
-
     }
 
     "return 200" in new Setup {
@@ -233,6 +232,38 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       val request = FakeRequest(GET, "/notifications/pulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
 
       val result = await(controller.getPulledByClientId()(request))
+
+      status(result) shouldBe OK
+      bodyOf(result) shouldBe """{"notifications":[]}"""
+    }
+  }
+
+  "GET /notifications/unpulled" should {
+
+    "return 400 when the X-Client-ID header is not sent to the request" in new Setup {
+      val result = await(controller.getPulledByClientId()(FakeRequest(GET, "/notifications/unpulled")))
+
+      status(result) shouldBe BAD_REQUEST
+    }
+
+    "return 200" in new Setup {
+      when(mockQueueService.get(clientId, Some(Unpulled))).thenReturn(Future.successful(List(notification1, notification2)))
+
+      val request = FakeRequest(GET, "/notifications/unpulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+      val result = await(controller.getUnpulledByClientId()(request))
+
+      status(result) shouldBe OK
+
+      val expectedJson = s"""{"notifications":["/notifications/unpulled/${notification1.notificationId}","/notifications/unpulled/${notification2.notificationId}"]}"""
+      bodyOf(result) shouldBe expectedJson
+    }
+
+    "return empty list if there are no notifications for a specific client id" in new Setup {
+      when(mockQueueService.get(clientId, Some(Unpulled))).thenReturn(Future.successful(List()))
+
+      val request = FakeRequest(GET, "/notifications/unpulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+
+      val result = await(controller.getUnpulledByClientId()(request))
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe """{"notifications":[]}"""
