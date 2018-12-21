@@ -79,7 +79,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
         unique = false
       ),
       Index(
-        key = Seq("dateReceived" -> IndexType.Descending),
+        key = Seq("notification.dateReceived" -> IndexType.Descending),
         name = Some("dateReceived-Index"),
         unique = false,
         options = BSONDocument("expireAfterSeconds" -> BSONLong(config.ttlInSeconds))
