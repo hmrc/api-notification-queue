@@ -90,8 +90,16 @@ class EmailConnectorSpec extends UnitSpec
 
       await(connector.send(sendEmailRequest))
 
+      PassByNameVerifier(mockCdsLogger, "info")
+        .withByNameParam("""sending notification warnings email: {"to":["some-email@address.com"],"templateId":"some-template-id","parameters":{"parameters":"some-parameter"},"force":false}""")
+        .verify()
+
       verify(mockHttpClient).POST(ArgumentMatchers.eq("http://some-url/hmrc/email"), any[JsValue](), any[Seq[(String, String)]]())(
         any(), any(), any(), any())
+
+      PassByNameVerifier(mockCdsLogger, "debug")
+        .withByNameParam("response status from email service was 0")
+        .verify()
     }
 
     "log error when email service unavailable" in new Setup {

@@ -17,12 +17,12 @@
 package uk.gov.hmrc.apinotificationqueue.service
 
 import java.util.UUID
-import javax.inject.Inject
 
+import javax.inject.Inject
 import uk.gov.hmrc.apinotificationqueue.connector.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ApiSubscriptionFieldsService @Inject()(apiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector) {

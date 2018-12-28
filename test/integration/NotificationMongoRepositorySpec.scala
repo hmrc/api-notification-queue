@@ -28,9 +28,11 @@ import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notif
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationMongoRepository, NotificationRepositoryErrorHandler}
+import uk.gov.hmrc.customs.api.common.config.ServicesConfig
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
+import util.StubCdsLogger
 import util.TestData._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -45,10 +47,10 @@ class NotificationMongoRepositorySpec extends UnitSpec
     override val mongo: () => DB = self.mongo
   }
 
-  private val mockCdsLogger = mock[CdsLogger]
+  private val cdsLogger = new StubCdsLogger(mock[ServicesConfig])
   private val mockErrorHandler = mock[NotificationRepositoryErrorHandler]
   private val mockConfigService = mock[ApiNotificationQueueConfig]
-  private val repository = new NotificationMongoRepository(mongoDbProvider, mockErrorHandler, mockCdsLogger, mockConfigService)
+  private val repository = new NotificationMongoRepository(mongoDbProvider, mockErrorHandler, cdsLogger, mockConfigService)
 
   override def beforeEach() {
     super.beforeEach()

@@ -25,14 +25,14 @@ import org.joda.time.DateTimeZone.UTC
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
-import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, Notifications}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorNotFound, errorBadRequest}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Singleton

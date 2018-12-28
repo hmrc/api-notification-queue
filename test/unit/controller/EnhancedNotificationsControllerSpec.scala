@@ -115,6 +115,9 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       verify(mockQueueService).update(clientId, pulledNotification)
       header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
+      PassByNameVerifier(mockCdsLogger, "debug")
+        .withByNameParam("Pulling unpulled notification for id: 7c422a91-1df6-439c-b561-f2cf2d8978ef")
+        .verify()
     }
 
     "return 400 if requested notification has already been pulled" in new Setup {
@@ -167,6 +170,9 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       bodyOf(result) shouldBe payload
       header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
+      PassByNameVerifier(mockCdsLogger, "debug")
+        .withByNameParam("Pulling pulled notification for id: 7c422a91-1df6-439c-b561-f2cf2d8978ef")
+        .verify()
     }
 
     "return 400 if requested notification is unpulled" in new Setup {

@@ -19,7 +19,7 @@ package unit.service
 import akka.actor.ActorSystem
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.{any, eq => ameq}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
@@ -27,8 +27,9 @@ import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiNotificationQueueConfigService, WarningEmailPollingService}
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
+import uk.gov.hmrc.customs.api.common.config.ServicesConfig
 import uk.gov.hmrc.play.test.UnitSpec
+import util.StubCdsLogger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -43,7 +44,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
 
     val mockNotificationRepository = mock[NotificationRepository]
     val mockEmailConnector = mock[EmailConnector]
-    val mockCdsLogger = mock[CdsLogger]
+    val cdsLogger = new StubCdsLogger(mock[ServicesConfig])
     val mockConfig = mock[ApiNotificationQueueConfigService]
     val mockEmailConfig = mock[EmailConfig]
     val testActorSystem = ActorSystem("WarningEmailPollingService")
@@ -74,7 +75,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
   "WarningEmailPollingService" should {
     "send an email" in new Setup {
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockCdsLogger, mockConfig)
+      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
       //TODO investigate a way of not requiring sleep
@@ -90,7 +91,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
 
     "not send an email when no clients breach queue threshold" in new Setup {
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List.empty))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, mockCdsLogger, mockConfig)
+      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
 
       //TODO investigate a way of not requiring sleep
       Thread.sleep(oneThousand)

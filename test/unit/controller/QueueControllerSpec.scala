@@ -109,6 +109,9 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       verify(mockFieldsService, never()).getClientId(any())(any())
       status(result) shouldBe CREATED
       header(LOCATION, result) shouldBe Some(s"/notification/$uuid")
+      PassByNameVerifier(mockCdsLogger, "debug")
+        .withByNameParam("saving request - [conversationId not found] Headers=WrappedArray((x-client-id,abc123), (Content-Type,application/xml; charset=utf-8))")
+        .verify()
     }
 
     "return 201 when getting client id via subscription fields id" in new Setup {
