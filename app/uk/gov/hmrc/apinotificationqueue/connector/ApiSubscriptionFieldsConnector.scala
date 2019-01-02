@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,11 @@ package uk.gov.hmrc.apinotificationqueue.connector
 import java.util.UUID
 
 import javax.inject.Inject
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.apinotificationqueue.model.ApiNotificationQueueConfig
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 

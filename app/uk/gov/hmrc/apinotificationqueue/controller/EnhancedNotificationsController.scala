@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import play.api.http.HttpEntity
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
@@ -32,7 +33,6 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorNotFound, 
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Singleton
