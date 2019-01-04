@@ -26,7 +26,7 @@ import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
 import reactivemongo.play.json._
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
-import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification, NotificationStatus}
+import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification, NotificationStatus, NotificationWithIdOnly}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -43,6 +43,8 @@ trait NotificationRepository {
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
   def fetch(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[Notification]]
+
+  def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]]
 
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
@@ -152,6 +154,17 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
     lazy val errorMsg = s"Could not delete entity for selector: $selector"
     collection.remove(selector).map(notificationRepositoryErrorHandler.handleDeleteError(_, errorMsg))
+  }
+
+  override def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
+    val selector = notificationStatus match {
+      case Some(Pulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> true))
+      case Some(Unpulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> false))
+      case _ => Json.obj("clientId" -> clientId)
+    }
+    val projection = Json.obj("notification.notificationId" -> 1, "_id" -> 0)
+
+    collection.find(selector, projection).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
   }
 
 }

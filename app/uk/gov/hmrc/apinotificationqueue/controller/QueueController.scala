@@ -107,8 +107,8 @@ class QueueController @Inject()(queueService: QueueService,
       request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
 
         val notificationIdPaths: Future[List[String]] = for {
-          notifications <- queueService.get(clientId, None)
-        } yield notifications.map("/notification/" + _.notificationId)
+          notificationIds <- queueService.get(clientId, None)
+        } yield notificationIds.map("/notification/" + _.notification.notificationId.toString)
 
         notificationIdPaths.map(idPaths => Ok(Json.toJson(Notifications(idPaths))))
       }

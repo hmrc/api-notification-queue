@@ -28,15 +28,15 @@ import play.api.mvc.{AnyContentAsEmpty, Headers, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, EnhancedNotificationsController, NotificationIdGenerator}
-import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.XmlUtil.string2xml
-import scala.xml.Utility.trim
 
+import scala.xml.Utility.trim
 import scala.concurrent.Future
 
 class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
@@ -221,14 +221,17 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     }
 
     "return 200" in new Setup {
-      when(mockQueueService.get(clientId, Some(Pulled))).thenReturn(Future.successful(List(notification3, notification4)))
+      val NotificationWithIdOnly3 = NotificationWithIdOnly(NotificationId(notification3.notificationId))
+      val NotificationWithIdOnly4 = NotificationWithIdOnly(NotificationId(notification4.notificationId))
+
+      when(mockQueueService.get(clientId, Some(Pulled))).thenReturn(Future.successful(List(NotificationWithIdOnly3, NotificationWithIdOnly4)))
 
       val request = FakeRequest(GET, "/notifications/pulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(controller.getPulledByClientId()(request))
 
       status(result) shouldBe OK
 
-      val expectedJson = s"""{"notifications":["/notifications/pulled/${notification3.notificationId}","/notifications/pulled/${notification4.notificationId}"]}"""
+      val expectedJson = s"""{"notifications":["/notifications/pulled/${notification3.notificationId.toString}","/notifications/pulled/${notification4.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
     }
 
@@ -253,14 +256,17 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     }
 
     "return 200" in new Setup {
-      when(mockQueueService.get(clientId, Some(Unpulled))).thenReturn(Future.successful(List(notification1, notification2)))
+      val NotificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(notification1.notificationId))
+      val NotificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(notification2.notificationId))
+
+      when(mockQueueService.get(clientId, Some(Unpulled))).thenReturn(Future.successful(List(NotificationWithIdOnly1, NotificationWithIdOnly2)))
 
       val request = FakeRequest(GET, "/notifications/unpulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(controller.getUnpulledByClientId()(request))
 
       status(result) shouldBe OK
 
-      val expectedJson = s"""{"notifications":["/notifications/unpulled/${notification1.notificationId}","/notifications/unpulled/${notification2.notificationId}"]}"""
+      val expectedJson = s"""{"notifications":["/notifications/unpulled/${notification1.notificationId.toString}","/notifications/unpulled/${notification2.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
     }
 

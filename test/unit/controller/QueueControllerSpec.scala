@@ -28,7 +28,7 @@ import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, NotificationIdGenerator, QueueController}
-import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -161,14 +161,17 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     }
 
     "return 200" in new Setup {
-      when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List(notification1, notification2)))
+      val NotificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(notification1.notificationId))
+      val NotificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(notification2.notificationId))
+
+      when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List(NotificationWithIdOnly1, NotificationWithIdOnly2)))
 
       val request = FakeRequest(GET, "/notifications", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(queueController.getAllByClientId()(request))
 
       status(result) shouldBe OK
 
-      val expectedJson = s"""{"notifications":["/notification/${notification1.notificationId}","/notification/${notification2.notificationId}"]}"""
+      val expectedJson = s"""{"notifications":["/notification/${notification1.notificationId.toString}","/notification/${notification2.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
     }
 

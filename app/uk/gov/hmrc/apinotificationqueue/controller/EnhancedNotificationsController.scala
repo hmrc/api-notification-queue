@@ -57,8 +57,8 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
       request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(errorBadRequest(MISSING_CLIENT_ID_ERROR).XmlResult)) { clientId =>
         val notificationIdPaths: Future[List[String]] =
           for {
-            notifications <- queueService.get(clientId, Some(notificationStatus))
-          } yield notifications.map(s"/notifications/$notificationStatus/" + _.notificationId)
+            notificationIds <- queueService.get(clientId, Some(notificationStatus))
+          } yield notificationIds.map(s"/notifications/$notificationStatus/" + _.notification.notificationId.toString)
 
         notificationIdPaths.map(idPaths => Ok(Json.toJson(Notifications(idPaths))))
       }

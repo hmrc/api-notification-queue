@@ -27,6 +27,16 @@ object NotificationStatus extends Enumeration {
   val Pulled = Value("pulled")
 }
 
+case class NotificationId(notificationId: UUID)
+object NotificationId {
+  implicit val notificationIdJF = Json.format[NotificationId]
+}
+
+case class NotificationWithIdOnly(notification: NotificationId)
+object NotificationWithIdOnly {
+  implicit val notificationWithIdOnlyJF = Json.format[NotificationWithIdOnly]
+}
+
 case class Notification(notificationId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime, datePulled: Option[DateTime])
 
 object Notification {
