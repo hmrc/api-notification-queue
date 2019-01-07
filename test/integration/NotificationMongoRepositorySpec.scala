@@ -179,7 +179,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId1, Notification1))
         await(repository.save(ClientId1, Notification2))
 
-        await(repository.fetch("DOES_NOT_EXIST_CLIENT_ID", None)) shouldBe Nil
+        await(repository.fetchNotificationIds("DOES_NOT_EXIST_CLIENT_ID", None)) shouldBe Nil
       }
     }
 
@@ -195,7 +195,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.delete(ClientId1, Notification1.notificationId)) shouldBe true
 
         collectionSize shouldBe 1
-        await(repository.fetch(ClientId1, None)).head shouldBe Notification2
+        await(repository.fetchNotificationIds(ClientId1, None)).head shouldBe NotificationWithIdOnly(NotificationId(Notification2.notificationId))
       }
 
       "return false when record not found" in {

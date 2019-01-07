@@ -42,8 +42,6 @@ trait NotificationRepository {
 
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
-  def fetch(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[Notification]]
-
   def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]]
 
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
@@ -119,17 +117,6 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
     val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
     collection.find(selector).one[ClientNotification].map(_.map(cn => cn.notification))
-  }
-
-  override def fetch(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[Notification]] = {
-
-    val selector = notificationStatus match {
-      case Some(Pulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> true))
-      case Some(Unpulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> false))
-      case _ => Json.obj("clientId" -> clientId)
-    }
-
-    collection.find(selector).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()).map{_.map(cn => cn.notification)}
   }
 
   override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
