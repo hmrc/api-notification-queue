@@ -19,7 +19,7 @@ package uk.gov.hmrc.apinotificationqueue.service
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus}
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationWithIdOnly, NotificationStatus}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 
 import scala.concurrent.Future
@@ -27,8 +27,8 @@ import scala.concurrent.Future
 @Singleton()
 class QueueService @Inject()(notificationRepo: NotificationRepository) {
 
-  def get(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[Notification]] = {
-    notificationRepo.fetch(clientId, notificationStatus)
+  def get(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
+    notificationRepo.fetchNotificationIds(clientId, notificationStatus)
   }
 
   def get(clientId: String, id: UUID): Future[Option[Notification]] = {

@@ -28,7 +28,7 @@ import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, NotificationIdGenerator, QueueController}
-import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -48,9 +48,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   trait Setup {
     val clientId = "abc123"
     val uuid = UUID.randomUUID()
-
-    val notification1 = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
-    val notification2 = notification1.copy(notificationId = UUID.randomUUID())
 
     class StaticIDGenerator extends NotificationIdGenerator {
       override def generateId(): UUID = uuid
@@ -79,7 +76,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     }
 
     "return 400 when the `api-subscription-fields-id` isn't a UUID" in new Setup {
-
       val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> "NOT-A_UUID"), AnyContentAsEmpty)))
 
       status(result) shouldBe BAD_REQUEST
@@ -104,6 +100,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       private val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
+
       val result = await(queueController.save()(request))
 
       verify(mockFieldsService, never()).getClientId(any())(any())
@@ -122,6 +119,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Some(clientId))
+
       val result = queueController.save()(request)
 
       status(result) shouldBe CREATED
@@ -140,13 +138,13 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Future.failed(emulatedServiceFailure))
+
       val result = await(queueController.save()(request))
 
       PassByNameVerifier(mockCdsLogger, "error")
         .withByNameParam("[conversationId=test-conversation-id] - Error calling subscription fields id")
         .withByNameParamMatcher(any[EmulatedServiceFailure])
         .verify()
-
     }
 
   }
@@ -157,25 +155,25 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       val result = await(queueController.getAllByClientId()(FakeRequest(GET, "/notifications")))
 
       status(result) shouldBe BAD_REQUEST
-
     }
 
     "return 200" in new Setup {
-      when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List(notification1, notification2)))
-
+      val notificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(UUID.randomUUID()))
+      val notificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(UUID.randomUUID()))
+      when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List(notificationWithIdOnly1, notificationWithIdOnly2)))
       val request = FakeRequest(GET, "/notifications", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+
       val result = await(queueController.getAllByClientId()(request))
 
       status(result) shouldBe OK
-
-      val expectedJson = s"""{"notifications":["/notification/${notification1.notificationId}","/notification/${notification2.notificationId}"]}"""
+      val expectedJson = s"""{"notifications":["/notification/${notificationWithIdOnly1.notification.notificationId.toString}","/notification/${notificationWithIdOnly2.notification.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
     }
 
     "return empty list if there are no notifications for a specific client id" in new Setup {
       when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List()))
-
       val request = FakeRequest(GET, "/notifications", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+
       val result = await(queueController.getAllByClientId()(request))
 
       status(result) shouldBe OK
@@ -194,21 +192,20 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     "return 200" in new Setup {
       val payload = "<xml>a</xml>"
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), None))))
-
       val request = FakeRequest(GET, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+
       val result = await(queueController.get(uuid)(request))
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe payload
-
       header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
     }
 
     "return 404 if the notification is not found" in new Setup {
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(None))
-
       val request = FakeRequest(GET, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+
       val result = await(queueController.get(uuid)(request))
 
       status(result) shouldBe NOT_FOUND
@@ -226,8 +223,8 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
     "return 204 if the notification is deleted" in new Setup {
       when(mockQueueService.delete(clientId, uuid)).thenReturn(Future.successful(true))
-
       val request = FakeRequest(DELETE, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+
       val result = await(queueController.delete(uuid)(request))
 
       status(result) shouldBe NO_CONTENT
@@ -235,8 +232,8 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
     "return 404 if the notification is not found" in new Setup {
       when(mockQueueService.delete(clientId, uuid)).thenReturn(Future.successful(false))
-
       val request = FakeRequest(DELETE, s"/notification/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+
       val result = await(queueController.delete(uuid)(request))
 
       status(result) shouldBe NOT_FOUND

@@ -21,7 +21,7 @@ import java.util.UUID
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.apinotificationqueue.model.Notification
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
@@ -39,6 +39,9 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
     val notification1: Notification = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
     val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(DateTime.now()))
+
+    val notificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(notification1.notificationId))
+    val notificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(notification2.notificationId))
   }
 
   "QueueService" should {
@@ -59,20 +62,20 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
       verify(mockNotificationRepository).update(clientId, notification1)
     }
 
-    "Retrieve all the notifications (by client id) from the mongo repository" in new Setup {
-      when(mockNotificationRepository.fetch(clientId, None)).thenReturn(Future.successful(List(notification1, notification2)))
+    "Retrieve all the notificationIds (by client id) from the mongo repository" in new Setup {
+      when(mockNotificationRepository.fetchNotificationIds(clientId, None)).thenReturn(Future.successful(List(notificationWithIdOnly1, notificationWithIdOnly2)))
 
-      await(queueService.get(clientId, None)) shouldBe List(notification1, notification2)
+      await(queueService.get(clientId, None)) shouldBe List(notificationWithIdOnly1, notificationWithIdOnly2)
 
-      verify(mockNotificationRepository).fetch(clientId, None)
+      verify(mockNotificationRepository).fetchNotificationIds(clientId, None)
     }
 
-    "Retrieve all the pulled notifications by client id from the mongo repository" in new Setup {
-      when(mockNotificationRepository.fetch(clientId, Some(Pulled))).thenReturn(Future.successful(List(notification2)))
+    "Retrieve all the pulled notificationIds by client id from the mongo repository" in new Setup {
+      when(mockNotificationRepository.fetchNotificationIds(clientId, Some(Pulled))).thenReturn(Future.successful(List(notificationWithIdOnly2)))
 
-      await(queueService.get(clientId, Some(Pulled))) shouldBe List(notification2)
+      await(queueService.get(clientId, Some(Pulled))) shouldBe List(notificationWithIdOnly2)
 
-      verify(mockNotificationRepository).fetch(clientId, Some(Pulled))
+      verify(mockNotificationRepository).fetchNotificationIds(clientId, Some(Pulled))
     }
 
     "Retrieve the expected notification from the mongo repository" in new Setup {
