@@ -79,10 +79,8 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     protected val clientId = "abc123"
     protected val uuid: UUID = UUID.fromString("7c422a91-1df6-439c-b561-f2cf2d8978ef")
 
-    protected val notification1 = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
-    protected val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID())
-    protected val notification3: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(DateTime.now()))
-    protected val notification4: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(DateTime.now()))
+    val notificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(UUID.randomUUID()))
+    val notificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(UUID.randomUUID()))
 
     class StaticIDGenerator extends NotificationIdGenerator {
       override def generateId(): UUID = uuid
@@ -221,17 +219,14 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     }
 
     "return 200" in new Setup {
-      val NotificationWithIdOnly3 = NotificationWithIdOnly(NotificationId(notification3.notificationId))
-      val NotificationWithIdOnly4 = NotificationWithIdOnly(NotificationId(notification4.notificationId))
-
-      when(mockQueueService.get(clientId, Some(Pulled))).thenReturn(Future.successful(List(NotificationWithIdOnly3, NotificationWithIdOnly4)))
+      when(mockQueueService.get(clientId, Some(Pulled))).thenReturn(Future.successful(List(notificationWithIdOnly1, notificationWithIdOnly2)))
 
       val request = FakeRequest(GET, "/notifications/pulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(controller.getPulledByClientId()(request))
 
       status(result) shouldBe OK
 
-      val expectedJson = s"""{"notifications":["/notifications/pulled/${notification3.notificationId.toString}","/notifications/pulled/${notification4.notificationId.toString}"]}"""
+      val expectedJson = s"""{"notifications":["/notifications/pulled/${notificationWithIdOnly1.notification.notificationId.toString}","/notifications/pulled/${notificationWithIdOnly2.notification.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
     }
 
@@ -256,17 +251,14 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     }
 
     "return 200" in new Setup {
-      val NotificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(notification1.notificationId))
-      val NotificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(notification2.notificationId))
-
-      when(mockQueueService.get(clientId, Some(Unpulled))).thenReturn(Future.successful(List(NotificationWithIdOnly1, NotificationWithIdOnly2)))
+      when(mockQueueService.get(clientId, Some(Unpulled))).thenReturn(Future.successful(List(notificationWithIdOnly1, notificationWithIdOnly2)))
 
       val request = FakeRequest(GET, "/notifications/unpulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(controller.getUnpulledByClientId()(request))
 
       status(result) shouldBe OK
 
-      val expectedJson = s"""{"notifications":["/notifications/unpulled/${notification1.notificationId.toString}","/notifications/unpulled/${notification2.notificationId.toString}"]}"""
+      val expectedJson = s"""{"notifications":["/notifications/unpulled/${notificationWithIdOnly1.notification.notificationId.toString}","/notifications/unpulled/${notificationWithIdOnly2.notification.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
     }
 

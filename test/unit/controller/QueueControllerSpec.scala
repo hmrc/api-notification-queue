@@ -49,9 +49,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     val clientId = "abc123"
     val uuid = UUID.randomUUID()
 
-    val notification1 = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
-    val notification2 = notification1.copy(notificationId = UUID.randomUUID())
-
     class StaticIDGenerator extends NotificationIdGenerator {
       override def generateId(): UUID = uuid
     }
@@ -79,7 +76,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     }
 
     "return 400 when the `api-subscription-fields-id` isn't a UUID" in new Setup {
-
       val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> "NOT-A_UUID"), AnyContentAsEmpty)))
 
       status(result) shouldBe BAD_REQUEST
@@ -103,7 +99,9 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       </xml>
       private val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
+
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
+
       val result = await(queueController.save()(request))
 
       verify(mockFieldsService, never()).getClientId(any())(any())
@@ -120,8 +118,10 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       </xml>
       private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
+
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Some(clientId))
+
       val result = queueController.save()(request)
 
       status(result) shouldBe CREATED
@@ -138,15 +138,16 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       </xml>
       private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
+
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Future.failed(emulatedServiceFailure))
+
       val result = await(queueController.save()(request))
 
       PassByNameVerifier(mockCdsLogger, "error")
         .withByNameParam("[conversationId=test-conversation-id] - Error calling subscription fields id")
         .withByNameParamMatcher(any[EmulatedServiceFailure])
         .verify()
-
     }
 
   }
@@ -157,21 +158,20 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       val result = await(queueController.getAllByClientId()(FakeRequest(GET, "/notifications")))
 
       status(result) shouldBe BAD_REQUEST
-
     }
 
     "return 200" in new Setup {
-      val NotificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(notification1.notificationId))
-      val NotificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(notification2.notificationId))
+      val notificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(UUID.randomUUID()))
+      val notificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(UUID.randomUUID()))
 
-      when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List(NotificationWithIdOnly1, NotificationWithIdOnly2)))
+      when(mockQueueService.get(clientId, None)).thenReturn(Future.successful(List(notificationWithIdOnly1, notificationWithIdOnly2)))
 
       val request = FakeRequest(GET, "/notifications", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
       val result = await(queueController.getAllByClientId()(request))
 
       status(result) shouldBe OK
 
-      val expectedJson = s"""{"notifications":["/notification/${notification1.notificationId.toString}","/notification/${notification2.notificationId.toString}"]}"""
+      val expectedJson = s"""{"notifications":["/notification/${notificationWithIdOnly1.notification.notificationId.toString}","/notification/${notificationWithIdOnly2.notification.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
     }
 
