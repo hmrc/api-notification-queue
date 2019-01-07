@@ -27,7 +27,7 @@ object NotificationStatus extends Enumeration {
   val Pulled = Value("pulled")
 }
 
-case class NotificationId(notificationId: UUID)
+case class NotificationId(notificationId: UUID) extends AnyVal
 object NotificationId {
   implicit val notificationIdJF = Json.format[NotificationId]
 }

@@ -99,7 +99,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       </xml>
       private val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
-
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
 
       val result = await(queueController.save()(request))
@@ -118,7 +117,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       </xml>
       private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
-
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Some(clientId))
 
@@ -138,7 +136,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       </xml>
       private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
-
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(Future.failed(emulatedServiceFailure))
 
