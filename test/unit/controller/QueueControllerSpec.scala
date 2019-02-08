@@ -28,9 +28,9 @@ import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, NotificationIdGenerator, QueueController}
-import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly}
+import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly, SeqOfHeader}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData._
@@ -55,9 +55,9 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
     val mockQueueService = mock[QueueService]
     val mockFieldsService = mock[ApiSubscriptionFieldsService]
-    val mockCdsLogger = mock[CdsLogger]
+    val mockLogger = mock[NotificationLogger]
     val mockDateTimeProvider = mock[DateTimeProvider]
-    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockDateTimeProvider, mockCdsLogger)
+    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockDateTimeProvider, mockLogger)
   }
 
   "POST /queue" should {
@@ -79,10 +79,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> "NOT-A_UUID"), AnyContentAsEmpty)))
 
       status(result) shouldBe BAD_REQUEST
-      PassByNameVerifier(mockCdsLogger, "error")
-        .withByNameParam("[conversationId not found] Headers=WrappedArray((api-subscription-fields-id,NOT-A_UUID)) - Invalid UUID 'NOT-A_UUID'")
-        .verify()
-
+      verifyLogWithHeaders(mockLogger, "error", "invalid subscriptionFieldsId NOT-A_UUID")
     }
 
     "return 400 if the request has no payload" in new Setup {
@@ -106,9 +103,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       verify(mockFieldsService, never()).getClientId(any())(any())
       status(result) shouldBe CREATED
       header(LOCATION, result) shouldBe Some(s"/notification/$uuid")
-      PassByNameVerifier(mockCdsLogger, "debug")
-        .withByNameParam("saving request - [conversationId not found] Headers=WrappedArray((x-client-id,abc123), (Content-Type,application/xml; charset=utf-8))")
-        .verify()
+      verifyLogWithHeaders(mockLogger, "debug", "saving request", request.headers.headers)
     }
 
     "return 201 when getting client id via subscription fields id" in new Setup {
@@ -141,10 +136,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
       val result = await(queueController.save()(request))
 
-      PassByNameVerifier(mockCdsLogger, "error")
-        .withByNameParam("[conversationId=test-conversation-id] - Error calling subscription fields id")
-        .withByNameParamMatcher(any[EmulatedServiceFailure])
-        .verify()
+      verifyLogWithHeaders(mockLogger, "error", "Error calling subscription fields id due to Emulated service failure.", request.headers.headers)
     }
 
   }
@@ -239,6 +231,20 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       status(result) shouldBe NOT_FOUND
       bodyOf(result) shouldBe "NOT FOUND"
     }
+  }
+
+  private def verifyLogWithHeaders(logger: NotificationLogger, method: String, message: String): Unit = {
+    PassByNameVerifier(logger, method)
+      .withByNameParam(message)
+      .withByNameParamMatcher(any[SeqOfHeader])
+      .verify()
+  }
+
+  private def verifyLogWithHeaders(logger: NotificationLogger, method: String, message: String, headers: SeqOfHeader): Unit = {
+    PassByNameVerifier(logger, method)
+      .withByNameParam(message)
+      .withByNameParam(headers)
+      .verify()
   }
 
 }

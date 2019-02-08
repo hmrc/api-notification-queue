@@ -24,11 +24,12 @@ import play.api.http.HttpEntity
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc._
+import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{X_CLIENT_ID_HEADER_NAME, API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME}
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -40,27 +41,23 @@ class QueueController @Inject()(queueService: QueueService,
                                 fieldsService: ApiSubscriptionFieldsService,
                                 idGenerator: NotificationIdGenerator,
                                 dateTimeProvider: DateTimeProvider,
-                                cdsLogger: CdsLogger) extends BaseController {
+                                logger: NotificationLogger) extends BaseController {
 
-  private val SUBSCRIPTION_FIELD_HEADER_NAME = "api-subscription-fields-id"
-  private val CLIENT_ID_HEADER_NAME = "X-Client-ID"
-
-  private val MISSING_CLIENT_ID_ERROR = s"$CLIENT_ID_HEADER_NAME required"
+  private val MISSING_CLIENT_ID_ERROR = s"$X_CLIENT_ID_HEADER_NAME required"
   private val MISSING_BODY_ERROR = "Body required."
 
   def save(): Action[AnyContent] = Action.async {
     implicit request => {
       val headers = request.headers
-      val conversationIdMsg = headers.get("X-Conversation-ID").fold(s"[conversationId not found] Headers=$headers"){ cid => s"[conversationId=$cid]"}
-      cdsLogger.debug(s"saving request - $conversationIdMsg")
-      getClientId(headers, conversationIdMsg).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
+      logger.debug(s"saving request", headers.headers)
+      getClientId(headers).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
         clientId =>
           request.body.asXml.fold(Future.successful(BadRequest(MISSING_BODY_ERROR))) { body =>
             queueService.save(
               clientId,
               Notification(
                 idGenerator.generateId(),
-                headers.remove(CLIENT_ID_HEADER_NAME, SUBSCRIPTION_FIELD_HEADER_NAME).toSimpleMap,
+                headers.remove(X_CLIENT_ID_HEADER_NAME, API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME).toSimpleMap,
                 body.toString(),
                 dateTimeProvider.now(),
                 None
@@ -73,7 +70,7 @@ class QueueController @Inject()(queueService: QueueService,
     }
   }
 
-  private def getClientId(headers: Headers, conversationIdMsg: String)(implicit hc: HeaderCarrier): Future[Option[String]] = {
+  private def getClientId(headers: Headers)(implicit hc: HeaderCarrier): Future[Option[String]] = {
 
     def maybeUuid(subscriptionFieldsId: String): Option[UUID] = Try(UUID.fromString(subscriptionFieldsId)) match {
       case Success(uuid) => Some(uuid)
@@ -83,15 +80,15 @@ class QueueController @Inject()(queueService: QueueService,
     def getClientIdFromSubId(headers: Headers): Future[Option[String]] = {
 
       val noResponse: Future[Option[String]] = Future.successful(None)
-      headers.get(SUBSCRIPTION_FIELD_HEADER_NAME).fold(noResponse){ subscriptionFieldsId =>
+      headers.get(API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME).fold(noResponse){ subscriptionFieldsId =>
         maybeUuid(subscriptionFieldsId).fold{
-          cdsLogger.error(s"$conversationIdMsg - Invalid UUID '$subscriptionFieldsId'")
+          logger.error(s"invalid subscriptionFieldsId $subscriptionFieldsId", headers.headers)
           noResponse
         }
         { uuid =>
           fieldsService.getClientId(uuid).recoverWith{
             case NonFatal(e) =>
-              cdsLogger.error(s"$conversationIdMsg - Error calling subscription fields id", e)
+              logger.error(s"Error calling subscription fields id due to ${e.getMessage}", headers.headers)
               noResponse
           }
         }
@@ -99,12 +96,12 @@ class QueueController @Inject()(queueService: QueueService,
     }
 
 
-    headers.get(CLIENT_ID_HEADER_NAME).fold(getClientIdFromSubId(headers))(clientId => Future.successful(Some(clientId)))
+    headers.get(X_CLIENT_ID_HEADER_NAME).fold(getClientIdFromSubId(headers))(clientId => Future.successful(Some(clientId)))
   }
 
   def getAllByClientId: Action[AnyContent] = Action.async {
     implicit request =>
-      request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
+      request.headers.get(X_CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
 
         val notificationIdPaths: Future[List[String]] = for {
           notificationIds <- queueService.get(clientId, None)
@@ -115,7 +112,7 @@ class QueueController @Inject()(queueService: QueueService,
   }
 
   def get(id: UUID): Action[AnyContent] = Action.async { implicit request =>
-    request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
+    request.headers.get(X_CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
       val notification = queueService.get(clientId, id)
       notification.map(opt =>
         opt.fold(NotFound("NOT FOUND"))(
@@ -129,7 +126,7 @@ class QueueController @Inject()(queueService: QueueService,
   }
 
   def delete(id: UUID): Action[AnyContent] = Action.async { implicit request =>
-    request.headers.get(CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
+    request.headers.get(X_CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
       val futureDeleted = queueService.delete(clientId, id)
       futureDeleted.map(deleted =>
         if (deleted) {
