@@ -24,12 +24,12 @@ import play.api.http.HttpEntity
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc._
+import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME, X_CLIENT_ID_HEADER_NAME}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{X_CLIENT_ID_HEADER_NAME, API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME}
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -46,28 +46,31 @@ class QueueController @Inject()(queueService: QueueService,
   private val MISSING_CLIENT_ID_ERROR = s"$X_CLIENT_ID_HEADER_NAME required"
   private val MISSING_BODY_ERROR = "Body required."
 
-  def save(): Action[AnyContent] = Action.async {
-    implicit request => {
-      val headers = request.headers
-      logger.debug(s"saving request", headers.headers)
-      getClientId(headers).flatMap(_.fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) {
-        clientId =>
-          request.body.asXml.fold(Future.successful(BadRequest(MISSING_BODY_ERROR))) { body =>
-            queueService.save(
-              clientId,
-              Notification(
-                idGenerator.generateId(),
-                headers.remove(X_CLIENT_ID_HEADER_NAME, API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME).toSimpleMap,
-                body.toString(),
-                dateTimeProvider.now(),
-                None
-              )
-            ).map(notification =>
-              Result(ResponseHeader(CREATED, Map(LOCATION -> routes.QueueController.get(notification.notificationId).url)), HttpEntity.NoEntity))
-          }
-
-      })
-    }
+  def save(): Action[AnyContent] = Action.async { implicit request =>
+    val headers = request.headers
+    logger.info(s"saving request", headers.headers)
+    getClientId(headers).flatMap(_.fold {
+      logger.error(s"missing $X_CLIENT_ID_HEADER_NAME header when saving", headers.headers)
+      Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))
+    } {
+      clientId =>
+        request.body.asXml.fold{
+          logger.error("missing body when saving", headers.headers)
+          Future.successful(BadRequest(MISSING_BODY_ERROR))
+        } { body =>
+          queueService.save(
+            clientId,
+            Notification(
+              idGenerator.generateId(),
+              headers.remove(X_CLIENT_ID_HEADER_NAME, API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME).toSimpleMap,
+              body.toString(),
+              dateTimeProvider.now(),
+              None
+            )
+          ).map(notification =>
+            Result(ResponseHeader(CREATED, Map(LOCATION -> routes.QueueController.get(notification.notificationId).url)), HttpEntity.NoEntity))
+        }
+    })
   }
 
   private def getClientId(headers: Headers)(implicit hc: HeaderCarrier): Future[Option[String]] = {
@@ -95,46 +98,73 @@ class QueueController @Inject()(queueService: QueueService,
       }
     }
 
-
     headers.get(X_CLIENT_ID_HEADER_NAME).fold(getClientIdFromSubId(headers))(clientId => Future.successful(Some(clientId)))
   }
 
-  def getAllByClientId: Action[AnyContent] = Action.async {
-    implicit request =>
-      request.headers.get(X_CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
+  def getAllByClientId: Action[AnyContent] = Action.async { implicit request =>
 
+    logger.info("getting all notifications", request.headers.headers)
+    validateHeader(request.headers, "getAllByClientId") match {
+      case Left(errorResponse) => Future.successful(BadRequest(errorResponse))
+      case Right(clientId) =>
         val notificationIdPaths: Future[List[String]] = for {
           notificationIds <- queueService.get(clientId, None)
         } yield notificationIds.map("/notification/" + _.notification.notificationId.toString)
 
-        notificationIdPaths.map(idPaths => Ok(Json.toJson(Notifications(idPaths))))
-      }
+        notificationIdPaths.map { idPaths =>
+          val json = Json.toJson(Notifications(idPaths))
+          logger.debug(s"listing all notifications $json", request.headers.headers)
+          Ok(json)
+        }
+    }
   }
 
   def get(id: UUID): Action[AnyContent] = Action.async { implicit request =>
-    request.headers.get(X_CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
-      val notification = queueService.get(clientId, id)
-      notification.map(opt =>
-        opt.fold(NotFound("NOT FOUND"))(
-          n => Result(
-            header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
-            body = HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE))
-          )
+
+    logger.info(s"getting notification id ${id.toString}", request.headers.headers)
+    validateHeader(request.headers, "retrieving") match {
+      case Left(errorResponse) => Future.successful(BadRequest(errorResponse))
+      case Right(clientId) =>
+        val notification = queueService.get(clientId, id)
+        notification.map(opt =>
+          opt.fold {
+            logger.debug(s"requested notification id ${id.toString} not found", request.headers.headers)
+            NotFound("NOT FOUND")
+          } {n =>
+            logger.debug(s"found notification id ${id.toString}", request.headers.headers)
+              Result(
+                header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
+                body = HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE)))
+          }
         )
-      )
     }
   }
 
   def delete(id: UUID): Action[AnyContent] = Action.async { implicit request =>
-    request.headers.get(X_CLIENT_ID_HEADER_NAME).fold(Future.successful(BadRequest(MISSING_CLIENT_ID_ERROR))) { clientId =>
-      val futureDeleted = queueService.delete(clientId, id)
-      futureDeleted.map(deleted =>
-        if (deleted) {
-          NoContent
-        } else {
-          NotFound("NOT FOUND")
-        }
-      )
+
+    logger.info(s"deleting notification id ${id.toString}", request.headers.headers)
+    validateHeader(request.headers, "delete") match {
+      case Left(errorResponse) => Future.successful(BadRequest(errorResponse))
+      case Right(clientId) =>
+        val futureDeleted = queueService.delete(clientId, id)
+        futureDeleted.map(deleted =>
+          if (deleted) {
+            logger.debug(s"successfully deleted notification id ${id.toString}", request.headers.headers)
+            NoContent
+          } else {
+            logger.debug(s"nothing to delete for notification id ${id.toString}", request.headers.headers)
+            NotFound("NOT FOUND")
+          }
+        )
+    }
+  }
+
+  private def validateHeader(headers: Headers, endpointName: String): Either[String, String] = {
+    headers.get(X_CLIENT_ID_HEADER_NAME).fold[Either[String, String]]{
+      logger.error(s"missing $X_CLIENT_ID_HEADER_NAME header when calling $endpointName endpoint", headers.headers)
+      Left(MISSING_CLIENT_ID_ERROR)
+    } { clientId =>
+      Right(clientId)
     }
   }
 

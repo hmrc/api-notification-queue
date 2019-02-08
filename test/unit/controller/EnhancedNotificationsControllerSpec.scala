@@ -20,7 +20,6 @@ import java.util.UUID
 
 import akka.stream.Materializer
 import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.ContentTypes.XML
@@ -114,7 +113,8 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       verify(mockQueueService).update(clientId, pulledNotification)
       header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
-      verifyLogWithHeaders(mockLogger, "debug", "Pulling unpulled notification for id: 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "info", "getting unpulled notification id 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "debug", "Pulling unpulled notification for id 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
     }
 
     "return 400 if requested notification has already been pulled" in new Setup {
@@ -126,7 +126,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       status(result) shouldBe BAD_REQUEST
       string2xml(contentAsString(result)) shouldBe alreadyPulledError
-      verifyLogWithHeaders(mockLogger, "error", "Notification has been pulled for id: 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "error", "Notification has been pulled for id 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
     }
 
     "return 400 when the X-Client-ID header is not present in the request" in new Setup {
@@ -135,7 +135,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       status(result) shouldBe BAD_REQUEST
       string2xml(contentAsString(result)) shouldBe missingClientIdError
-      verifyLogWithHeaders(mockLogger, "error", "Client id is missing", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "error", "missing X-Client-ID header when calling get unpulled endpoint", request.headers.headers)
     }
 
     "return 404 if the notification is not found" in new Setup {
@@ -145,7 +145,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       status(result) shouldBe NOT_FOUND
       string2xml(contentAsString(result)) shouldBe notFoundError
-      verifyLogWithHeaders(mockLogger, "error", "Notification not found for id: 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "error", "Notification not found for id 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
     }
   }
 
@@ -160,7 +160,8 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       bodyOf(result) shouldBe payload
       header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
-      verifyLogWithHeaders(mockLogger, "debug", "Pulling pulled notification for id: 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "info", "getting pulled notification id 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "debug", "Pulling pulled notification for id 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
     }
 
     "return 400 if requested notification is unpulled" in new Setup {
@@ -170,7 +171,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       status(result) shouldBe BAD_REQUEST
       string2xml(contentAsString(result)) shouldBe unpulledError
-      verifyLogWithHeaders(mockLogger, "error", "Notification is unpulled for id: 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "error", "Notification is unpulled for id 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
     }
 
     "return 400 when the X-Client-ID header is not present in the request" in new Setup {
@@ -178,7 +179,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       status(result) shouldBe BAD_REQUEST
       string2xml(contentAsString(result)) shouldBe missingClientIdError
-      verifyLogWithHeaders(mockLogger, "error", "Client id is missing", Seq.empty)
+      verifyLogWithHeaders(mockLogger, "error", s"missing X-Client-ID header when calling get pulled endpoint", Seq.empty)
     }
 
     "return 404 if the notification is not found" in new Setup {
@@ -188,7 +189,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       status(result) shouldBe NOT_FOUND
       string2xml(contentAsString(result)) shouldBe notFoundError
-      verifyLogWithHeaders(mockLogger, "error", "Notification not found for id: 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "error", "Notification not found for id 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
     }
   }
 
@@ -198,6 +199,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       val result = await(controller.getPulledByClientId()(FakeRequest(GET, "/notifications/pulled")))
 
       status(result) shouldBe BAD_REQUEST
+      verifyLogWithHeaders(mockLogger, "error", "missing X-Client-ID header when calling get pulled by client id endpoint", Seq.empty)
     }
 
     "return 200" in new Setup {
@@ -210,6 +212,8 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       val expectedJson = s"""{"notifications":["/notifications/pulled/${notificationWithIdOnly1.notification.notificationId.toString}","/notifications/pulled/${notificationWithIdOnly2.notification.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
+      verifyLogWithHeaders(mockLogger, "debug", s"listing pulled notifications $expectedJson", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "info", s"listing pulled notifications", request.headers.headers)
     }
 
     "return empty list if there are no notifications for a specific client id" in new Setup {
@@ -242,6 +246,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       val expectedJson = s"""{"notifications":["/notifications/unpulled/${notificationWithIdOnly1.notification.notificationId.toString}","/notifications/unpulled/${notificationWithIdOnly2.notification.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
+      verifyLogWithHeaders(mockLogger, "info", s"listing unpulled notifications", request.headers.headers)
     }
 
     "return empty list if there are no notifications for a specific client id" in new Setup {
