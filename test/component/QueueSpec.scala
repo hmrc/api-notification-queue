@@ -16,8 +16,10 @@
 
 package component
 
+import java.util.UUID
+
 import org.scalatest.OptionValues._
-import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen, Matchers}
+import org.scalatest._
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -28,6 +30,8 @@ import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
+import util.externalservices.ApiSubscriptionFieldsService
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -35,16 +39,32 @@ class QueueSpec extends FeatureSpec
   with GivenWhenThen
   with Matchers
   with GuiceOneAppPerSuite
+  with ApiSubscriptionFieldsService
+  with WireMockRunner
+  with BeforeAndAfterAll
   with BeforeAndAfterEach {
 
   private val componentTestConfigs: Map[String, Any] = Map(
-    "notification.email.delay" -> 30
+    "notification.email.delay" -> 30,
+    "auditing.enabled" -> false,
+    "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
+    "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,
+    "microservice.services.api-subscription-fields.context" -> ApiNotificationQueueExternalServicesConfig.ApiSubscriptionFieldsContext
   )
+
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(componentTestConfigs).build()
   private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
     collectionName = "notifications",
     mongo = app.injector.instanceOf[MongoDbProvider].mongo,
     domainFormat = ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats) {
+  }
+
+  override protected def beforeAll() {
+    startMockServer()
+  }
+
+  override protected def afterAll() {
+    stopMockServer()
   }
 
   override def beforeEach() {
@@ -64,8 +84,11 @@ class QueueSpec extends FeatureSpec
     scenario("3rd party system gets a message previously queued") {
       Given("a message has already been queued")
       val clientId = "aaaa"
+      val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
       val xmlBody = <xml><node>Stuff</node></xml>
-      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      startApiSubscriptionFieldsService(fieldsId = UUID.fromString(fieldsId), clientId = clientId)
+
+      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location = queueResponse.header.headers("Location")
 
       When("you make a GET based on the location header")
@@ -94,7 +117,9 @@ class QueueSpec extends FeatureSpec
       Given("a message has already been queued")
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
-      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
+      startApiSubscriptionFieldsService(fieldsId = UUID.fromString(fieldsId), clientId = clientId)
+      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location = queueResponse.header.headers("Location")
       val notificationId = location.substring(location.length() - 36)
 
@@ -128,10 +153,11 @@ class QueueSpec extends FeatureSpec
       Given("two messages have already been queued")
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
-      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
       val notificationId1 = location1.substring(location1.length() - 36)
-      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location2 = queueResponse2.header.headers("Location")
       val notificationId2 = location2.substring(location2.length() - 36)
 
@@ -164,10 +190,11 @@ class QueueSpec extends FeatureSpec
       Given("two messages have already been queued")
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
-      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
       val notificationId1 = location1.substring(location1.length() - 36)
-      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("x-client-id" -> clientId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location2 = queueResponse2.header.headers("Location")
       val notificationId2 = location2.substring(location2.length() - 36)
 

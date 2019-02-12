@@ -26,12 +26,10 @@ import play.api.http.HttpEntity
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc._
-import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.X_CLIENT_ID_HEADER_NAME
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorNotFound, errorBadRequest}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
@@ -42,10 +40,9 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
                                                 fieldsService: ApiSubscriptionFieldsService,
                                                 idGenerator: NotificationIdGenerator,
                                                 dateTimeProvider: DateTimeProvider,
-                                                logger: NotificationLogger) extends BaseController {
+                                                logger: NotificationLogger) extends BaseController with HeaderValidator {
 
-  private val MISSING_CLIENT_ID_ERROR = s"$X_CLIENT_ID_HEADER_NAME required"
-
+  override val notificationLogger: NotificationLogger = logger
   private val badRequestPulledText = "Notification has been pulled"
   private val badRequestUnpulledText = "Notification is unpulled"
 
@@ -56,7 +53,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
     val headers = request.headers
     logger.info(s"listing $notificationStatus notifications", headers.headers)
-    validateHeader(request.headers, s"get $notificationStatus by client id") match {
+    validateClientIdHeader(request.headers, s"get $notificationStatus by client id") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
         val notificationIdPaths: Future[List[String]] =
@@ -97,7 +94,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
     val headers = request.headers
     logger.info(s"getting $notificationStatus notification id ${id.toString}", headers.headers)
-    validateHeader(request.headers, s"get $notificationStatus") match {
+    validateClientIdHeader(request.headers, s"get $notificationStatus") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
         queueService.get(clientId, id).map(opt =>
@@ -114,15 +111,6 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
       header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(n.notificationId).url) ++ n.headers),
       body = HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE))
     )
-
-  private def validateHeader(headers: Headers, endpointName: String): Either[ErrorResponse, String] = {
-    headers.get(X_CLIENT_ID_HEADER_NAME).fold[Either[ErrorResponse, String]]{
-      logger.error(s"missing $X_CLIENT_ID_HEADER_NAME header when calling $endpointName endpoint", headers.headers)
-      Left(errorBadRequest(MISSING_CLIENT_ID_ERROR))
-    } { clientId =>
-      Right(clientId)
-    }
-  }
 
 }
 

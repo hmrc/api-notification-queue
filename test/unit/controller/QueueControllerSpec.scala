@@ -31,6 +31,7 @@ import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, Notificati
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly, SeqOfHeader}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData._
@@ -46,7 +47,8 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   private val CONVERSATION_ID_HEADER_NAME = "X-Conversation-ID"
 
   trait Setup {
-    val clientId = "abc123"
+    val clientId = "b540741d-4d55-4fc8-9f1e-22dbc853bb12"
+    val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
     val uuid = UUID.randomUUID()
 
     class StaticIDGenerator extends NotificationIdGenerator {
@@ -61,19 +63,21 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
   }
 
   "POST /queue" should {
-    "return 400 when none of the `X-Client-ID` and `api-subscription-fields-id` headers are sent in the request" in new Setup {
+    "return 400 when `api-subscription-fields-id` header is missing" in new Setup {
       val result = await(queueController.save()(FakeRequest(POST, "/queue")))
 
       status(result) shouldBe BAD_REQUEST
-      verifyLogWithHeaders(mockLogger, "error", "missing X-Client-ID header when saving", Seq.empty)
+      verifyLogWithHeaders(mockLogger, "error", "missing api-subscription-fields-id header when calling save endpoint", Seq.empty)
     }
 
     "return 400 when the `fieldsId` does not exist in the `api-subscription-fields` service" in new Setup {
-      when(mockFieldsService.getClientId(mockEq(uuid))(any())).thenReturn(None)
+      when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(None)
 
-      val result = await(queueController.save()(FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> uuid.toString), AnyContentAsEmpty)))
+      val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> fieldsId), AnyContentAsEmpty)
+      val result = await(queueController.save()(request))
 
       status(result) shouldBe BAD_REQUEST
+      verifyLogWithHeaders(mockLogger, "error", s"unable to retrieve clientId from api-subscription-fields service for fieldsId $fieldsId", request.headers.headers)
     }
 
     "return 400 when the `api-subscription-fields-id` isn't a UUID" in new Setup {
@@ -82,32 +86,17 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       val result = await(queueController.save()(request))
 
       status(result) shouldBe BAD_REQUEST
-      verifyLogWithHeaders(mockLogger, "error", "invalid subscriptionFieldsId NOT-A_UUID", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "error", "invalid api-subscription-fields-id NOT-A_UUID", request.headers.headers)
     }
 
     "return 400 if the request has no payload" in new Setup {
-      val request = FakeRequest(POST, "/queue", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+      when(mockFieldsService.getClientId(any[UUID])(any[HeaderCarrier])).thenReturn(Future.successful(Some(clientId)))
+      val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> fieldsId), AnyContentAsEmpty)
 
       val result = await(queueController.save()(request))
 
       status(result) shouldBe BAD_REQUEST
       verifyLogWithHeaders(mockLogger, "error", "missing body when saving", request.headers.headers)
-    }
-
-    "return 201, without calling `api-subscription-fields`, when the X-Client-ID header is sent to the request" in new Setup {
-      private val xml = <xml>
-        <node>Stuff</node>
-      </xml>
-      private val request = FakeRequest(POST, "/ queue", Headers(CLIENT_ID_HEADER_NAME -> clientId, CONTENT_TYPE -> XML), AnyContentAsEmpty).withXmlBody(xml)
-      private val notification = Notification(uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
-      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
-
-      val result = await(queueController.save()(request))
-
-      verify(mockFieldsService, never()).getClientId(any())(any())
-      status(result) shouldBe CREATED
-      header(LOCATION, result) shouldBe Some(s"/notification/$uuid")
-      verifyLogWithHeaders(mockLogger, "info", "saving request", request.headers.headers)
     }
 
     "return 201 when getting client id via subscription fields id" in new Setup {
@@ -140,7 +129,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
 
       val result = await(queueController.save()(request))
 
-      verifyLogWithHeaders(mockLogger, "error", "Error calling subscription fields id due to Emulated service failure.", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "error", "Error calling api-subscription-fields-service due to Emulated service failure.", request.headers.headers)
     }
 
   }
@@ -244,13 +233,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       bodyOf(result) shouldBe "NOT FOUND"
       verifyLogWithHeaders(mockLogger, "debug", s"nothing to delete for notification id ${uuid.toString}", request.headers.headers)
     }
-  }
-
-  private def verifyLogWithHeaders(logger: NotificationLogger, method: String, message: String): Unit = {
-    PassByNameVerifier(logger, method)
-      .withByNameParam(message)
-      .withByNameParamMatcher(any[SeqOfHeader])
-      .verify()
   }
 
   private def verifyLogWithHeaders(logger: NotificationLogger, method: String, message: String, headers: SeqOfHeader): Unit = {

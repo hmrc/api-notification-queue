@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
+import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames._
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
+
 object CustomHeaderNames {
   val X_CLIENT_ID_HEADER_NAME = "X-Client-ID"
 
@@ -23,3 +27,10 @@ object CustomHeaderNames {
 
   val API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME = "api-subscription-fields-id"
 }
+
+object CustomErrorResponses {
+  val ErrorClientIdMissing: ErrorResponse = errorBadRequest(s"$X_CLIENT_ID_HEADER_NAME required")
+
+  val ErrorBodyMissing: ErrorResponse = errorBadRequest("Body required.")
+}
+
