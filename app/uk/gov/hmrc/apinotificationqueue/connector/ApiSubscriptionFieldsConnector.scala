@@ -21,6 +21,7 @@ import java.util.UUID
 import javax.inject.Inject
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{Format, Json}
+import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.ApiNotificationQueueConfig
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -33,12 +34,16 @@ object ApiSubscriptionFieldResponse {
   implicit val rds: Format[ApiSubscriptionFieldResponse] = Json.format[ApiSubscriptionFieldResponse]
 }
 
-class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient, config: ApiNotificationQueueConfig) {
+class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
+                                               config: ApiNotificationQueueConfig,
+                                               logger: NotificationLogger) {
 
   val serviceUrl: String = config.apiSubscriptionFieldsServiceUrl
 
   def lookupClientId(subscriptionFieldsId: UUID)(implicit hc: HeaderCarrier): Future[ApiSubscriptionFieldResponse] = {
-    http.GET[ApiSubscriptionFieldResponse](s"$serviceUrl/$subscriptionFieldsId")
+    val url = s"$serviceUrl/$subscriptionFieldsId"
+    logger.debug(s"looking up clientId for $url", hc.headers)
+    http.GET[ApiSubscriptionFieldResponse](url)
   }
 
 }

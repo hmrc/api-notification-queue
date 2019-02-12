@@ -19,8 +19,10 @@ package util
 import java.util.UUID
 
 import org.joda.time.{DateTime, DateTimeZone}
+import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{X_CLIENT_ID_HEADER_NAME, X_CONVERSATION_ID_HEADER_NAME}
 import uk.gov.hmrc.apinotificationqueue.model.{Email, Notification, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, ClientOverThreshold}
+import util.TestData._
 
 object TestData {
 
@@ -30,6 +32,7 @@ object TestData {
   val NotificationId2 = UUID.randomUUID()
   val NotificationId3 = UUID.randomUUID()
   val Payload = "<foo></foo>"
+  val ConversationId = "eaca01f9-ec3b-4ede-b263-61b626dde231"
 
   val Year = 2017
   val MonthOfYear = 7
@@ -61,4 +64,13 @@ object TestData {
   type EmulatedServiceFailure = UnsupportedOperationException
   val emulatedServiceFailure = new EmulatedServiceFailure("Emulated service failure.")
 
+}
+
+object RequestHeaders {
+
+  lazy val X_CLIENT_ID_HEADER: (String, String) = X_CLIENT_ID_HEADER_NAME -> ClientId1
+
+  lazy val X_CONVERSATION_ID_HEADER: (String, String) = X_CONVERSATION_ID_HEADER_NAME -> ConversationId
+
+  val LoggingHeaders: Seq[(String, String)] = Seq(X_CLIENT_ID_HEADER, X_CONVERSATION_ID_HEADER)
 }
