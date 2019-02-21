@@ -106,7 +106,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
       "error when update failed" in {
         val caught = intercept[RuntimeException](await(repository.update(ClientId1, Notification1)))
 
-        caught.getMessage shouldBe "Notification not updated for clientId clientId1, notificationId: ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d. clientId not found"
+        caught.getMessage shouldBe "clientId not found"
       }
     }
 

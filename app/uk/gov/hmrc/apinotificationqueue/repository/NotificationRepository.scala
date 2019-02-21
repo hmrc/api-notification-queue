@@ -118,11 +118,11 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
             throw new RuntimeException("clientId not found")
           }
         }
-    }.recover {
+    }.recoverWith {
       case error =>
         val msg = s"$errorMsg. ${error.getMessage}"
         cdsLogger.error(msg)
-        throw new RuntimeException(msg)
+        Future.failed(error)
     }
   }
 
