@@ -27,6 +27,7 @@ import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
 import reactivemongo.play.json._
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification, NotificationStatus, NotificationWithIdOnly}
+import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
@@ -47,7 +48,6 @@ trait NotificationRepository {
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
-
 }
 
 @Singleton
@@ -59,7 +59,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
     with NotificationRepository {
 
-  private implicit val format: Format[ClientNotification] = ClientNotification.ClientNotificationJF
+  private implicit val format: Format[ClientNotification] = ClientNotificationJF
 
   override def indexes: Seq[Index] = {
     Seq(
@@ -95,7 +95,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
     lazy val errorMsg = s"Notification not saved for client $clientId"
 
-    collection.insert(clientNotification).map {
+    insert(clientNotification).map {
       writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
     }
   }
@@ -105,24 +105,37 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
     val clientNotification = ClientNotification(clientId, notification)
 
-    lazy val errorMsg = s"Notification not updated for client $clientId, notificationId: ${notification.notificationId}"
+    lazy val errorMsg = s"Notification not updated for clientId $clientId, notificationId: ${notification.notificationId}"
 
     val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notification.notificationId)
 
-    collection.update(selector, clientNotification).map {
-      writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
+    findAndUpdate(selector, ClientNotificationJF.writes(clientNotification)).map {
+      res =>
+        res.lastError.fold(notification){err =>
+          if (err.n > 0) {
+            notification
+          } else {
+            throw new RuntimeException("clientId not found")
+          }
+        }
+    }.recover {
+      case error =>
+        val msg = s"$errorMsg. ${error.getMessage}"
+        cdsLogger.error(msg)
+        throw new RuntimeException(msg)
     }
   }
 
   override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
-    val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
-    collection.find(selector).one[ClientNotification].map(_.map(cn => cn.notification))
+    find("clientId" -> clientId, "notification.notificationId" -> notificationId).map {
+      _.headOption.map (cn => cn.notification)
+    }
   }
 
   override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
     import collection.BatchCommands.AggregationFramework._
 
-    collection.aggregate(
+    collection.aggregatorContext[ClientOverThreshold](
       Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,
                                                  "oldestNotification" -> MinField("notification.dateReceived"),
                                                  "latestNotification" -> MaxField("notification.dateReceived")
@@ -134,13 +147,15 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
                             "oldestNotification" -> "$oldestNotification",
                             "latestNotification" -> "$latestNotification"
            ))))
-        .map(_.head[ClientOverThreshold])
+      .prepared
+      .cursor
+      .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[ClientOverThreshold]]())
   }
 
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
     val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
     lazy val errorMsg = s"Could not delete entity for selector: $selector"
-    collection.remove(selector).map(notificationRepositoryErrorHandler.handleDeleteError(_, errorMsg))
+    remove("clientId" -> clientId, "notification.notificationId" -> notificationId).map(notificationRepositoryErrorHandler.handleDeleteError(_, errorMsg))
   }
 
   override def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
@@ -151,7 +166,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     }
     val projection = Json.obj("notification.notificationId" -> 1, "_id" -> 0)
 
-    collection.find(selector, projection).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
+    collection.find(selector, Some(projection)).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
   }
 
 }

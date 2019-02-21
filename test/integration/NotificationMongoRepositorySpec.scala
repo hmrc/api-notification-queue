@@ -22,11 +22,9 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.libs.json.Json
-import reactivemongo.api.{Cursor, DB}
-import reactivemongo.play.json._
+import reactivemongo.api.DB
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, NotificationId, NotificationWithIdOnly}
-import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationMongoRepository, NotificationRepositoryErrorHandler}
 import uk.gov.hmrc.customs.api.common.config.ServicesConfig
 import uk.gov.hmrc.mongo.MongoSpecSupport
@@ -52,21 +50,15 @@ class NotificationMongoRepositorySpec extends UnitSpec
   private val repository = new NotificationMongoRepository(mongoDbProvider, mockErrorHandler, cdsLogger, mockConfigService)
 
   override def beforeEach() {
-    super.beforeEach()
-    await(repository.drop)
+    dropTestCollection("notifications")
   }
 
   override def afterAll() {
-    super.afterAll()
-    await(repository.drop)
+    dropTestCollection("notifications")
   }
 
   private def collectionSize: Int = {
-    await(repository.collection.count())
-  }
-
-  private def selector(clientId: String) = {
-    Json.obj("clientId" -> clientId)
+    await(repository.count(Json.obj()))
   }
 
   "repository" can {
@@ -78,8 +70,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
         collectionSize shouldBe 1
         actualMessage shouldBe Notification1
-        val actualNotification = await(repository.collection.find(selector(ClientId1)).one[ClientNotification]).get
-        actualNotification shouldBe Client1Notification1
+        fetchNotification shouldBe Client1Notification1
       }
 
       "be successful when called multiple times" in {
@@ -88,7 +79,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId2, Notification3))
 
         collectionSize shouldBe 3
-        val clientNotifications = await(repository.collection.find(selector(ClientId1)).cursor[ClientNotification]().collect[List](Int.MaxValue, Cursor.FailOnError[List[ClientNotification]]()))
+        val clientNotifications = await(repository.find("clientId" -> ClientId1))
         clientNotifications.size shouldBe 2
         clientNotifications should contain(Client1Notification1)
         clientNotifications should contain(Client1Notification2)
@@ -100,22 +91,22 @@ class NotificationMongoRepositorySpec extends UnitSpec
         val time = DateTime.now(DateTimeZone.UTC)
         val updatedNotification = Notification1.copy(datePulled = Some(time))
 
-        when(mockErrorHandler.handleSaveError(any(), any(), any())).thenReturn(Notification1)
-
         val actualMessage1 = await(repository.save(ClientId1, Notification1))
         collectionSize shouldBe 1
         actualMessage1 shouldBe Notification1
-
-        when(mockErrorHandler.handleSaveError(any(), any(), any())).thenReturn(updatedNotification)
 
         val actualMessage2 = await(repository.update(ClientId1, updatedNotification))
         collectionSize shouldBe 1
         actualMessage2 shouldBe updatedNotification
 
-        val actualNotification = await(repository.collection.find(selector(ClientId1)).one[ClientNotification]).get
         val expectedNotification = ClientNotification(ClientId1, updatedNotification)
+        fetchNotification shouldBe expectedNotification
+      }
 
-        actualNotification shouldBe expectedNotification
+      "error when update failed" in {
+        val caught = intercept[RuntimeException](await(repository.update(ClientId1, Notification1)))
+
+        caught.getMessage shouldBe "Notification not updated for clientId clientId1, notificationId: ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d. clientId not found"
       }
     }
 
@@ -236,4 +227,5 @@ class NotificationMongoRepositorySpec extends UnitSpec
     }
   }
 
+  private def fetchNotification: ClientNotification = await(repository.find("clientId" -> ClientId1).head)
 }
