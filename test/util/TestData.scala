@@ -28,7 +28,7 @@ object TestData {
 
   val ClientId1 = "clientId1"
   val ClientId2 = "clientId2"
-  val NotificationId1 = UUID.randomUUID()
+  val NotificationId1 = UUID.fromString("ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d")
   val NotificationId2 = UUID.randomUUID()
   val NotificationId3 = UUID.randomUUID()
   val Payload = "<foo></foo>"
