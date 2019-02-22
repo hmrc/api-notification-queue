@@ -17,11 +17,14 @@
 package unit.repository
 
 import org.scalatest.mockito.MockitoSugar
-import reactivemongo.api.commands.{DefaultWriteResult, WriteConcernError, WriteError}
+import play.api.libs.json.{JsObject, Json}
+import reactivemongo.api.commands.{DefaultWriteResult, WriteConcernError, WriteError, WriteResult}
+import reactivemongo.play.json.commands.JSONFindAndModifyCommand.{FindAndModifyResult, UpdateLastError}
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepositoryErrorHandler
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.test.UnitSpec
+import util.TestData._
 
 class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar {
 
@@ -55,7 +58,35 @@ class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar 
 
         caught.getMessage shouldBe "ERROR_MSG. WriteConcernError(1,ERROR)"
       }
+    }
 
+    "handle update" should {
+
+      "return notification if there are no database errors and at least one record inserted" in {
+        val lastError = UpdateLastError(updatedExisting = true, upsertedId = Some(1), n = 1, err = None)
+
+        val successfulUpdateResult = findAndModifyResult(lastError)
+
+        errorHandler.handleUpdateError(successfulUpdateResult, "ERROR_MSG", notification) shouldBe notification
+      }
+
+      "throw a RuntimeException if there are no database errors but no record inserted" in {
+        val lastError = UpdateLastError(updatedExisting = false, upsertedId = None, n = 0, err = None)
+        val noRecordsUpdateResult = findAndModifyResult(lastError)
+
+        val caught = intercept[RuntimeException](errorHandler.handleUpdateError(noRecordsUpdateResult, "ERROR_MSG", notification))
+
+        caught.getMessage shouldBe "ERROR_MSG"
+      }
+
+      "throw a RuntimeException if there is a database error" in {
+        val lastError = UpdateLastError(updatedExisting = false, upsertedId = None, n = 0, err = Some("database error"))
+        val errorUpdateResult = findAndModifyResult(lastError)
+
+        val caught = intercept[RuntimeException](errorHandler.handleUpdateError(errorUpdateResult, "ERROR_MSG", notification))
+
+        caught.getMessage shouldBe "ERROR_MSG. database error"
+      }
     }
 
     "handle Delete" should {
@@ -83,7 +114,7 @@ class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar 
   }
 
   private def writeResult(alteredRecords: Int, writeErrors: Seq[WriteError] = Nil,
-                          writeConcernError: Option[WriteConcernError] = None) = {
+                          writeConcernError: Option[WriteConcernError] = None): WriteResult = {
     DefaultWriteResult(
       ok = true,
       n = alteredRecords,
@@ -93,4 +124,7 @@ class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar 
       errmsg = None)
   }
 
+  private def findAndModifyResult(lastError: UpdateLastError): FindAndModifyResult = {
+    FindAndModifyResult(Some(lastError), Json.toJson(Notification1).asOpt[JsObject])
+  }
 }

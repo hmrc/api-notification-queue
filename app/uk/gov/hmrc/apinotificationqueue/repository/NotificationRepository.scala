@@ -110,18 +110,10 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notification.notificationId)
 
     findAndUpdate(selector, ClientNotificationJF.writes(clientNotification)).map {
-      res =>
-        res.lastError.fold(notification){err =>
-          if (err.n > 0) {
-            notification
-          } else {
-            throw new RuntimeException("clientId not found")
-          }
-        }
+      result =>
+        notificationRepositoryErrorHandler.handleUpdateError(result, errorMsg, notification)
     }.recoverWith {
       case error =>
-        val msg = s"$errorMsg. ${error.getMessage}"
-        cdsLogger.error(msg)
         Future.failed(error)
     }
   }

@@ -91,22 +91,18 @@ class NotificationMongoRepositorySpec extends UnitSpec
         val time = DateTime.now(DateTimeZone.UTC)
         val updatedNotification = Notification1.copy(datePulled = Some(time))
 
+        when(mockErrorHandler.handleUpdateError(any(), any(), any())).thenReturn(Notification1)
         val actualMessage1 = await(repository.save(ClientId1, Notification1))
         collectionSize shouldBe 1
         actualMessage1 shouldBe Notification1
 
+        when(mockErrorHandler.handleUpdateError(any(), any(), any())).thenReturn(updatedNotification)
         val actualMessage2 = await(repository.update(ClientId1, updatedNotification))
         collectionSize shouldBe 1
         actualMessage2 shouldBe updatedNotification
 
         val expectedNotification = ClientNotification(ClientId1, updatedNotification)
         fetchNotification shouldBe expectedNotification
-      }
-
-      "error when update failed" in {
-        val caught = intercept[RuntimeException](await(repository.update(ClientId1, Notification1)))
-
-        caught.getMessage shouldBe "clientId not found"
       }
     }
 
