@@ -33,7 +33,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
 import util.externalservices.ApiSubscriptionFieldsService
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 class QueueSpec extends FeatureSpec
   with GivenWhenThen

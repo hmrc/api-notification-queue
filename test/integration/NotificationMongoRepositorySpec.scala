@@ -32,7 +32,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import util.StubCdsLogger
 import util.TestData._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 class NotificationMongoRepositorySpec extends UnitSpec
   with BeforeAndAfterAll

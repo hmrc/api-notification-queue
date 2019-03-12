@@ -36,6 +36,7 @@ import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.externalservices.EmailService
 import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
 
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.{ExecutionContext, Future}
 
 class EmailConnectorSpec extends UnitSpec

@@ -18,8 +18,8 @@ package uk.gov.hmrc.apinotificationqueue.service
 
 import java.util.concurrent.TimeUnit
 
-import javax.inject.{Inject, Singleton}
 import akka.actor.ActorSystem
+import javax.inject.{Inject, Singleton}
 import org.joda.time.format.ISODateTimeFormat
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Email, SendEmailRequest}
@@ -27,7 +27,6 @@ import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, Notific
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 @Singleton
