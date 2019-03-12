@@ -31,7 +31,7 @@ import uk.gov.hmrc.customs.api.common.config.ServicesConfig
 import uk.gov.hmrc.play.test.UnitSpec
 import util.StubCdsLogger
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 
 class WarningEmailPollingServiceSpec extends UnitSpec

@@ -23,11 +23,10 @@ import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EmailConnector @Inject()(http: HttpClient, config: ApiNotificationQueueConfig, cdsLogger: CdsLogger) {
+class EmailConnector @Inject()(http: HttpClient, config: ApiNotificationQueueConfig, cdsLogger: CdsLogger)(implicit ec: ExecutionContext) {
 
   private val emailUrl = config.emailConfig.emailServiceUrl
   private implicit val hc: HeaderCarrier = HeaderCarrier()

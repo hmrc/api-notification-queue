@@ -35,7 +35,7 @@ import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbP
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.duration._
 
 class WarningEmailSpec extends FeatureSpec
