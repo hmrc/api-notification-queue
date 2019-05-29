@@ -62,7 +62,6 @@ lazy val microservice = (project in file("."))
     unitTestSettings,
     integrationTestSettings,
     componentTestSettings,
-    playSettings,
     playPublishingSettings,
     allTest,
     scoverageSettings,
@@ -107,10 +106,6 @@ lazy val commonSettings: Seq[Setting[_]] =
     publishingSettings ++
     defaultSettings() ++
     gitStampSettings
-
-lazy val playSettings: Seq[Setting[_]] = Seq(
-  routesImport ++= Seq("uk.gov.hmrc.customs.api.common.domain._")
-)
 
 lazy val playPublishingSettings: Seq[sbt.Setting[_]] = sbtrelease.ReleasePlugin.releaseSettings ++
   Seq(credentials += SbtCredentials) ++

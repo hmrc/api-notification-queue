@@ -7,7 +7,7 @@ object AppDependencies {
   val scalatestplusVersion = "2.0.1"
   val mockitoVersion = "2.25.0"
   val wireMockVersion = "2.21.0"
-  val customsApiCommonVersion = "1.37.0"
+  val customsApiCommonVersion = "1.40.0"
   val simpleReactiveMongoVersion = "7.14.0-play-25"
   val reactiveMongoTestVersion = "4.9.0-play-25"
   val testScope = "test,it"
