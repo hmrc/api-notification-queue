@@ -35,6 +35,7 @@ import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, Q
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.XmlUtil.string2xml
+import util.TestData.{ConversationId, ConversationIdUuid, NotificationWithIdAndPulledStatus1, NotificationWithIdAndPulledStatus2}
 
 import scala.concurrent.Future
 import scala.xml.Utility.trim
@@ -99,6 +100,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     when(mockDateTimeProvider.now()).thenReturn(time)
     protected val unpulledRequest = FakeRequest(GET, s"/notifications/unpulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
     protected val pulledRequest = FakeRequest(GET, s"/notifications/pulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
+    protected val conversationIdRequest = FakeRequest(GET, s"/notifications/conversationId/$ConversationId", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
   }
 
   "GET /notifications/unpulled/:id" should {
@@ -212,7 +214,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
 
       val expectedJson = s"""{"notifications":["/notifications/pulled/${notificationWithIdOnly1.notification.notificationId.toString}","/notifications/pulled/${notificationWithIdOnly2.notification.notificationId.toString}"]}"""
       bodyOf(result) shouldBe expectedJson
-      verifyLogWithHeaders(mockLogger, "debug", s"listing pulled notifications $expectedJson", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "debug", s"returning notifications $expectedJson", request.headers.headers)
       verifyLogWithHeaders(mockLogger, "info", s"listing pulled notifications", request.headers.headers)
     }
 
@@ -255,6 +257,37 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       val request = FakeRequest(GET, "/notifications/unpulled", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
 
       val result = await(controller.getUnpulledByClientId()(request))
+
+      status(result) shouldBe OK
+      bodyOf(result) shouldBe """{"notifications":[]}"""
+    }
+  }
+  
+  "GET /notifications/conversationId/:id" should {
+
+    "return 400 when the X-Client-ID header is not sent to the request" in new Setup {
+      val result = await(controller.getByConversationId(ConversationIdUuid)(FakeRequest(GET, s"/notifications/conversationId/$ConversationId")))
+
+      status(result) shouldBe BAD_REQUEST
+    }
+
+    "return 200" in new Setup {
+      when(mockQueueService.getByConversationId(clientId, UUID.fromString(ConversationId)))
+        .thenReturn(Future.successful(List(NotificationWithIdAndPulledStatus1, NotificationWithIdAndPulledStatus2)))
+
+      val result = await(controller.getByConversationId(ConversationIdUuid)(conversationIdRequest))
+
+      status(result) shouldBe OK
+      
+      val expectedJson = s"""{"notifications":["/notifications/unpulled/ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d","/notifications/pulled/5d60bab0-b866-4179-ba5c-b8e19176cfd9"]}"""
+      bodyOf(result) shouldBe expectedJson
+      verifyLogWithHeaders(mockLogger, "info", "listing notifications with conversationId eaca01f9-ec3b-4ede-b263-61b626dde231", conversationIdRequest.headers.headers)
+    }
+
+    "return empty list if there are no notifications for a specific conversationId" in new Setup {
+      when(mockQueueService.getByConversationId(clientId, ConversationIdUuid)).thenReturn(Future.successful(List()))
+
+      val result = await(controller.getByConversationId(ConversationIdUuid)(conversationIdRequest))
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe """{"notifications":[]}"""

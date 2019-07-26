@@ -49,33 +49,28 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
   def getPulledByClientId: Action[AnyContent] = pullByClientId(Pulled)
   def getUnpulledByClientId: Action[AnyContent] = pullByClientId(Unpulled)
 
-  def getByConversationId(id: UUID): Action[AnyContent] = Action.async { implicit request =>
+  def getByConversationId(conversationId: UUID): Action[AnyContent] = Action.async { implicit request =>
 
     val headers = request.headers
-    logger.info(s"listing notifications with conversationId $id", headers.headers)
+    logger.info(s"listing notifications with conversationId $conversationId", headers.headers)
     validateClientIdHeader(request.headers, "getByConversationId") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
         val notificationIdPaths: Future[List[String]] =
           for {
-            notificationIds <- queueService.getByConversationId(clientId, id)
+            notificationIds <- queueService.getByConversationId(clientId, conversationId)
           } yield notificationIds.map { n =>
             val status = if (n.pulledStatus) "pulled" else "unpulled"
             s"/notifications/$status/${n.notification.notificationId.toString}"
           }
 
-        notificationIdPaths.map {idPaths =>
-          val json = Json.toJson(Notifications(idPaths))
-          logger.debug(s"listing notifications by conversationId $id $json", headers.headers)
-          Ok(json)
-        }
+        generateResponse(notificationIdPaths, headers)
     }
   }
- 
   
   private def pullByClientId(notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
 
-    val headers = request.headers
+    val headers: Headers = request.headers
     logger.info(s"listing $notificationStatus notifications", headers.headers)
     validateClientIdHeader(request.headers, s"get $notificationStatus by client id") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
@@ -85,11 +80,15 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
             notificationIds <- queueService.get(clientId, Some(notificationStatus))
           } yield notificationIds.map(s"/notifications/$notificationStatus/" + _.notification.notificationId.toString)
 
-        notificationIdPaths.map {idPaths =>
-          val json = Json.toJson(Notifications(idPaths))
-          logger.debug(s"listing $notificationStatus notifications $json", headers.headers)
-          Ok(json)
-        }
+        generateResponse(notificationIdPaths, headers)
+    }
+  }
+
+  private def generateResponse(notificationIdPaths: Future[List[String]], headers: Headers) = {
+    notificationIdPaths.map { idPaths =>
+      val json = Json.toJson(Notifications(idPaths))
+      logger.debug(s"returning notifications $json", headers.headers)
+      Ok(json)
     }
   }
 

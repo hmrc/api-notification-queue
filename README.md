@@ -49,38 +49,6 @@ Note that all headers in the above `POST` are replayed in the response with the 
 
 ---
 
-### GET `/notifications`
-
-Gets all notifications of a specific third-party application. 
-
-Required header: `X-Client-ID`.
-
-```
-curl -v -X GET "http://localhost:9648/notifications" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
-```
-
-#### Response
-200 OK code.
-
----
-
-### DELETE `/notification/[id]`
-
-Deletes a specific notification. 
-
-Required header: `X-Client-ID`.
-
-```
-curl -v -X DELETE "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-874b35eb3724" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"   
-```
-
-#### Response
-204 No Content on successful delete, otherwise 404 Not Found.
-
----
-
 ### GET `/notifications/unpulled/[id]`
 
 Retrieves a specific notification and sets `datePulled` field in MongoDB.
@@ -142,6 +110,63 @@ curl -v -X GET "http://localhost:9648/notifications/pulled" \
 
 #### Response
 200 OK code on successful get, otherwise an empty list.
+
+---
+
+### GET `/notifications/conversationId/[id]`
+
+Retrieves a list of notifications with the supplied conversationId. Both pulled and unpulled are returned.
+
+Required header: `X-Client-ID`.
+
+```
+curl -v -X GET "http://localhost:9648/notifications/conversationId/e83ad4fc-16a3-4ff9-92d4-87fa468ee733" \
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+```
+
+#### Response
+200 OK code on successful get with sample body below, otherwise an empty list.
+
+```
+{
+    "notifications": [
+        "/notifications/pulled/b6c00206-3b90-455e-918e-45af23c0e21d"
+        "/notifications/pulled/c2be30be-24e3-4965-bc6a-2948ede37362"
+        "/notifications/unpulled/bb7a3662-958a-4905-acb6-c724d5c1c5b3"
+    ]
+}
+```
+---
+
+### GET `/notifications` [DEPRECATED]
+
+Gets all notifications of a specific third-party application. 
+
+Required header: `X-Client-ID`.
+
+```
+curl -v -X GET "http://localhost:9648/notifications" \
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+```
+
+#### Response
+200 OK code.
+
+---
+
+### DELETE `/notification/[id]` [DEPRECATED]
+
+Deletes a specific notification. 
+
+Required header: `X-Client-ID`.
+
+```
+curl -v -X DELETE "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-874b35eb3724" \
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"   
+```
+
+#### Response
+204 No Content on successful delete, otherwise 404 Not Found.
 
 ---
 

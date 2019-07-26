@@ -20,7 +20,7 @@ import java.util.UUID
 
 import org.joda.time.{DateTime, DateTimeZone}
 import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{X_CLIENT_ID_HEADER_NAME, X_CONVERSATION_ID_HEADER_NAME}
-import uk.gov.hmrc.apinotificationqueue.model.{Email, Notification, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.model.{Email, Notification, NotificationId, NotificationWithIdAndPulledStatus, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, ClientOverThreshold}
 import util.TestData._
 
@@ -29,10 +29,11 @@ object TestData {
   val ClientId1 = "clientId1"
   val ClientId2 = "clientId2"
   val NotificationId1 = UUID.fromString("ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d")
-  val NotificationId2 = UUID.randomUUID()
+  val NotificationId2 = UUID.fromString("5d60bab0-b866-4179-ba5c-b8e19176cfd9")
   val NotificationId3 = UUID.randomUUID()
   val Payload = "<foo></foo>"
   val ConversationId = "eaca01f9-ec3b-4ede-b263-61b626dde231"
+  val ConversationIdUuid = UUID.fromString(ConversationId)
 
   val Year = 2017
   val MonthOfYear = 7
@@ -43,7 +44,7 @@ object TestData {
   val LatestReceived = TimeReceived.plus(1)
   val TimePulled = LatestReceived.plus(1)
 
-  val Headers = Map("h1" -> "v1", "h2" -> "v2")
+  val Headers = Map("h1" -> "v1", "h2" -> "v2", "X-Conversation-ID" -> ConversationId)
   val Notification1 = Notification(NotificationId1, Headers, Payload, TimeReceived, None)
   val Notification2 = Notification(NotificationId2, Headers, Payload, LatestReceived, Some(TimePulled))
   val Notification3 = Notification(NotificationId3, Headers, Payload, TimeReceived, None)
@@ -52,6 +53,9 @@ object TestData {
 
   val ClientOverThreshold1 = ClientOverThreshold(ClientId1, 2, TimeReceived, LatestReceived)
 
+  val NotificationWithIdAndPulledStatus1 = NotificationWithIdAndPulledStatus(NotificationId(NotificationId1), pulledStatus = false)
+  val NotificationWithIdAndPulledStatus2 = NotificationWithIdAndPulledStatus(NotificationId(NotificationId2), pulledStatus = true)
+  
   val TestSendEmailRequest = SendEmailRequest(List(Email("some-email@domain.com")),
     "customs_pull_notifications_warning",
     Map("clientId_0" -> "clientId1",

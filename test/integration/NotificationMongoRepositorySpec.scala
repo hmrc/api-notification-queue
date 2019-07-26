@@ -16,11 +16,14 @@
 
 package integration
 
+import java.util.UUID
+
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import reactivemongo.api.DB
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
@@ -31,8 +34,6 @@ import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 import util.StubCdsLogger
 import util.TestData._
-
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 class NotificationMongoRepositorySpec extends UnitSpec
   with BeforeAndAfterAll
@@ -127,6 +128,27 @@ class NotificationMongoRepositorySpec extends UnitSpec
       }
     }
 
+    "fetch by clientId and conversationId" should {
+      "return all notificationIds and statuses when found" in {
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId2, Notification3))
+        await(repository.save(ClientId1, Notification2))
+
+        val notificationIdsWithStatus = await(repository.fetchNotificationIds(ClientId1, ConversationIdUuid))
+
+        notificationIdsWithStatus shouldBe NotificationWithIdAndPulledStatus1 :: NotificationWithIdAndPulledStatus2 :: Nil
+      }
+
+      "return empty list when nothing found" in {
+        await(repository.save(ClientId1, Notification1))
+        val nonExistentConversationId = UUID.randomUUID()
+
+        val notificationIdsWithStatus = await(repository.fetchNotificationIds(ClientId1, nonExistentConversationId))
+
+        notificationIdsWithStatus shouldBe Nil
+      }
+    }
+
     "fetch by clientId" should {
       "return all notificationIds when found by clientId" in {
         await(repository.save(ClientId1, Notification1))
@@ -162,7 +184,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         notifications should contain(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))
       }
 
-      "return None when not found" in {
+      "return empty List when not found" in {
         await(repository.save(ClientId1, Notification1))
         await(repository.save(ClientId1, Notification2))
 
