@@ -49,6 +49,30 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
   def getPulledByClientId: Action[AnyContent] = pullByClientId(Pulled)
   def getUnpulledByClientId: Action[AnyContent] = pullByClientId(Unpulled)
 
+  def getByConversationId(id: UUID): Action[AnyContent] = Action.async { implicit request =>
+
+    val headers = request.headers
+    logger.info(s"listing notifications with conversationId $id", headers.headers)
+    validateClientIdHeader(request.headers, "getByConversationId") match {
+      case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
+      case Right(clientId) =>
+        val notificationIdPaths: Future[List[String]] =
+          for {
+            notificationIds <- queueService.getByConversationId(clientId, id)
+          } yield notificationIds.map { n =>
+            val status = if (n.pulledStatus) "pulled" else "unpulled"
+            s"/notifications/$status/${n.notification.notificationId.toString}"
+          }
+
+        notificationIdPaths.map {idPaths =>
+          val json = Json.toJson(Notifications(idPaths))
+          logger.debug(s"listing notifications by conversationId $id $json", headers.headers)
+          Ok(json)
+        }
+    }
+  }
+ 
+  
   private def pullByClientId(notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
 
     val headers = request.headers

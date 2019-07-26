@@ -23,10 +23,10 @@ import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{Format, Json}
 import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
+import reactivemongo.bson.{BSONDocument, BSONLong, BSONNull, BSONObjectID}
 import reactivemongo.play.json._
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
-import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notification, NotificationStatus, NotificationWithIdOnly}
+import uk.gov.hmrc.apinotificationqueue.model._
 import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.ReactiveRepository
@@ -44,6 +44,8 @@ trait NotificationRepository {
 
   def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]]
 
+  def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulledStatus]]
+  
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
@@ -75,6 +77,11 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
       Index(
         key = Seq("clientId" -> IndexType.Ascending, "notification.datePulled" -> IndexType.Ascending),
         name = Some("clientId-datePulled-Index"),
+        unique = false
+      ),
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending, "notification.headers.X-Conversation-ID" -> IndexType.Ascending),
+        name = Some("clientId-xConversationId-Index"),
         unique = false
       ),
       Index(
@@ -124,7 +131,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   }
 
   override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
-    import collection.BatchCommands.AggregationFramework._
+    import collection.BatchCommands.AggregationFramework.{Group, Match, MaxField, MinField, Project, SumAll}
 
     collection.aggregatorContext[ClientOverThreshold](
       Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,
@@ -160,4 +167,17 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     collection.find(selector, Some(projection)).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
   }
 
+  override def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulledStatus]] = {
+    import collection.BatchCommands.AggregationFramework.{Match, Project}
+
+    collection.aggregatorContext[NotificationWithIdAndPulledStatus](
+      Match(Json.obj("clientId" -> clientId, "notification.headers.X-Conversation-ID" -> conversationId)),
+      List(Project(Json.obj("_id" -> 0,
+          "notification" -> 1,
+          "pulledStatus" ->  Json.obj("$gt" -> Json.arr("$notification.datePulled", BSONNull))
+        ))))
+      .prepared
+      .cursor
+      .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[NotificationWithIdAndPulledStatus]]())
+  }
 }

@@ -19,13 +19,13 @@ package uk.gov.hmrc.apinotificationqueue.service
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationWithIdOnly, NotificationStatus}
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, NotificationWithIdAndPulledStatus, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class QueueService @Inject()(notificationRepo: NotificationRepository) {
+class QueueService @Inject()(notificationRepo: NotificationRepository)(implicit ec:ExecutionContext) {
 
   def get(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
     notificationRepo.fetchNotificationIds(clientId, notificationStatus)
@@ -35,6 +35,10 @@ class QueueService @Inject()(notificationRepo: NotificationRepository) {
     notificationRepo.fetch(clientId, id)
   }
 
+  def getByConversationId(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulledStatus]] = {
+    notificationRepo.fetchNotificationIds(clientId, conversationId)
+  }
+  
   def delete(clientId: String, id: UUID): Future[Boolean] = {
     notificationRepo.delete(clientId, id)
   }
