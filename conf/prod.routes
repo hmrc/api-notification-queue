@@ -1,16 +1,18 @@
-->            /                                     health.Routes
+->            /                                               health.Routes
 
-GET           /admin/metrics                          @com.kenshoo.play.metrics.MetricsController.metrics
+GET           /admin/metrics                                  @com.kenshoo.play.metrics.MetricsController.metrics
 
-POST          /queue                                  @uk.gov.hmrc.apinotificationqueue.controller.QueueController.save
+POST          /queue                                          @uk.gov.hmrc.apinotificationqueue.controller.QueueController.save
 
-GET           /notification/:id                       @uk.gov.hmrc.apinotificationqueue.controller.QueueController.get(id: java.util.UUID)
-GET           /notifications                          @uk.gov.hmrc.apinotificationqueue.controller.QueueController.getAllByClientId
+GET           /notification/:id                               @uk.gov.hmrc.apinotificationqueue.controller.QueueController.get(id: java.util.UUID)
+GET           /notifications                                  @uk.gov.hmrc.apinotificationqueue.controller.QueueController.getAllByClientId
 
-DELETE        /notification/:id                       @uk.gov.hmrc.apinotificationqueue.controller.QueueController.delete(id: java.util.UUID)
+DELETE        /notification/:id                               @uk.gov.hmrc.apinotificationqueue.controller.QueueController.delete(id: java.util.UUID)
 
-GET           /notifications/unpulled/:id             @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.unpulled(id: java.util.UUID)
-GET           /notifications/pulled/:id               @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.pulled(id: java.util.UUID)
-GET           /notifications/pulled                   @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getPulledByClientId
-GET           /notifications/unpulled                 @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getUnpulledByClientId
-GET           /notifications/conversationId/:id       @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getByConversationId(id: java.util.UUID)
+GET           /notifications/unpulled/:id                     @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.unpulled(id: java.util.UUID)
+GET           /notifications/pulled/:id                       @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.pulled(id: java.util.UUID)
+GET           /notifications/pulled                           @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getPulledByClientId
+GET           /notifications/unpulled                         @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getUnpulledByClientId
+GET           /notifications/conversationId/:id               @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getByConversationId(id: java.util.UUID)
+GET           /notifications/conversationId/:id/pulled        @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getPulledByConversationId(id: java.util.UUID)
+GET           /notifications/conversationId/:id/unpulled      @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getUnpulledByConversationId(id: java.util.UUID)

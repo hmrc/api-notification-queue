@@ -136,6 +136,55 @@ curl -v -X GET "http://localhost:9648/notifications/conversationId/e83ad4fc-16a3
     ]
 }
 ```
+
+---
+
+### GET `/notifications/conversationId/[id]/pulled`
+
+Retrieves a list of pulled notifications with the supplied conversationId.
+
+Required header: `X-Client-ID`.
+
+```
+curl -v -X GET "http://localhost:9648/notifications/conversationId/e83ad4fc-16a3-4ff9-92d4-87fa468ee733"/pulled \
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+```
+
+#### Response
+200 OK code on successful get with sample body below, otherwise an empty list.
+
+```
+{
+    "notifications": [
+        "/notifications/pulled/b6c00206-3b90-455e-918e-45af23c0e21d"
+        "/notifications/pulled/c2be30be-24e3-4965-bc6a-2948ede37362"
+    ]
+}
+```
+---
+
+### GET `/notifications/conversationId/[id]/unpulled`
+
+Retrieves a list of unpulled notifications with the supplied conversationId.
+
+Required header: `X-Client-ID`.
+
+```
+curl -v -X GET "http://localhost:9648/notifications/conversationId/e83ad4fc-16a3-4ff9-92d4-87fa468ee733"/unpulled \
+  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+```
+
+#### Response
+200 OK code on successful get with sample body below, otherwise an empty list.
+
+```
+{
+    "notifications": [
+        "/notifications/unpulled/b6c00206-3b90-455e-918e-45af23c0e21d"
+        "/notifications/unpulled/c2be30be-24e3-4965-bc6a-2948ede37362"
+    ]
+}
+```
 ---
 
 ### GET `/notifications` [DEPRECATED]

@@ -149,6 +149,26 @@ class NotificationMongoRepositorySpec extends UnitSpec
       }
     }
 
+    "fetch by clientId, conversationId and status" should {
+      "return all notificationIds when found" in {
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId2, Notification3))
+        await(repository.save(ClientId1, Notification2))
+
+        val notifications = await(repository.fetchNotificationIds(ClientId1, ConversationIdUuid, Unpulled))
+
+        notifications.size shouldBe 1
+        notifications should contain(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))
+      }
+
+      "return empty list when nothing found" in {
+        await(repository.save(ClientId1, Notification1))
+        val nonExistentConversationId = UUID.randomUUID()
+
+        await(repository.fetchNotificationIds(ClientId1, nonExistentConversationId, Pulled)) shouldBe Nil
+      }
+    }
+
     "fetch by clientId" should {
       "return all notificationIds when found by clientId" in {
         await(repository.save(ClientId1, Notification1))
@@ -167,7 +187,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId1, Notification2))
         await(repository.save(ClientId2, Notification3))
 
-        val notifications: List[NotificationWithIdOnly] = await(repository.fetchNotificationIds(ClientId1, Some(Pulled)))
+        val notifications = await(repository.fetchNotificationIds(ClientId1, Some(Pulled)))
 
         notifications.size shouldBe 1
         notifications should contain(NotificationWithIdOnly(NotificationId(Notification2.notificationId)))

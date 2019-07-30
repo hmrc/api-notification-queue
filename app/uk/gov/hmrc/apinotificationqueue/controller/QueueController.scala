@@ -97,40 +97,40 @@ class QueueController @Inject()(queueService: QueueService,
     }
   }
 
-  def get(id: UUID): Action[AnyContent] = Action.async { implicit request =>
+  def get(notificationId: UUID): Action[AnyContent] = Action.async { implicit request =>
 
-    logger.info(s"getting notification id ${id.toString}", request.headers.headers)
+    logger.info(s"getting notification id ${notificationId.toString}", request.headers.headers)
     validateClientIdHeader(request.headers, "get") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
-        val notification = queueService.get(clientId, id)
+        val notification = queueService.get(clientId, notificationId)
         notification.map(opt =>
           opt.fold {
-            logger.debug(s"requested notification id ${id.toString} not found", request.headers.headers)
+            logger.debug(s"requested notification id ${notificationId.toString} not found", request.headers.headers)
             NotFound("NOT FOUND")
           } {n =>
-            logger.debug(s"found notification id ${id.toString}", request.headers.headers)
+            logger.debug(s"found notification id ${notificationId.toString}", request.headers.headers)
               Result(
-                header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(id).url) ++ n.headers),
+                header = ResponseHeader(OK, Map(LOCATION -> routes.QueueController.get(notificationId).url) ++ n.headers),
                 body = HttpEntity.Strict(ByteString(n.payload), n.headers.get(CONTENT_TYPE)))
           }
         )
     }
   }
 
-  def delete(id: UUID): Action[AnyContent] = Action.async { implicit request =>
+  def delete(notificationId: UUID): Action[AnyContent] = Action.async { implicit request =>
 
-    logger.info(s"deleting notification id ${id.toString}", request.headers.headers)
+    logger.info(s"deleting notification id ${notificationId.toString}", request.headers.headers)
     validateClientIdHeader(request.headers, "delete") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
-        val futureDeleted = queueService.delete(clientId, id)
+        val futureDeleted = queueService.delete(clientId, notificationId)
         futureDeleted.map(deleted =>
           if (deleted) {
-            logger.debug(s"successfully deleted notification id ${id.toString}", request.headers.headers)
+            logger.debug(s"successfully deleted notification id ${notificationId.toString}", request.headers.headers)
             NoContent
           } else {
-            logger.debug(s"nothing to delete for notification id ${id.toString}", request.headers.headers)
+            logger.debug(s"nothing to delete for notification id ${notificationId.toString}", request.headers.headers)
             NotFound("NOT FOUND")
           }
         )

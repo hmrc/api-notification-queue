@@ -43,6 +43,8 @@ trait NotificationRepository {
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
   def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]]
+  
+  def fetchNotificationIds(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]]
 
   def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulledStatus]]
   
@@ -161,6 +163,16 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
       case Some(Pulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> true))
       case Some(Unpulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> false))
       case _ => Json.obj("clientId" -> clientId)
+    }
+    val projection = Json.obj("notification.notificationId" -> 1, "_id" -> 0)
+
+    collection.find(selector, Some(projection)).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
+  }
+
+  override def fetchNotificationIds(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]] = {
+    val selector = notificationStatus match {
+      case Pulled => Json.obj("clientId" -> clientId, "notification.headers.X-Conversation-ID" -> conversationId, "notification.datePulled" -> Json.obj("$exists" -> true))
+      case Unpulled => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> false))
     }
     val projection = Json.obj("notification.notificationId" -> 1, "_id" -> 0)
 

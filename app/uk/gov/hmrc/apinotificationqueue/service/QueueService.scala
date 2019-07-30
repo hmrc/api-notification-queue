@@ -31,16 +31,20 @@ class QueueService @Inject()(notificationRepo: NotificationRepository)(implicit 
     notificationRepo.fetchNotificationIds(clientId, notificationStatus)
   }
 
-  def get(clientId: String, id: UUID): Future[Option[Notification]] = {
-    notificationRepo.fetch(clientId, id)
-  }
-
   def getByConversationId(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulledStatus]] = {
     notificationRepo.fetchNotificationIds(clientId, conversationId)
   }
+
+  def getByConversationId(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]] = {
+    notificationRepo.fetchNotificationIds(clientId, conversationId, notificationStatus: NotificationStatus.Value)
+  }
+
+  def get(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
+    notificationRepo.fetch(clientId, notificationId)
+  }
   
-  def delete(clientId: String, id: UUID): Future[Boolean] = {
-    notificationRepo.delete(clientId, id)
+  def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
+    notificationRepo.delete(clientId, notificationId)
   }
 
   def save(clientId: String, message: Notification): Future[Notification] = {

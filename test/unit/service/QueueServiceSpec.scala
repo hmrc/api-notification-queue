@@ -89,6 +89,15 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
       verify(mockNotificationRepository).fetchNotificationIds(clientId, ConversationIdUuid)
     }
 
+    "Retrieve all notificationIds by client id, conversation id and status from the mongo repository" in new Setup {
+      when(mockNotificationRepository.fetchNotificationIds(clientId, ConversationIdUuid, Pulled))
+        .thenReturn(Future.successful(List(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))))
+
+      await(queueService.getByConversationId(clientId, ConversationIdUuid, Pulled)) shouldBe List(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))
+
+      verify(mockNotificationRepository).fetchNotificationIds(clientId, ConversationIdUuid, Pulled)
+    }
+
     "Retrieve the expected notification from the mongo repository" in new Setup {
       when(mockNotificationRepository.fetch(clientId, notification1.notificationId)).thenReturn(Future.successful(Some(notification1)))
 
