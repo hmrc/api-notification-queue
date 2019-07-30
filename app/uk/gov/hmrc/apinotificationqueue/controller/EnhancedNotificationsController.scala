@@ -46,13 +46,16 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
   private val badRequestPulledText = "Notification has been pulled"
   private val badRequestUnpulledText = "Notification is unpulled"
 
-  def getPulledByClientId: Action[AnyContent] = pullByClientId(Pulled)
-  def getUnpulledByClientId: Action[AnyContent] = pullByClientId(Unpulled)
+  def getPulledByNotificationId(notificationId: UUID): Action[AnyContent] = get(notificationId, Pulled)
+  def getUnpulledByNotificationId(notificationId: UUID): Action[AnyContent] = get(notificationId, Unpulled)
 
-  def getPulledByConversationId(conversationId: UUID): Action[AnyContent] = pullByConversationId(conversationId: UUID, Pulled)
-  def getUnpulledByConversationId(conversationId: UUID): Action[AnyContent] = pullByConversationId(conversationId: UUID, Unpulled)
+  def getAllPulledByClientId: Action[AnyContent] = getAllByClientId(Pulled)
+  def getAllUnpulledByClientId: Action[AnyContent] = getAllByClientId(Unpulled)
 
-  def getByConversationId(conversationId: UUID): Action[AnyContent] = Action.async { implicit request =>
+  def getAllPulledByConversationId(conversationId: UUID): Action[AnyContent] = getAllByConversationId(conversationId: UUID, Pulled)
+  def getAllUnpulledByConversationId(conversationId: UUID): Action[AnyContent] = getAllByConversationId(conversationId: UUID, Unpulled)
+
+  def getAllByConversationId(conversationId: UUID): Action[AnyContent] = Action.async { implicit request =>
 
     val headers = request.headers
     logger.info(s"listing notifications with conversationId $conversationId", headers.headers)
@@ -63,7 +66,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
           for {
             notificationIds <- queueService.getByConversationId(clientId, conversationId)
           } yield notificationIds.map { n =>
-            val status = if (n.pulledStatus) "pulled" else "unpulled"
+            val status = if (n.pulled) "pulled" else "unpulled"
             s"/notifications/$status/${n.notification.notificationId.toString}"
           }
 
@@ -71,7 +74,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
     }
   }
   
-  private def pullByClientId(notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
+  private def getAllByClientId(notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
 
     val headers: Headers = request.headers
     logger.info(s"listing $notificationStatus notifications by clientId", headers.headers)
@@ -87,7 +90,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
     }
   }
 
-  private def pullByConversationId(conversationId: UUID, notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
+  private def getAllByConversationId(conversationId: UUID, notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
 
     val headers: Headers = request.headers
     logger.info(s"listing $notificationStatus notifications by conversationId ${conversationId.toString}", headers.headers)
@@ -111,10 +114,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
     }
   }
 
-  def unpulled(notificationId: UUID): Action[AnyContent] = pull(notificationId, Unpulled)
-  def pulled(notificationId: UUID): Action[AnyContent] = pull(notificationId, Pulled)
-
-  private def pull(notificationId: UUID, notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
+  private def get(notificationId: UUID, notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
 
     def datePulledResult(n: Notification, clientId: String, headers: Headers) = {
       n.datePulled match {

@@ -20,7 +20,7 @@ import java.util.UUID
 
 import org.joda.time.{DateTime, DateTimeZone}
 import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{X_CLIENT_ID_HEADER_NAME, X_CONVERSATION_ID_HEADER_NAME}
-import uk.gov.hmrc.apinotificationqueue.model.{Email, Notification, NotificationId, NotificationWithIdAndPulledStatus, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.model.{Email, Notification, NotificationId, NotificationWithIdAndPulled, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, ClientOverThreshold}
 import util.TestData._
 
@@ -53,8 +53,8 @@ object TestData {
 
   val ClientOverThreshold1 = ClientOverThreshold(ClientId1, 2, TimeReceived, LatestReceived)
 
-  val NotificationWithIdAndPulledStatus1 = NotificationWithIdAndPulledStatus(NotificationId(NotificationId1), pulledStatus = false)
-  val NotificationWithIdAndPulledStatus2 = NotificationWithIdAndPulledStatus(NotificationId(NotificationId2), pulledStatus = true)
+  val NotificationWithIdAndPulledStatus1 = NotificationWithIdAndPulled(NotificationId(NotificationId1), pulled = false)
+  val NotificationWithIdAndPulledStatus2 = NotificationWithIdAndPulled(NotificationId(NotificationId2), pulled = true)
   
   val TestSendEmailRequest = SendEmailRequest(List(Email("some-email@domain.com")),
     "customs_pull_notifications_warning",

@@ -9,10 +9,10 @@ GET           /notifications                                  @uk.gov.hmrc.apino
 
 DELETE        /notification/:id                               @uk.gov.hmrc.apinotificationqueue.controller.QueueController.delete(id: java.util.UUID)
 
-GET           /notifications/unpulled/:id                     @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.unpulled(id: java.util.UUID)
-GET           /notifications/pulled/:id                       @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.pulled(id: java.util.UUID)
-GET           /notifications/pulled                           @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getPulledByClientId
-GET           /notifications/unpulled                         @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getUnpulledByClientId
-GET           /notifications/conversationId/:id               @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getByConversationId(id: java.util.UUID)
-GET           /notifications/conversationId/:id/pulled        @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getPulledByConversationId(id: java.util.UUID)
-GET           /notifications/conversationId/:id/unpulled      @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getUnpulledByConversationId(id: java.util.UUID)
+GET           /notifications/unpulled/:id                     @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getUnpulledByNotificationId(id: java.util.UUID)
+GET           /notifications/pulled/:id                       @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getPulledByNotificationId(id: java.util.UUID)
+GET           /notifications/pulled                           @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getAllPulledByClientId
+GET           /notifications/unpulled                         @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getAllUnpulledByClientId
+GET           /notifications/conversationId/:id               @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getAllByConversationId(id: java.util.UUID)
+GET           /notifications/conversationId/:id/pulled        @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getAllPulledByConversationId(id: java.util.UUID)
+GET           /notifications/conversationId/:id/unpulled      @uk.gov.hmrc.apinotificationqueue.controller.EnhancedNotificationsController.getAllUnpulledByConversationId(id: java.util.UUID)

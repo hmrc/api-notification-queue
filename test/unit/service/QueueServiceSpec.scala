@@ -21,7 +21,7 @@ import java.util.UUID
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdAndPulledStatus, NotificationWithIdOnly}
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdAndPulled, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
@@ -82,9 +82,9 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
     "Retrieve all notificationIds by client id and conversation id from the mongo repository" in new Setup {
       when(mockNotificationRepository.fetchNotificationIds(clientId, ConversationIdUuid))
-        .thenReturn(Future.successful(List(NotificationWithIdAndPulledStatus(NotificationId(Notification1.notificationId), pulledStatus = true))))
+        .thenReturn(Future.successful(List(NotificationWithIdAndPulled(NotificationId(Notification1.notificationId), pulled = true))))
 
-      await(queueService.getByConversationId(clientId, ConversationIdUuid)) shouldBe List(NotificationWithIdAndPulledStatus(NotificationId(Notification1.notificationId), pulledStatus = true))
+      await(queueService.getByConversationId(clientId, ConversationIdUuid)) shouldBe List(NotificationWithIdAndPulled(NotificationId(Notification1.notificationId), pulled = true))
 
       verify(mockNotificationRepository).fetchNotificationIds(clientId, ConversationIdUuid)
     }
