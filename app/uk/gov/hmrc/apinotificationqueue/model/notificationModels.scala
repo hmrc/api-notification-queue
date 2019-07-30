@@ -37,6 +37,11 @@ object NotificationWithIdOnly {
   implicit val notificationWithIdOnlyJF = Json.format[NotificationWithIdOnly]
 }
 
+case class NotificationWithIdAndPulled(notification: NotificationId, pulled: Boolean)
+object NotificationWithIdAndPulled {
+  implicit val notificationWithIdAndPulledStatusJF = Json.format[NotificationWithIdAndPulled]
+}
+
 case class Notification(notificationId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime, datePulled: Option[DateTime])
 
 object Notification {

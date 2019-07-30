@@ -19,24 +19,32 @@ package uk.gov.hmrc.apinotificationqueue.service
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationWithIdOnly, NotificationStatus}
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, NotificationWithIdAndPulled, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class QueueService @Inject()(notificationRepo: NotificationRepository) {
+class QueueService @Inject()(notificationRepo: NotificationRepository)(implicit ec:ExecutionContext) {
 
   def get(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
     notificationRepo.fetchNotificationIds(clientId, notificationStatus)
   }
 
-  def get(clientId: String, id: UUID): Future[Option[Notification]] = {
-    notificationRepo.fetch(clientId, id)
+  def getByConversationId(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulled]] = {
+    notificationRepo.fetchNotificationIds(clientId, conversationId)
   }
 
-  def delete(clientId: String, id: UUID): Future[Boolean] = {
-    notificationRepo.delete(clientId, id)
+  def getByConversationId(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]] = {
+    notificationRepo.fetchNotificationIds(clientId, conversationId, notificationStatus: NotificationStatus.Value)
+  }
+
+  def get(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
+    notificationRepo.fetch(clientId, notificationId)
+  }
+  
+  def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
+    notificationRepo.delete(clientId, notificationId)
   }
 
   def save(clientId: String, message: Notification): Future[Notification] = {
