@@ -32,6 +32,7 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
 import util.externalservices.ApiSubscriptionFieldsService
+import util.TestData.ConversationId
 
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -46,7 +47,6 @@ class QueueSpec extends FeatureSpec
 
   private val componentTestConfigs: Map[String, Any] = Map(
     "notification.email.delay" -> 30,
-    "auditing.enabled" -> false,
     "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
     "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,
     "microservice.services.api-subscription-fields.context" -> ApiNotificationQueueExternalServicesConfig.ApiSubscriptionFieldsContext
@@ -203,6 +203,31 @@ class QueueSpec extends FeatureSpec
 
       Then("you will receive a list of two unpulled messages")
       contentAsString(pulledListResult) shouldBe s"""{"notifications":["/notifications/unpulled/$notificationId1","/notifications/unpulled/$notificationId2"]}"""
+    }
+  }
+
+  feature("Post and then get a list of all messages by conversationId from the queue") {
+    info("As a 3rd Party system")
+    info("I want to successfully persist notifications")
+    info("And then pull a list of all messages by conversationId")
+
+    scenario("3rd party system gets a list of messages by conversationId") {
+      Given("two messages have already been queued")
+      val clientId = "aaaa"
+      val xmlBody = <xml><node>Stuff</node></xml>
+      val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId,  "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val location1 = queueResponse1.header.headers("Location")
+      val notificationId1 = location1.substring(location1.length() - 36)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val location2 = queueResponse2.header.headers("Location")
+      val notificationId2 = location2.substring(location2.length() - 36)
+
+      When("you get a list of all messages by conversationId")
+      val listResult = route(app, FakeRequest(GET, s"/notifications/conversationId/$ConversationId", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+
+      Then("you will receive a list of two messages")
+      contentAsString(listResult) shouldBe s"""{"notifications":["/notifications/unpulled/$notificationId1","/notifications/unpulled/$notificationId2"]}"""
     }
   }
 }
