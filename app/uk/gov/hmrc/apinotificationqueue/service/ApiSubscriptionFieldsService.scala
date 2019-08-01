@@ -19,13 +19,13 @@ package uk.gov.hmrc.apinotificationqueue.service
 import java.util.UUID
 
 import javax.inject.Inject
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import uk.gov.hmrc.apinotificationqueue.connector.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class ApiSubscriptionFieldsService @Inject()(apiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector) {
+class ApiSubscriptionFieldsService @Inject()(apiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector)
+                                            (implicit ec: ExecutionContext) {
 
   def getClientId(fieldsId: UUID)(implicit hc: HeaderCarrier): Future[Option[String]] = {
     apiSubscriptionFieldsConnector.lookupClientId(fieldsId).map(resp => Some(resp.clientId)) recover {

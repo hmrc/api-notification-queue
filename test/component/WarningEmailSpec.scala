@@ -28,14 +28,15 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.test.Helpers.{await, ACCEPTED}
+import play.api.test.Helpers
+import play.api.test.Helpers.{ACCEPTED, await}
 import reactivemongo.bson.BSONObjectID
 import util.TestData._
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 class WarningEmailSpec extends FeatureSpec
@@ -59,6 +60,7 @@ class WarningEmailSpec extends FeatureSpec
     "microservice.services.email.port" -> Port
   )
 
+  implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(componentTestConfigs).build()
 
   private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](

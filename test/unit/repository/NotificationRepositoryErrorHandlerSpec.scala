@@ -16,7 +16,7 @@
 
 package unit.repository
 
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsObject, Json}
 import reactivemongo.api.commands.{DefaultWriteResult, WriteConcernError, WriteError, WriteResult}
 import reactivemongo.play.json.commands.JSONFindAndModifyCommand.{FindAndModifyResult, UpdateLastError}

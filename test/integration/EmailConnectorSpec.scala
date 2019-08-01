@@ -19,12 +19,13 @@ package integration
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Writes}
+import play.api.test.Helpers
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
@@ -36,7 +37,6 @@ import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.externalservices.EmailService
 import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
 
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.{ExecutionContext, Future}
 
 class EmailConnectorSpec extends UnitSpec
@@ -47,6 +47,7 @@ class EmailConnectorSpec extends UnitSpec
   with EmailService
   with WireMockRunner {
 
+  implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
   private val mockConfig = mock[ApiNotificationQueueConfigService]
   private val mockHttpClient = mock[HttpClient]
   private val mockCdsLogger = mock[CdsLogger]

@@ -21,7 +21,6 @@ import java.util.UUID
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 import play.api.http.HttpEntity
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.controller.CustomErrorResponses.{ErrorBodyMissing, ErrorClientIdMissing}
@@ -29,9 +28,9 @@ import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{API_SUBSCR
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 //TODO: there needs to be a separate validation stage before main processing. At the moment validation responsibilities are sprayed throughout the code
@@ -40,7 +39,11 @@ class QueueController @Inject()(queueService: QueueService,
                                 fieldsService: ApiSubscriptionFieldsService,
                                 idGenerator: NotificationIdGenerator,
                                 dateTimeProvider: DateTimeProvider,
-                                logger: NotificationLogger) extends BaseController with HeaderValidator {
+                                cc: ControllerComponents,
+                                logger: NotificationLogger)
+                               (implicit ec: ExecutionContext)
+  extends BackendController(cc)
+    with HeaderValidator {
 
   override val notificationLogger: NotificationLogger = logger
 

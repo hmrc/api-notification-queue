@@ -24,7 +24,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers.{await, _}
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
@@ -34,7 +34,7 @@ import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig,
 import util.externalservices.ApiSubscriptionFieldsService
 import util.TestData.ConversationId
 
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.ExecutionContext
 
 class QueueSpec extends FeatureSpec
   with GivenWhenThen
@@ -52,6 +52,7 @@ class QueueSpec extends FeatureSpec
     "microservice.services.api-subscription-fields.context" -> ApiNotificationQueueExternalServicesConfig.ApiSubscriptionFieldsContext
   )
 
+  implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(componentTestConfigs).build()
   private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
     collectionName = "notifications",

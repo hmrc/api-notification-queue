@@ -23,7 +23,6 @@ import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import play.api.http.HttpEntity
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
@@ -31,16 +30,20 @@ import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorNotFound, errorBadRequest}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class EnhancedNotificationsController @Inject()(queueService: QueueService,
                                                 fieldsService: ApiSubscriptionFieldsService,
                                                 idGenerator: NotificationIdGenerator,
                                                 dateTimeProvider: DateTimeProvider,
-                                                logger: NotificationLogger) extends BaseController with HeaderValidator {
+                                                cc: ControllerComponents,
+                                                logger: NotificationLogger)
+                                               (implicit ec: ExecutionContext)
+  extends BackendController(cc)
+    with HeaderValidator {
 
   override val notificationLogger: NotificationLogger = logger
   private val badRequestPulledText = "Notification has been pulled"
@@ -59,7 +62,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
     val headers = request.headers
     logger.info(s"listing notifications with conversationId $conversationId", headers.headers)
-    validateClientIdHeader(request.headers, "getByConversationId") match {
+    validateClientIdHeader(request.headers, "getAllByConversationId") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
         val notificationIdPaths: Future[List[String]] =
@@ -78,7 +81,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
     val headers: Headers = request.headers
     logger.info(s"listing $notificationStatus notifications by clientId", headers.headers)
-    validateClientIdHeader(request.headers, s"get $notificationStatus by client id") match {
+    validateClientIdHeader(request.headers, s"get all $notificationStatus by client id") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
         val notificationIdPaths: Future[List[String]] =
@@ -94,7 +97,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
     val headers: Headers = request.headers
     logger.info(s"listing $notificationStatus notifications by conversationId ${conversationId.toString}", headers.headers)
-    validateClientIdHeader(request.headers, s"get $notificationStatus by conversation id") match {
+    validateClientIdHeader(request.headers, s"get all $notificationStatus by conversation id") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
         val notificationIdPaths: Future[List[String]] =

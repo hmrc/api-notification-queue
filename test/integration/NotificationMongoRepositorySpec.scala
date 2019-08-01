@@ -21,16 +21,16 @@ import java.util.UUID
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
+import play.api.test.Helpers
 import reactivemongo.api.DB
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, NotificationId, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationMongoRepository, NotificationRepositoryErrorHandler}
-import uk.gov.hmrc.customs.api.common.config.ServicesConfig
 import uk.gov.hmrc.mongo.MongoSpecSupport
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.test.UnitSpec
 import util.StubCdsLogger
 import util.TestData._
@@ -45,6 +45,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
     override val mongo: () => DB = self.mongo
   }
 
+  implicit val ec = Helpers.stubControllerComponents().executionContext
   private val cdsLogger = new StubCdsLogger(mock[ServicesConfig])
   private val mockErrorHandler = mock[NotificationRepositoryErrorHandler]
   private val mockConfigService = mock[ApiNotificationQueueConfig]

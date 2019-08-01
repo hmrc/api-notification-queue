@@ -20,20 +20,21 @@ import java.util.UUID
 
 import org.joda.time.DateTime
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.test.Helpers
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdAndPulled, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData.{ConversationIdUuid, Notification1}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
   trait Setup {
+    implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
     val mockNotificationRepository: NotificationRepository = mock[NotificationRepository]
     val queueService: QueueService = new QueueService(mockNotificationRepository)
 
