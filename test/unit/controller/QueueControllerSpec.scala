@@ -21,11 +21,11 @@ import java.util.UUID
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => mockEq, _}
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.ContentTypes.XML
 import play.api.http.HeaderNames.{CONTENT_TYPE, LOCATION}
 import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, NotificationIdGenerator, QueueController}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
@@ -41,6 +41,7 @@ import scala.concurrent.Future
 class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
 
   private implicit lazy val materializer = fakeApplication.materializer
+  private implicit val ec = Helpers.stubControllerComponents().executionContext
 
   private val CLIENT_ID_HEADER_NAME = "x-client-id"
   private val SUBSCRIPTION_FIELDS_ID_HEADER_NAME = "api-subscription-fields-id"
@@ -59,7 +60,8 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
     val mockFieldsService = mock[ApiSubscriptionFieldsService]
     val mockLogger = mock[NotificationLogger]
     val mockDateTimeProvider = mock[DateTimeProvider]
-    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockDateTimeProvider, mockLogger)
+    val controllerComponents = Helpers.stubControllerComponents()
+    val queueController = new QueueController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockDateTimeProvider, controllerComponents, mockLogger)
   }
 
   "POST /queue" should {
@@ -67,7 +69,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       val result = await(queueController.save()(FakeRequest(POST, "/queue")))
 
       status(result) shouldBe BAD_REQUEST
-      verifyLogWithHeaders(mockLogger, "error", "missing api-subscription-fields-id header when calling save endpoint", Seq.empty)
+      verifyLogWithHeaders(mockLogger, "error", "missing api-subscription-fields-id header when calling save endpoint", List((HOST, "localhost")))
     }
 
     "return 400 when the `fieldsId` does not exist in the `api-subscription-fields` service" in new Setup {
@@ -140,7 +142,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       val result = await(queueController.getAllByClientId()(FakeRequest(GET, "/notifications")))
 
       status(result) shouldBe BAD_REQUEST
-      verifyLogWithHeaders(mockLogger, "error", "missing X-Client-ID header when calling getAllByClientId endpoint", Seq.empty)
+      verifyLogWithHeaders(mockLogger, "error", "missing X-Client-ID header when calling getAllByClientId endpoint", List((HOST, "localhost")))
     }
 
     "return 200" in new Setup {

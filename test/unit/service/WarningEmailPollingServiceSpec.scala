@@ -22,17 +22,17 @@ import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.test.Helpers
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiNotificationQueueConfigService, WarningEmailPollingService}
-import uk.gov.hmrc.customs.api.common.config.ServicesConfig
 import uk.gov.hmrc.play.test.UnitSpec
 import util.StubCdsLogger
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class WarningEmailPollingServiceSpec extends UnitSpec
   with MockitoSugar
@@ -40,6 +40,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
 
   trait Setup {
 
+    implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
     val emailConfig = EmailConfig("some-url", 2, "some-email@address.com", 1, 0)
 
     val mockNotificationRepository = mock[NotificationRepository]

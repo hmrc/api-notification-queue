@@ -19,17 +19,19 @@ package unit.service
 import java.util.UUID
 
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.test.Helpers
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
 import uk.gov.hmrc.apinotificationqueue.service.ApiSubscriptionFieldsService
 import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ApiSubscriptionFieldsServiceSpec extends UnitSpec with MockitoSugar {
 
   trait Setup {
+    implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
     val uuid: UUID = UUID.randomUUID()
     val clientId = "abc123"
     val mockConnector: ApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
