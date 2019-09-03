@@ -64,6 +64,19 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
   private implicit val format: Format[ClientNotification] = ClientNotificationJF
 
+  private val ttlIndexName = "dateReceived-Index"
+  private val ttlInSeconds = config.ttlInSeconds
+  private val ttlIndex = Index(
+    key = Seq("notification.dateReceived" -> IndexType.Descending),
+    name = Some(ttlIndexName),
+    unique = false,
+    options = BSONDocument("expireAfterSeconds" -> BSONLong(ttlInSeconds))
+  )
+
+  dropInvalidIndexes.flatMap { _ =>
+    collection.indexesManager.ensure(ttlIndex)
+  }
+
   override def indexes: Seq[Index] = {
     Seq(
       Index(
@@ -91,13 +104,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
         name = Some("clientId-xConversationId-datePulled-Index"),
         unique = false
       ),
-      Index(
-        key = Seq("notification.dateReceived" -> IndexType.Descending),
-        name = Some("dateReceived-Index"),
-        unique = false,
-        options = BSONDocument("expireAfterSeconds" -> BSONLong(config.ttlInSeconds))
-      )
-
+      ttlIndex
     )
   }
 
@@ -183,7 +190,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
     collection.find(selector, Some(projection)).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
   }
-
+  
   override def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulled]] = {
     import collection.BatchCommands.AggregationFramework.{Match, Project}
 
@@ -197,4 +204,19 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
       .cursor
       .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[NotificationWithIdAndPulled]]())
   }
+
+  private def dropInvalidIndexes: Future[_] =
+    collection.indexesManager.list().flatMap { indexes =>
+      indexes
+        .find { index =>
+          index.name.contains(ttlIndexName) &&
+            !index.options.getAs[Int]("expireAfterSeconds").contains(ttlInSeconds)
+        }
+        .map { _ =>
+          logger.debug(s"dropping $ttlIndexName index as ttl value is incorrect")
+          collection.indexesManager.drop(ttlIndexName)
+        }
+        .getOrElse(Future.successful(()))
+    }
+
 }
