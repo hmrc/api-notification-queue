@@ -65,12 +65,12 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   private implicit val format: Format[ClientNotification] = ClientNotificationJF
 
   private val ttlIndexName = "dateReceived-Index"
-  
+  private val ttlInSeconds = config.ttlInSeconds
   private val ttlIndex = Index(
     key = Seq("notification.dateReceived" -> IndexType.Descending),
     name = Some(ttlIndexName),
     unique = false,
-    options = BSONDocument("expireAfterSeconds" -> BSONLong(config.ttlInSeconds))
+    options = BSONDocument("expireAfterSeconds" -> BSONLong(ttlInSeconds))
   )
 
   dropInvalidIndexes.flatMap { _ =>
@@ -210,7 +210,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
       indexes
         .find { index =>
           index.name.contains(ttlIndexName) &&
-            !index.options.getAs[Int]("expireAfterSeconds").contains(config.ttlInSeconds)
+            !index.options.getAs[Int]("expireAfterSeconds").contains(ttlInSeconds)
         }
         .map { _ =>
           logger.debug(s"dropping $ttlIndexName index as ttl value is incorrect")
