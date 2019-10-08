@@ -125,10 +125,12 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
           logger.error(s"Notification has been pulled for id ${notificationId.toString}", headers.headers)
           errorBadRequest(badRequestPulledText).XmlResult
         case Some(_) if notificationStatus == Pulled =>
-          logger.debug(s"Pulling pulled notification for id ${notificationId.toString}", headers.headers)
+          val conversationId = n.headers.getOrElse("X-Conversation-ID", "[ABSENT]")
+          logger.debug(s"Pulling pulled notification for conversationId: ${conversationId.toString} with notificationId: ${notificationId.toString}", headers.headers)
           result(n)
         case None if notificationStatus == Unpulled =>
-          logger.debug(s"Pulling unpulled notification for id ${notificationId.toString}", headers.headers)
+          val conversationId = n.headers.getOrElse("X-Conversation-ID", "[ABSENT]")
+          logger.debug(s"Pulling unpulled notification for conversationId: ${conversationId} with notificationId: ${notificationId.toString}", headers.headers)
           queueService.update(clientId, n.copy(datePulled = Some(dateTimeProvider.now())))
           result(n)
         case None if notificationStatus == Pulled =>
