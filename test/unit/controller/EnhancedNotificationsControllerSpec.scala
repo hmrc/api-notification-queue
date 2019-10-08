@@ -120,7 +120,8 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
       verifyLogWithHeaders(mockLogger, "info", "getting unpulled notificationId 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
-      verifyLogWithHeaders(mockLogger, "debug", "Pulling unpulled notification for id 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "debug", "Pulling unpulled notification for conversationId: 5 with notificationId: 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
+
     }
 
     "return 400 if requested notification has already been pulled" in new Setup {
@@ -167,7 +168,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
       header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
       verifyLogWithHeaders(mockLogger, "info", "getting pulled notificationId 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
-      verifyLogWithHeaders(mockLogger, "debug", "Pulling pulled notification for id 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "debug", "Pulling pulled notification for conversationId: 5 with notificationId: 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
     }
 
     "return 400 if requested notification is unpulled" in new Setup {
