@@ -26,17 +26,17 @@ import play.api.http.ContentTypes.XML
 import play.api.http.HeaderNames.{CONTENT_TYPE, HOST}
 import play.api.mvc.request.RequestTarget
 import play.api.mvc.{AnyContentAsEmpty, ControllerComponents, Headers, Result}
-import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers._
-import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, EnhancedNotificationsController, NotificationIdGenerator}
+import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.apinotificationqueue.controller.{DateTimeProvider, EnhancedNotificationsController}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly, SeqOfHeader}
-import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
+import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService, UuidService}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import util.MockitoPassByNameHelper.PassByNameVerifier
-import util.XmlUtil.string2xml
 import util.TestData.{ConversationId, ConversationIdUuid, NotificationWithIdAndPulledStatus1, NotificationWithIdAndPulledStatus2}
+import util.XmlUtil.string2xml
 
 import scala.concurrent.Future
 import scala.xml.Utility.trim
@@ -85,22 +85,20 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar wit
     val notificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(UUID.randomUUID()))
     val notificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(UUID.randomUUID()))
 
-    class StaticIDGenerator extends NotificationIdGenerator {
-      override def generateId(): UUID = uuid
-    }
-
     protected val mockQueueService: QueueService = mock[QueueService]
     protected val mockFieldsService: ApiSubscriptionFieldsService = mock[ApiSubscriptionFieldsService]
+    protected val mockUuidService: UuidService = mock[UuidService]
     protected val mockLogger: NotificationLogger = mock[NotificationLogger]
     protected val mockDateTimeProvider: DateTimeProvider = mock[DateTimeProvider]
     protected val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
-    protected val controller = new EnhancedNotificationsController(mockQueueService, mockFieldsService, new StaticIDGenerator, mockDateTimeProvider, controllerComponents, mockLogger)
+    protected val controller = new EnhancedNotificationsController(mockQueueService, mockFieldsService, mockUuidService, mockDateTimeProvider, controllerComponents, mockLogger)
     protected val payload = "<xml>a</xml>"
     protected val unpulledNotification = Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), None)
     protected val time = DateTime.now()
     protected val pulledNotification = unpulledNotification.copy(datePulled = Some(time))
 
     when(mockDateTimeProvider.now()).thenReturn(time)
+    when(mockUuidService.uuid()).thenReturn(uuid)
     protected val unpulledRequest = FakeRequest(GET, s"/notifications/unpulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
     protected val pulledRequest = FakeRequest(GET, s"/notifications/pulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
     protected val conversationEndpoint = s"/notifications/conversationId/$ConversationId"
