@@ -76,7 +76,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
         generateResponse(notificationIdPaths, headers)
     }
   }
-  
+
   private def getAllByClientId(notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
 
     val headers: Headers = request.headers

@@ -144,5 +144,5 @@ class QueueController @Inject()(queueService: QueueService,
   private def extractNotificationIdHeaderValue(headers: Headers): Option[UUID] = {
     headers.get(NOTIFICATION_ID_HEADER_NAME).fold[Option[UUID]](None)(id => validateUuid(id))
   }
-  
+
 }

@@ -43,11 +43,11 @@ trait NotificationRepository {
   def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]]
 
   def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]]
-  
+
   def fetchNotificationIds(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]]
 
   def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulled]]
-  
+
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
@@ -190,7 +190,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
     collection.find(selector, Some(projection)).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
   }
-  
+
   override def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulled]] = {
     import collection.BatchCommands.AggregationFramework.{Match, Project}
 

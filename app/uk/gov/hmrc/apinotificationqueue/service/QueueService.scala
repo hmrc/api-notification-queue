@@ -42,7 +42,7 @@ class QueueService @Inject()(notificationRepo: NotificationRepository)(implicit 
   def get(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
     notificationRepo.fetch(clientId, notificationId)
   }
-  
+
   def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
     notificationRepo.delete(clientId, notificationId)
   }
