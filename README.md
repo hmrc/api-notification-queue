@@ -13,8 +13,8 @@ The upstream client is the `api-notification-pull` service.
 ### POST `/queue`
 
 Payload must be text based, e.g. XML.
-When each notification is put onto the queue database, a unique id will be generated.
-This id will be used later for querying the notification.
+If a `notification-id` header is supplied then this is used as the notification ID otherwise it is generated when each notification is saved.
+This id will be used for retrieving the notification.
 The `api-subscription-fields-id` header must be included in the request. The client ID will be retrieved from the `api-subscription-fields` service.
 
 ```

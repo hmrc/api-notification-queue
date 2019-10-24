@@ -26,6 +26,8 @@ object CustomHeaderNames {
   val X_CONVERSATION_ID_HEADER_NAME = "X-Conversation-ID"
 
   val API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME = "api-subscription-fields-id"
+
+  val NOTIFICATION_ID_HEADER_NAME: String = "notification-id"
 }
 
 object CustomErrorResponses {

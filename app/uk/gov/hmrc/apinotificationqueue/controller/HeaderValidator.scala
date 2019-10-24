@@ -58,7 +58,7 @@ trait HeaderValidator {
     }
   }
 
-  private def validateUuid(subscriptionFieldsId: String): Option[UUID] = Try(UUID.fromString(subscriptionFieldsId)) match {
+  def validateUuid(maybeUuid: String): Option[UUID] = Try(UUID.fromString(maybeUuid)) match {
     case Success(uuid) => Some(uuid)
     case Failure(_) => None
   }

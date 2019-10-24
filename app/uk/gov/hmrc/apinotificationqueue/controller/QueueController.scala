@@ -24,10 +24,10 @@ import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.controller.CustomErrorResponses.{ErrorBodyMissing, ErrorClientIdMissing}
-import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME, X_CLIENT_ID_HEADER_NAME}
+import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME, NOTIFICATION_ID_HEADER_NAME, X_CLIENT_ID_HEADER_NAME}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, Notifications}
-import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
+import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService, UuidService}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,7 +37,7 @@ import scala.util.control.NonFatal
 @Singleton()
 class QueueController @Inject()(queueService: QueueService,
                                 fieldsService: ApiSubscriptionFieldsService,
-                                idGenerator: NotificationIdGenerator,
+                                uuidService: UuidService,
                                 dateTimeProvider: DateTimeProvider,
                                 cc: ControllerComponents,
                                 logger: NotificationLogger)
@@ -48,7 +48,7 @@ class QueueController @Inject()(queueService: QueueService,
   override val notificationLogger: NotificationLogger = logger
 
   def save(): Action[AnyContent] = Action.async { implicit request =>
-    val headers = request.headers
+    val headers: Headers = request.headers
     logger.info(s"saving request", headers.headers)
     validateApiSubscriptionFieldsHeader(headers, "save") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
@@ -62,11 +62,12 @@ class QueueController @Inject()(queueService: QueueService,
             logger.error("missing body when saving", headers.headers)
             Future.successful(ErrorBodyMissing.XmlResult)
           } { body =>
+             val notificationId = extractNotificationIdHeaderValue(headers).getOrElse(uuidService.uuid())
               queueService.save(
                 maybeClientId.get,
                 Notification(
-                  idGenerator.generateId(),
-                  headers.remove(X_CLIENT_ID_HEADER_NAME, API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME).toSimpleMap,
+                  notificationId,
+                  headers.remove(X_CLIENT_ID_HEADER_NAME, API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME, NOTIFICATION_ID_HEADER_NAME).toSimpleMap,
                   body.toString(),
                   dateTimeProvider.now(),
                   None)).map { notification =>
@@ -140,11 +141,8 @@ class QueueController @Inject()(queueService: QueueService,
     }
   }
 
-}
-
-@Singleton
-class NotificationIdGenerator {
-  def generateId(): UUID = {
-    UUID.randomUUID()
+  private def extractNotificationIdHeaderValue(headers: Headers): Option[UUID] = {
+    headers.get(NOTIFICATION_ID_HEADER_NAME).fold[Option[UUID]](None)(id => validateUuid(id))
   }
+
 }

@@ -28,7 +28,7 @@ import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, Notifications}
-import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService}
+import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService, UuidService}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorNotFound, errorBadRequest}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
@@ -37,7 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class EnhancedNotificationsController @Inject()(queueService: QueueService,
                                                 fieldsService: ApiSubscriptionFieldsService,
-                                                idGenerator: NotificationIdGenerator,
+                                                uuidService: UuidService,
                                                 dateTimeProvider: DateTimeProvider,
                                                 cc: ControllerComponents,
                                                 logger: NotificationLogger)
@@ -76,7 +76,7 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
         generateResponse(notificationIdPaths, headers)
     }
   }
-  
+
   private def getAllByClientId(notificationStatus: NotificationStatus.Value): Action[AnyContent] = Action.async { implicit request =>
 
     val headers: Headers = request.headers
@@ -126,11 +126,11 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
           errorBadRequest(badRequestPulledText).XmlResult
         case Some(_) if notificationStatus == Pulled =>
           val conversationId = n.headers.getOrElse("X-Conversation-ID", "[ABSENT]")
-          logger.debug(s"Pulling pulled notification for conversationId: ${conversationId.toString} with notificationId: ${notificationId.toString}", headers.headers)
+          logger.debug(s"Pulling pulled notification for conversationId: $conversationId with notificationId: ${notificationId.toString}", headers.headers)
           result(n)
         case None if notificationStatus == Unpulled =>
           val conversationId = n.headers.getOrElse("X-Conversation-ID", "[ABSENT]")
-          logger.debug(s"Pulling unpulled notification for conversationId: ${conversationId} with notificationId: ${notificationId.toString}", headers.headers)
+          logger.debug(s"Pulling unpulled notification for conversationId: $conversationId with notificationId: ${notificationId.toString}", headers.headers)
           queueService.update(clientId, n.copy(datePulled = Some(dateTimeProvider.now())))
           result(n)
         case None if notificationStatus == Pulled =>
