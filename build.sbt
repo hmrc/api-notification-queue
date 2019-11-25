@@ -46,8 +46,7 @@ lazy val microservice = (project in file("."))
     componentTestSettings,
     playPublishingSettings,
     allTest,
-    scoverageSettings,
-    allResolvers
+    scoverageSettings
   )
   .settings(majorVersion := 0)
 

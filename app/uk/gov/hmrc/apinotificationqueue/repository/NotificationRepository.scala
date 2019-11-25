@@ -51,6 +51,8 @@ trait NotificationRepository {
   def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]]
 
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
+
+  def deleteAll(): Future[Unit]
 }
 
 @Singleton
@@ -203,6 +205,14 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
       .prepared
       .cursor
       .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[NotificationWithIdAndPulled]]())
+  }
+
+  override def deleteAll(): Future[Unit] = {
+    cdsLogger.debug(s"deleting all notifications")
+
+    removeAll().map {result =>
+      cdsLogger.debug(s"deleted ${result.n} notifications")
+    }
   }
 
   private def dropInvalidIndexes: Future[_] =
