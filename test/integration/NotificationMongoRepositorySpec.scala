@@ -264,6 +264,20 @@ class NotificationMongoRepositorySpec extends UnitSpec
         excessive shouldBe 'Empty
       }
     }
+    
+    "delete all" should {
+      "successfully delete all notifications" in {
+        await(repository.save(ClientId1, Notification1))
+        await(repository.save(ClientId2, Notification1))
+        collectionSize shouldBe 2
+
+        await(repository.deleteAll())
+
+        collectionSize shouldBe 0
+      }
+
+    }
+    
   }
 
   private def fetchNotification: ClientNotification = await(repository.find("clientId" -> ClientId1).head)
