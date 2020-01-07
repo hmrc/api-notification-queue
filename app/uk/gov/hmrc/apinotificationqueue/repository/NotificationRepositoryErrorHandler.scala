@@ -17,8 +17,9 @@
 package uk.gov.hmrc.apinotificationqueue.repository
 
 import javax.inject.{Inject, Singleton}
+import reactivemongo.api.commands.FindAndModifyCommand.Result
 import reactivemongo.api.commands.WriteResult
-import reactivemongo.play.json.commands.JSONFindAndModifyCommand.FindAndModifyResult
+import reactivemongo.play.json.JSONSerializationPack
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
@@ -52,7 +53,7 @@ class NotificationRepositoryErrorHandler @Inject() (cdsLogger: CdsLogger) {
     }
   }
 
-  def handleUpdateError(result: FindAndModifyResult, exceptionMsg: String, notification: Notification): Notification = {
+  def handleUpdateError(result: Result[JSONSerializationPack.type], exceptionMsg: String, notification: Notification): Notification = {
     result.lastError.fold(notification) { lastError =>
       if (lastError.n > 0) {
         notification
