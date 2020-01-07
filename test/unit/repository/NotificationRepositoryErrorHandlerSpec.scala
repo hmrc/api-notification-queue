@@ -17,9 +17,9 @@
 package unit.repository
 
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.libs.json.{JsObject, JsValue, Json}
-import reactivemongo.api.commands._
+import play.api.libs.json.Json
 import reactivemongo.api.commands.FindAndModifyCommand.UpdateLastError
+import reactivemongo.api.commands._
 import reactivemongo.play.json.JSONSerializationPack
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepositoryErrorHandler
