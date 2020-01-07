@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
 package unit.repository
 
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.libs.json.{JsObject, Json}
-import reactivemongo.api.commands.{DefaultWriteResult, WriteConcernError, WriteError, WriteResult}
-import reactivemongo.play.json.commands.JSONFindAndModifyCommand.{FindAndModifyResult, UpdateLastError}
+import play.api.libs.json.Json
+import reactivemongo.api.commands.FindAndModifyCommand.UpdateLastError
+import reactivemongo.api.commands._
+import reactivemongo.play.json.JSONSerializationPack
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepositoryErrorHandler
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
@@ -124,7 +125,11 @@ class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar 
       errmsg = None)
   }
 
-  private def findAndModifyResult(lastError: UpdateLastError): FindAndModifyResult = {
-    FindAndModifyResult(Some(lastError), Json.toJson(Notification1).asOpt[JsObject])
+  private def findAndModifyResult(lstError: UpdateLastError): FindAndModifyCommand.Result[JSONSerializationPack.type] = {
+    new FindAndModifyCommand.Result[JSONSerializationPack.type]{
+      val pack = JSONSerializationPack
+      def lastError = Some(lstError)
+      def value = Json.toJson(Notification1).asOpt[JSONSerializationPack.Document]
+    }
   }
 }
