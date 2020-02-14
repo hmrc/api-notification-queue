@@ -4,12 +4,13 @@ import sbt.Tests.{Group, SubProcess}
 import sbt.{Resolver, _}
 import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings, targetJvm}
 import uk.gov.hmrc.PublishingSettings._
+import uk.gov.hmrc.gitstamp.GitStampPlugin._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
 import scala.language.postfixOps
 
 name := "api-notification-queue"
-
+scalaVersion := "2.12.10"
 targetJvm := "jvm-1.8"
 
 lazy val allResolvers = resolvers ++= Seq(
@@ -30,7 +31,7 @@ def forkedJvmPerTestConfig(tests: Seq[TestDefinition], packages: String*): Seq[G
 
 lazy val testAll = TaskKey[Unit]("test-all")
 lazy val allTest = Seq(testAll := (test in ComponentTest)
-  .dependsOn((test in CdsIntegrationTest).dependsOn(test in Test)))
+  .dependsOn((test in CdsIntegrationTest).dependsOn(test in Test)).value)
 
 lazy val microservice = (project in file("."))
   .enablePlugins(PlayScala)
@@ -88,7 +89,7 @@ lazy val commonSettings: Seq[Setting[_]] =
     defaultSettings() ++
     gitStampSettings
 
-lazy val playPublishingSettings: Seq[sbt.Setting[_]] = sbtrelease.ReleasePlugin.releaseSettings ++
+lazy val playPublishingSettings: Seq[sbt.Setting[_]] = Seq(credentials += SbtCredentials) ++
   Seq(credentials += SbtCredentials) ++
   publishAllArtefacts
 
@@ -105,7 +106,7 @@ scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
 val compileDependencies = Seq(customsApiCommon, simpleReactiveMongo)
 
-val testDependencies = Seq(hmrcTest, scalaTest, scalaTestPlusPlay, wireMock, mockito, reactiveMongoTest, customsApiCommonTests)
+val testDependencies = Seq(hmrcTest, scalaTestPlusPlay, wireMock, mockito, reactiveMongoTest, customsApiCommonTests)
 
 libraryDependencies ++= compileDependencies ++ testDependencies
 
