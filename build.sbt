@@ -90,7 +90,6 @@ lazy val commonSettings: Seq[Setting[_]] =
     gitStampSettings
 
 lazy val playPublishingSettings: Seq[sbt.Setting[_]] = Seq(credentials += SbtCredentials) ++
-  Seq(credentials += SbtCredentials) ++
   publishAllArtefacts
 
 
