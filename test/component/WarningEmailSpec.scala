@@ -53,6 +53,7 @@ class WarningEmailSpec extends FeatureSpec
 
   private val componentTestConfigs: Map[String, Any] = Map(
     "notification.email.queueThreshold" -> 2,
+    "notification.email.enabled" -> true,
     "notification.email.address" -> "some-email@domain.com",
     "notification.email.interval" -> 1,
     "notification.email.delay" -> 3,

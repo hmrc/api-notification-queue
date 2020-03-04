@@ -32,6 +32,7 @@ class ApiNotificationQueueConfigService @Inject()(configValidatedNel: ConfigVali
   private case class ApiNotificationQueueConfigImpl(emailConfig: EmailConfig, apiSubscriptionFieldsServiceUrl: String, ttlInSeconds: Int) extends ApiNotificationQueueConfig
 
   private val emailServiceUrlNel = configValidatedNel.service("email").serviceUrl
+  private val notificationEmailEnabledNel = root.boolean("notification.email.enabled")
   private val notificationEmailQueueThresholdNel = root.int("notification.email.queueThreshold")
   private val notificationEmailAddressNel = root.string("notification.email.address")
   private val notificationEmailIntervalNel = root.int("notification.email.interval")
@@ -40,6 +41,7 @@ class ApiNotificationQueueConfigService @Inject()(configValidatedNel: ConfigVali
 
   private val validatedEmailConfig: CustomsValidatedNel[EmailConfig] =
     (emailServiceUrlNel,
+      notificationEmailEnabledNel,
       notificationEmailQueueThresholdNel,
       notificationEmailAddressNel,
       notificationEmailIntervalNel,

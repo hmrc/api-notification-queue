@@ -41,18 +41,21 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
   private val delay = config.emailConfig.notificationEmailDelay
   private val toAddress = config.emailConfig.notificationEmailAddress
   private val queueThreshold = config.emailConfig.notificationEmailQueueThreshold
+  private val emailEnabled = config.emailConfig.notificationEmailEnabled
 
-  actorSystem.scheduler.schedule(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
+  if (emailEnabled) {
+    actorSystem.scheduler.schedule(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
 
-    cdsLogger.debug(s"running warning email scheduler with delay of $delay, interval of $interval and queue threshold of $queueThreshold")
-    notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
-    if (results.nonEmpty) {
-      val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
-      cdsLogger.debug(s"sending email with ${results.size} clientId rows")
-      emailConnector.send(sendEmailRequest)
-    } else {
-      cdsLogger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
-    })
+      cdsLogger.debug(s"running warning email scheduler with delay of $delay, interval of $interval and queue threshold of $queueThreshold")
+      notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
+        if (results.nonEmpty) {
+          val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
+          cdsLogger.debug(s"sending email with ${results.size} clientId rows")
+          emailConnector.send(sendEmailRequest)
+        } else {
+          cdsLogger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
+        })
+    }
   }
 
   private def buildParameters(results: List[ClientOverThreshold], queueThreshold: Int): Map[String, String] = {

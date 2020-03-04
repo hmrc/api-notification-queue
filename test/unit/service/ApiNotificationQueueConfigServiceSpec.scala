@@ -34,6 +34,7 @@ class ApiNotificationQueueConfigServiceSpec extends UnitSpec with MockitoSugar w
     s"""
       |{
       |notification.email.queueThreshold=2
+      |notification.email.enabled=true
       |notification.email.address="some.address@domain.com"
       |notification.email.interval=1440
       |notification.email.delay=1
@@ -70,6 +71,7 @@ class ApiNotificationQueueConfigServiceSpec extends UnitSpec with MockitoSugar w
       val actual: ApiNotificationQueueConfigService = configService(validServicesConfig)
 
       actual.emailConfig.emailServiceUrl shouldBe "http://localhost:8300/hmrc/email"
+      actual.emailConfig.notificationEmailEnabled shouldBe true
       actual.emailConfig.notificationEmailAddress shouldBe "some.address@domain.com"
       actual.emailConfig.notificationEmailDelay shouldBe 1
       actual.emailConfig.notificationEmailInterval shouldBe 1440
@@ -81,6 +83,7 @@ class ApiNotificationQueueConfigServiceSpec extends UnitSpec with MockitoSugar w
       val expected = """
                        |Could not find config email.host
                        |Service configuration not found for key: email.context
+                       |Could not find config key 'notification.email.enabled'
                        |Could not find config key 'notification.email.queueThreshold'
                        |Could not find config key 'notification.email.address'
                        |Could not find config key 'notification.email.interval'

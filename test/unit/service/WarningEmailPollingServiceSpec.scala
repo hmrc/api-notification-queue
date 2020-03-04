@@ -41,7 +41,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
   trait Setup {
 
     implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
-    val emailConfig = EmailConfig("some-url", 2, "some-email@address.com", 1, 0)
+    val emailConfig = EmailConfig("some-url", notificationEmailEnabled = true, 2, "some-email@address.com", 1, 0)
 
     val mockNotificationRepository = mock[NotificationRepository]
     val mockEmailConnector = mock[EmailConnector]
@@ -92,6 +92,18 @@ class WarningEmailPollingServiceSpec extends UnitSpec
 
     "not send an email when no clients breach queue threshold" in new Setup {
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List.empty))
+      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
+
+      //TODO investigate a way of not requiring sleep
+      Thread.sleep(oneThousand)
+      verify(mockEmailConnector, never()).send(any[SendEmailRequest]())
+    }
+
+    "not send an email when email disabled in config" in new Setup {
+      private val emailDisabledConfig = EmailConfig("some-url", notificationEmailEnabled = false, 2, "some-email@address.com", 1, 0)
+      when(mockConfig.emailConfig).thenReturn(emailDisabledConfig)
+
+      when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
       val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
 
       //TODO investigate a way of not requiring sleep
