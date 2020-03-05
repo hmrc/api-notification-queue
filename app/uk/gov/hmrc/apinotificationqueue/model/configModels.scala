@@ -20,6 +20,7 @@ import com.google.inject.ImplementedBy
 import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
 
 case class EmailConfig(emailServiceUrl: String,
+                       notificationEmailEnabled: Boolean,
                        notificationEmailQueueThreshold: Int,
                        notificationEmailAddress: String,
                        notificationEmailInterval: Int,

@@ -146,7 +146,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplic
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Future.failed(emulatedServiceFailure))
 
-      val result = await(queueController.save()(request))
+      await(queueController.save()(request))
 
       verifyLogWithHeaders(mockLogger, "error", "Error calling api-subscription-fields-service due to Emulated service failure.", request.headers.headers)
     }
