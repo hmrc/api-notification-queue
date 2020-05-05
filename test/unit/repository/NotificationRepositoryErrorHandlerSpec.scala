@@ -24,7 +24,7 @@ import reactivemongo.play.json.JSONSerializationPack
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepositoryErrorHandler
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.TestData._
 
 class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar {

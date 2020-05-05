@@ -10,7 +10,7 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import scala.language.postfixOps
 
 name := "api-notification-queue"
-scalaVersion := "2.12.10"
+scalaVersion := "2.12.11"
 targetJvm := "jvm-1.8"
 
 lazy val allResolvers = resolvers ++= Seq(
@@ -85,7 +85,7 @@ scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
 val compileDependencies = Seq(customsApiCommon, simpleReactiveMongo)
 
-val testDependencies = Seq(hmrcTest, scalaTestPlusPlay, wireMock, mockito, reactiveMongoTest, customsApiCommonTests)
+val testDependencies = Seq(scalaTestPlusPlay, wireMock, mockito, reactiveMongoTest, customsApiCommonTests)
 
 libraryDependencies ++= compileDependencies ++ testDependencies
 

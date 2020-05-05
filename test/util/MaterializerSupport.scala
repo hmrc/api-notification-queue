@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-package unit.service
+package util
 
-import uk.gov.hmrc.apinotificationqueue.service.UuidService
-import util.UnitSpec
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 
-class UuidServiceSpec extends UnitSpec {
-
-  private val uuidService = new UuidService
-
-  "UuidService" should {
-    "provide different value on each call" in {
-      val uuid1 = uuidService.uuid()
-      val uuid2 = uuidService.uuid()
-
-      uuid1 should not be uuid2
-      uuid1.toString should not be uuid2.toString
-    }
-  }
-
+trait MaterializerSupport {
+  implicit val system = ActorSystem("Sys")
+  implicit val materializer: Materializer = ActorMaterializer()
 }

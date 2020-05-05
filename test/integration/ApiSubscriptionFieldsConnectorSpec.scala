@@ -27,8 +27,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
 import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException, Upstream5xxResponse}
-import uk.gov.hmrc.play.test.UnitSpec
-import util._
+import util.{UnitSpec, _}
 import util.externalservices.ApiSubscriptionFieldsService
 
 class ApiSubscriptionFieldsConnectorSpec extends UnitSpec

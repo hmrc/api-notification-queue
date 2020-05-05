@@ -31,7 +31,7 @@ import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Notif
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationMongoRepository, NotificationRepositoryErrorHandler}
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.StubCdsLogger
 import util.TestData._
 

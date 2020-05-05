@@ -2,22 +2,19 @@ import sbt._
 
 object AppDependencies {
 
-  val hmrcTestVersion = "3.9.0-play-26"
-  val scalatestplusVersion = "3.1.3"
-  val mockitoVersion = "3.2.4"
-  val wireMockVersion = "2.26.0"
-  val customsApiCommonVersion = "1.47.0"
-  val simpleReactiveMongoVersion = "7.23.0-play-26"
-  val reactiveMongoTestVersion = "4.16.0-play-26"
+  val scalaTestPlusPlayVersion = "3.1.3"
+  val mockitoVersion = "3.3.3"
+  val wireMockVersion = "2.26.3"
+  val customsApiCommonVersion = "1.50.0"
+  val simpleReactiveMongoVersion = "7.26.0-play-26"
+  val reactiveMongoTestVersion = "4.19.0-play-26"
   val testScope = "test,it"
 
   val simpleReactiveMongo = "uk.gov.hmrc" %% "simple-reactivemongo" % simpleReactiveMongoVersion
 
   val reactiveMongoTest = "uk.gov.hmrc" %% "reactivemongo-test" % reactiveMongoTestVersion % testScope
 
-  val hmrcTest = "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % testScope
-
-  val scalaTestPlusPlay = "org.scalatestplus.play" %% "scalatestplus-play" % scalatestplusVersion % testScope
+  val scalaTestPlusPlay = "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusPlayVersion % testScope
 
   val wireMock = "com.github.tomakehurst" % "wiremock-jre8" % wireMockVersion % testScope
 

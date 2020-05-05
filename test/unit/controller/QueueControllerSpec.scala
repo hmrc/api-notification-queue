@@ -32,15 +32,14 @@ import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly, SeqOfHeader}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService, UuidService}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData._
+import util.{MaterializerSupport, UnitSpec}
 
 import scala.concurrent.Future
 
-class QueueControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
+class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSupport {
 
-  private implicit lazy val materializer = fakeApplication.materializer
   private implicit val ec = Helpers.stubControllerComponents().executionContext
 
   private val CLIENT_ID_HEADER_NAME = "x-client-id"
