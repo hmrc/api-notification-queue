@@ -28,7 +28,7 @@ import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiNotificationQueueConfigService, WarningEmailPollingService}
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.StubCdsLogger
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -76,7 +76,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
   "WarningEmailPollingService" should {
     "send an email" in new Setup {
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
+      new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
       //TODO investigate a way of not requiring sleep
@@ -92,7 +92,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
 
     "not send an email when no clients breach queue threshold" in new Setup {
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List.empty))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
+      new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
 
       //TODO investigate a way of not requiring sleep
       Thread.sleep(oneThousand)
@@ -104,7 +104,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
       when(mockConfig.emailConfig).thenReturn(emailDisabledConfig)
 
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
-      val warningEmailService = new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
+      new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
 
       //TODO investigate a way of not requiring sleep
       Thread.sleep(oneThousand)

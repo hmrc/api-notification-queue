@@ -18,7 +18,6 @@ package unit.controller
 
 import java.util.UUID
 
-import akka.stream.Materializer
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
@@ -33,17 +32,16 @@ import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly, SeqOfHeader}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService, UuidService}
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData.{ConversationId, ConversationIdUuid, NotificationWithIdAndPulledStatus1, NotificationWithIdAndPulledStatus2}
 import util.XmlUtil.string2xml
+import util.{MaterializerSupport, UnitSpec}
 
 import scala.concurrent.Future
 import scala.xml.Utility.trim
 
-class EnhancedNotificationsControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
+class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupport with MockitoSugar {
 
-  private implicit lazy val materializer: Materializer = fakeApplication.materializer
   private implicit val ec = Helpers.stubControllerComponents().executionContext
 
   private val CLIENT_ID_HEADER_NAME = "x-client-id"

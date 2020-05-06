@@ -26,7 +26,7 @@ import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, Not
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.TestData.{ConversationIdUuid, Notification1}
 
 import scala.concurrent.{ExecutionContext, Future}

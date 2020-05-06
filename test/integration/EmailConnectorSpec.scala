@@ -32,7 +32,7 @@ import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigServic
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.externalservices.EmailService
 import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}

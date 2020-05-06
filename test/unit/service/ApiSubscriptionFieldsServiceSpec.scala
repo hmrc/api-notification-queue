@@ -24,7 +24,7 @@ import play.api.test.Helpers
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
 import uk.gov.hmrc.apinotificationqueue.service.ApiSubscriptionFieldsService
 import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 
 import scala.concurrent.{ExecutionContext, Future}
 

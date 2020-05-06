@@ -19,7 +19,7 @@ package unit.logging
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.RequestHeaders.LoggingHeaders
 
