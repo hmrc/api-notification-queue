@@ -6,8 +6,8 @@ object AppDependencies {
   val mockitoVersion = "3.3.3"
   val wireMockVersion = "2.26.3"
   val customsApiCommonVersion = "1.50.0"
-  val simpleReactiveMongoVersion = "7.26.0-play-26"
-  val reactiveMongoTestVersion = "4.19.0-play-26"
+  val simpleReactiveMongoVersion = "7.30.0-play-26"
+  val reactiveMongoTestVersion = "4.21.0-play-26"
   val testScope = "test,it"
 
   val simpleReactiveMongo = "uk.gov.hmrc" %% "simple-reactivemongo" % simpleReactiveMongoVersion
