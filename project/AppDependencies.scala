@@ -3,11 +3,11 @@ import sbt._
 object AppDependencies {
 
   val scalaTestPlusPlayVersion = "3.1.3"
-  val mockitoVersion = "3.3.3"
-  val wireMockVersion = "2.26.3"
-  val customsApiCommonVersion = "1.50.0"
-  val simpleReactiveMongoVersion = "7.30.0-play-26"
-  val reactiveMongoTestVersion = "4.21.0-play-26"
+  val mockitoVersion = "3.5.9"
+  val wireMockVersion = "2.27.2"
+  val customsApiCommonVersion = "1.53.0"
+  val simpleReactiveMongoVersion = "7.30.0-play-27"
+  val reactiveMongoTestVersion = "4.21.0-play-27"
   val testScope = "test,it"
 
   val simpleReactiveMongo = "uk.gov.hmrc" %% "simple-reactivemongo" % simpleReactiveMongoVersion
