@@ -19,11 +19,11 @@ package unit.service
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.{Configuration, Mode}
+import play.api.Configuration
 import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
 import uk.gov.hmrc.customs.api.common.config.ConfigValidatedNelAdaptor
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
-import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import util.UnitSpec
 
 import scala.language.postfixOps
@@ -59,7 +59,7 @@ class ApiNotificationQueueConfigServiceSpec extends UnitSpec with MockitoSugar w
 
   private val emptyAppConfig: Config = ConfigFactory.parseString("")
 
-  private def testServicesConfig(configuration: Configuration) = new ServicesConfig(configuration, new RunMode(configuration, Mode.Test)) {}
+  private def testServicesConfig(configuration: Configuration) = new ServicesConfig(configuration) {}
 
   private val validServicesConfig = new Configuration(validAppConfig)
   private val emptyServicesConfig = new Configuration(emptyAppConfig)
@@ -81,14 +81,14 @@ class ApiNotificationQueueConfigServiceSpec extends UnitSpec with MockitoSugar w
 
     "throw an exception when configuration is invalid, that contains AGGREGATED error messages" in {
       val expected = """
-                       |Could not find config email.host
+                       |Could not find config key 'email.host'
                        |Service configuration not found for key: email.context
                        |Could not find config key 'notification.email.enabled'
                        |Could not find config key 'notification.email.queueThreshold'
                        |Could not find config key 'notification.email.address'
                        |Could not find config key 'notification.email.interval'
                        |Could not find config key 'notification.email.delay'
-                       |Could not find config api-subscription-fields.host
+                       |Could not find config key 'api-subscription-fields.host'
                        |Service configuration not found for key: api-subscription-fields.context
                        |Could not find config key 'ttlInSeconds'""".stripMargin
 
