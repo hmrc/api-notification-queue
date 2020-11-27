@@ -32,8 +32,9 @@ object TestData {
   val NotificationId2 = UUID.fromString("5d60bab0-b866-4179-ba5c-b8e19176cfd9")
   val NotificationId3 = UUID.randomUUID()
   val Payload = "<foo></foo>"
-  val ConversationId = "eaca01f9-ec3b-4ede-b263-61b626dde231"
-  val ConversationIdUuid = UUID.fromString(ConversationId)
+  val ConversationId1 = "eaca01f9-ec3b-4ede-b263-61b626dde231"
+  val ConversationId2 = "47a1311c-2de0-403f-b1bb-b474da5eb0c6"
+  val ConversationId1Uuid = UUID.fromString(ConversationId1)
 
   val Year = 2017
   val MonthOfYear = 7
@@ -44,7 +45,7 @@ object TestData {
   val LatestReceived = TimeReceived.plus(1)
   val TimePulled = LatestReceived.plus(1)
 
-  val Headers = Map("h1" -> "v1", "h2" -> "v2", "X-Conversation-ID" -> ConversationId)
+  val Headers = Map("h1" -> "v1", "h2" -> "v2", "X-Conversation-ID" -> ConversationId1)
   val Notification1 = Notification(NotificationId1, Headers, Payload, TimeReceived, None)
   val Notification2 = Notification(NotificationId2, Headers, Payload, LatestReceived, Some(TimePulled))
   val Notification3 = Notification(NotificationId3, Headers, Payload, TimeReceived, None)
@@ -55,6 +56,11 @@ object TestData {
 
   val NotificationWithIdAndPulledStatus1 = NotificationWithIdAndPulled(NotificationId(NotificationId1), pulled = false)
   val NotificationWithIdAndPulledStatus2 = NotificationWithIdAndPulled(NotificationId(NotificationId2), pulled = true)
+
+  val LowercaseHeadersConvoId1 = Map("h1" -> "v1", "h2" -> "v2", "x-conversation-id" -> ConversationId1)
+  val LowercaseHeadersConvoId2 = Map("h1" -> "v1", "h2" -> "v2", "x-conversation-id" -> ConversationId2)
+  val Notification2WithLowerCaseConvoId1 = Notification2.copy(headers = LowercaseHeadersConvoId1)
+  val Notification3WithLowerCaseConvoId2 = Notification3.copy(headers = LowercaseHeadersConvoId2)
   
   val TestSendEmailRequest = SendEmailRequest(List(Email("some-email@domain.com")),
     "customs_pull_notifications_warning",
@@ -74,7 +80,7 @@ object RequestHeaders {
 
   lazy val X_CLIENT_ID_HEADER: (String, String) = X_CLIENT_ID_HEADER_NAME -> ClientId1
 
-  lazy val X_CONVERSATION_ID_HEADER: (String, String) = X_CONVERSATION_ID_HEADER_NAME -> ConversationId
+  lazy val X_CONVERSATION_ID_HEADER: (String, String) = X_CONVERSATION_ID_HEADER_NAME -> ConversationId1
 
   val LoggingHeaders: Seq[(String, String)] = Seq(X_CLIENT_ID_HEADER, X_CONVERSATION_ID_HEADER)
 }

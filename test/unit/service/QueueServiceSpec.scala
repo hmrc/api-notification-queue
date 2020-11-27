@@ -27,7 +27,7 @@ import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import util.UnitSpec
-import util.TestData.{ConversationIdUuid, Notification1}
+import util.TestData.{ConversationId1Uuid, Notification1}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -82,21 +82,21 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
     }
 
     "Retrieve all notificationIds by client id and conversation id from the mongo repository" in new Setup {
-      when(mockNotificationRepository.fetchNotificationIds(clientId, ConversationIdUuid))
+      when(mockNotificationRepository.fetchNotificationIds(clientId, ConversationId1Uuid))
         .thenReturn(Future.successful(List(NotificationWithIdAndPulled(NotificationId(Notification1.notificationId), pulled = true))))
 
-      await(queueService.getByConversationId(clientId, ConversationIdUuid)) shouldBe List(NotificationWithIdAndPulled(NotificationId(Notification1.notificationId), pulled = true))
+      await(queueService.getByConversationId(clientId, ConversationId1Uuid)) shouldBe List(NotificationWithIdAndPulled(NotificationId(Notification1.notificationId), pulled = true))
 
-      verify(mockNotificationRepository).fetchNotificationIds(clientId, ConversationIdUuid)
+      verify(mockNotificationRepository).fetchNotificationIds(clientId, ConversationId1Uuid)
     }
 
     "Retrieve all notificationIds by client id, conversation id and status from the mongo repository" in new Setup {
-      when(mockNotificationRepository.fetchNotificationIds(clientId, ConversationIdUuid, Pulled))
+      when(mockNotificationRepository.fetchNotificationIds(clientId, ConversationId1Uuid, Pulled))
         .thenReturn(Future.successful(List(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))))
 
-      await(queueService.getByConversationId(clientId, ConversationIdUuid, Pulled)) shouldBe List(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))
+      await(queueService.getByConversationId(clientId, ConversationId1Uuid, Pulled)) shouldBe List(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))
 
-      verify(mockNotificationRepository).fetchNotificationIds(clientId, ConversationIdUuid, Pulled)
+      verify(mockNotificationRepository).fetchNotificationIds(clientId, ConversationId1Uuid, Pulled)
     }
 
     "Retrieve the expected notification from the mongo repository" in new Setup {

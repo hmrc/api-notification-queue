@@ -33,7 +33,7 @@ import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdOnly, SeqOfHeader}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService, UuidService}
 import util.MockitoPassByNameHelper.PassByNameVerifier
-import util.TestData.{ConversationId, ConversationIdUuid, NotificationWithIdAndPulledStatus1, NotificationWithIdAndPulledStatus2}
+import util.TestData.{ConversationId1, ConversationId1Uuid, NotificationWithIdAndPulledStatus1, NotificationWithIdAndPulledStatus2}
 import util.XmlUtil.string2xml
 import util.{MaterializerSupport, UnitSpec}
 
@@ -99,7 +99,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
     when(mockUuidService.uuid()).thenReturn(uuid)
     protected val unpulledRequest = FakeRequest(GET, s"/notifications/unpulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
     protected val pulledRequest = FakeRequest(GET, s"/notifications/pulled/$uuid", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
-    protected val conversationEndpoint = s"/notifications/conversationId/$ConversationId"
+    protected val conversationEndpoint = s"/notifications/conversationId/$ConversationId1"
     protected val conversationIdRequest = FakeRequest(GET, conversationEndpoint, Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
   }
 
@@ -267,16 +267,16 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
   "GET /notifications/conversationId/:id" should {
 
     "return 400 when the X-Client-ID header is not sent to the request" in new Setup {
-      val result = await(controller.getAllByConversationId(ConversationIdUuid)(FakeRequest(GET, s"/notifications/conversationId/$ConversationId")))
+      val result = await(controller.getAllByConversationId(ConversationId1Uuid)(FakeRequest(GET, s"/notifications/conversationId/$ConversationId1")))
 
       status(result) shouldBe BAD_REQUEST
     }
 
     "return 200" in new Setup {
-      when(mockQueueService.getByConversationId(clientId, UUID.fromString(ConversationId)))
+      when(mockQueueService.getByConversationId(clientId, UUID.fromString(ConversationId1)))
         .thenReturn(Future.successful(List(NotificationWithIdAndPulledStatus1, NotificationWithIdAndPulledStatus2)))
 
-      val result = await(controller.getAllByConversationId(ConversationIdUuid)(conversationIdRequest))
+      val result = await(controller.getAllByConversationId(ConversationId1Uuid)(conversationIdRequest))
 
       status(result) shouldBe OK
       
@@ -286,9 +286,9 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
     }
 
     "return empty list if there are no notifications for a specific conversationId" in new Setup {
-      when(mockQueueService.getByConversationId(clientId, ConversationIdUuid)).thenReturn(Future.successful(List()))
+      when(mockQueueService.getByConversationId(clientId, ConversationId1Uuid)).thenReturn(Future.successful(List()))
 
-      val result = await(controller.getAllByConversationId(ConversationIdUuid)(conversationIdRequest))
+      val result = await(controller.getAllByConversationId(ConversationId1Uuid)(conversationIdRequest))
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe """{"notifications":[]}"""
@@ -298,16 +298,16 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
   "GET /notifications/conversationId/:id/pulled" should {
 
     "return 400 when the X-Client-ID header is not sent to the request" in new Setup {
-      val result = await(controller.getAllPulledByConversationId(ConversationIdUuid)(FakeRequest(GET, s"/notifications/conversationId/$ConversationId/pulled")))
+      val result = await(controller.getAllPulledByConversationId(ConversationId1Uuid)(FakeRequest(GET, s"/notifications/conversationId/$ConversationId1/pulled")))
 
       status(result) shouldBe BAD_REQUEST
     }
 
     "return 200" in new Setup {
-      when(mockQueueService.getByConversationId(clientId, UUID.fromString(ConversationId), Pulled))
+      when(mockQueueService.getByConversationId(clientId, UUID.fromString(ConversationId1), Pulled))
         .thenReturn(Future.successful(List(notificationWithIdOnly1, notificationWithIdOnly2)))
 
-      val result = await(controller.getAllPulledByConversationId(ConversationIdUuid)(conversationIdRequest.withTarget(RequestTarget(s"$conversationEndpoint/pulled", conversationIdRequest.path, conversationIdRequest.queryString))))
+      val result = await(controller.getAllPulledByConversationId(ConversationId1Uuid)(conversationIdRequest.withTarget(RequestTarget(s"$conversationEndpoint/pulled", conversationIdRequest.path, conversationIdRequest.queryString))))
 
       status(result) shouldBe OK
 
@@ -317,9 +317,9 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
     }
 
     "return empty list if there are no notifications for a specific conversationId and status" in new Setup {
-      when(mockQueueService.getByConversationId(clientId, ConversationIdUuid, Pulled)).thenReturn(Future.successful(List()))
+      when(mockQueueService.getByConversationId(clientId, ConversationId1Uuid, Pulled)).thenReturn(Future.successful(List()))
 
-      val result = await(controller.getAllPulledByConversationId(ConversationIdUuid)(conversationIdRequest.withTarget(RequestTarget(s"$conversationEndpoint/pulled", conversationIdRequest.path, conversationIdRequest.queryString))))
+      val result = await(controller.getAllPulledByConversationId(ConversationId1Uuid)(conversationIdRequest.withTarget(RequestTarget(s"$conversationEndpoint/pulled", conversationIdRequest.path, conversationIdRequest.queryString))))
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe """{"notifications":[]}"""
@@ -329,16 +329,16 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
   "GET /notifications/conversationId/:id/unpulled" should {
 
     "return 400 when the X-Client-ID header is not sent to the request" in new Setup {
-      val result = await(controller.getAllPulledByConversationId(ConversationIdUuid)(FakeRequest(GET, s"/notifications/conversationId/$ConversationId/unpulled")))
+      val result = await(controller.getAllPulledByConversationId(ConversationId1Uuid)(FakeRequest(GET, s"/notifications/conversationId/$ConversationId1/unpulled")))
 
       status(result) shouldBe BAD_REQUEST
     }
 
     "return 200" in new Setup {
-      when(mockQueueService.getByConversationId(clientId, UUID.fromString(ConversationId), Unpulled))
+      when(mockQueueService.getByConversationId(clientId, UUID.fromString(ConversationId1), Unpulled))
         .thenReturn(Future.successful(List(notificationWithIdOnly1, notificationWithIdOnly2)))
 
-      val result = await(controller.getAllUnpulledByConversationId(ConversationIdUuid)(conversationIdRequest.withTarget(RequestTarget(s"$conversationEndpoint/unpulled", conversationIdRequest.path, conversationIdRequest.queryString))))
+      val result = await(controller.getAllUnpulledByConversationId(ConversationId1Uuid)(conversationIdRequest.withTarget(RequestTarget(s"$conversationEndpoint/unpulled", conversationIdRequest.path, conversationIdRequest.queryString))))
 
       status(result) shouldBe OK
 
@@ -348,9 +348,9 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
     }
 
     "return empty list if there are no notifications for a specific conversationId and status" in new Setup {
-      when(mockQueueService.getByConversationId(clientId, ConversationIdUuid, Unpulled)).thenReturn(Future.successful(List()))
+      when(mockQueueService.getByConversationId(clientId, ConversationId1Uuid, Unpulled)).thenReturn(Future.successful(List()))
 
-      val result = await(controller.getAllUnpulledByConversationId(ConversationIdUuid)(conversationIdRequest.withTarget(RequestTarget(s"$conversationEndpoint/unpulled", conversationIdRequest.path, conversationIdRequest.queryString))))
+      val result = await(controller.getAllUnpulledByConversationId(ConversationId1Uuid)(conversationIdRequest.withTarget(RequestTarget(s"$conversationEndpoint/unpulled", conversationIdRequest.path, conversationIdRequest.queryString))))
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe """{"notifications":[]}"""
