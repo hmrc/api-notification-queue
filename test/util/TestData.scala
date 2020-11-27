@@ -33,9 +33,10 @@ object TestData {
   val NotificationId3 = UUID.randomUUID()
   val Payload = "<foo></foo>"
   val ConversationId1 = "eaca01f9-ec3b-4ede-b263-61b626dde231"
-  val ConversationId2 = "47a1311c-2de0-403f-b1bb-b474da5eb0c6"
   val ConversationId1Uuid = UUID.fromString(ConversationId1)
-
+  val ConversationId2 = "47a1311c-2de0-403f-b1bb-b474da5eb0c6"
+  val ConversationId2Uuid = UUID.fromString(ConversationId2)
+  
   val Year = 2017
   val MonthOfYear = 7
   val DayOfMonth = 4
@@ -46,9 +47,9 @@ object TestData {
   val TimePulled = LatestReceived.plus(1)
 
   val Headers = Map("h1" -> "v1", "h2" -> "v2", "X-Conversation-ID" -> ConversationId1)
-  val Notification1 = Notification(NotificationId1, Headers, Payload, TimeReceived, None)
-  val Notification2 = Notification(NotificationId2, Headers, Payload, LatestReceived, Some(TimePulled))
-  val Notification3 = Notification(NotificationId3, Headers, Payload, TimeReceived, None)
+  val Notification1 = Notification(NotificationId1, ConversationId1Uuid, Headers, Payload, TimeReceived, None)
+  val Notification2 = Notification(NotificationId2, ConversationId1Uuid, Headers, Payload, LatestReceived, Some(TimePulled))
+  val Notification3 = Notification(NotificationId3, ConversationId1Uuid, Headers, Payload, TimeReceived, None)
   val Client1Notification1 = ClientNotification(ClientId1, Notification1)
   val Client1Notification2 = ClientNotification(ClientId1, Notification2)
 
@@ -60,7 +61,7 @@ object TestData {
   val LowercaseHeadersConvoId1 = Map("h1" -> "v1", "h2" -> "v2", "x-conversation-id" -> ConversationId1)
   val LowercaseHeadersConvoId2 = Map("h1" -> "v1", "h2" -> "v2", "x-conversation-id" -> ConversationId2)
   val Notification2WithLowerCaseConvoId1 = Notification2.copy(headers = LowercaseHeadersConvoId1)
-  val Notification3WithLowerCaseConvoId2 = Notification3.copy(headers = LowercaseHeadersConvoId2)
+  val Notification3WithLowerCaseConvoId2 = Notification3.copy(conversationId = ConversationId2Uuid, headers = LowercaseHeadersConvoId2)
   
   val TestSendEmailRequest = SendEmailRequest(List(Email("some-email@domain.com")),
     "customs_pull_notifications_warning",

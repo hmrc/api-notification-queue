@@ -110,6 +110,16 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
         name = Some("clientId-xConversationId-datePulled-Index"),
         unique = false
       ),
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending, "notification.conversationId" -> IndexType.Ascending),
+        name = Some("clientId-conversationId-Index"),
+        unique = false
+      ),
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending, "notification.conversationId" -> IndexType.Ascending, "notification.datePulled" -> IndexType.Ascending),
+        name = Some("clientId-conversationId-datePulled-Index"),
+        unique = false
+      ),
       ttlIndex
     )
   }

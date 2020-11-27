@@ -24,11 +24,11 @@ import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.apinotificationqueue.controller.CustomErrorResponses.{ErrorBodyMissing, ErrorClientIdMissing}
-import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME, NOTIFICATION_ID_HEADER_NAME, X_CLIENT_ID_HEADER_NAME}
+import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME, NOTIFICATION_ID_HEADER_NAME, X_CLIENT_ID_HEADER_NAME, X_CONVERSATION_ID_HEADER_NAME}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService, UuidService}
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -62,11 +62,13 @@ class QueueController @Inject()(queueService: QueueService,
             logger.error("missing body when saving", headers.headers)
             Future.successful(ErrorBodyMissing.XmlResult)
           } { body =>
-             val notificationId = extractNotificationIdHeaderValue(headers).getOrElse(uuidService.uuid())
+             val notificationId = extractHeaderValue(headers, NOTIFICATION_ID_HEADER_NAME).getOrElse(uuidService.uuid())
+             val conversationId = extractHeaderValue(headers, X_CONVERSATION_ID_HEADER_NAME).getOrElse(throw new IllegalStateException("No conversationId header"))
               queueService.save(
                 maybeClientId.get,
                 Notification(
                   notificationId,
+                  conversationId,
                   headers.remove(X_CLIENT_ID_HEADER_NAME, API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME, NOTIFICATION_ID_HEADER_NAME).toSimpleMap,
                   body.toString(),
                   dateTimeProvider.now(),
@@ -141,8 +143,8 @@ class QueueController @Inject()(queueService: QueueService,
     }
   }
 
-  private def extractNotificationIdHeaderValue(headers: Headers): Option[UUID] = {
-    headers.get(NOTIFICATION_ID_HEADER_NAME).fold[Option[UUID]](None)(id => validateUuid(id))
+  private def extractHeaderValue(headers: Headers, headerName: String): Option[UUID] = {
+    headers.get(headerName).fold[Option[UUID]](None)(id => validateUuid(id))
   }
 
 }

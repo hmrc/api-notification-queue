@@ -91,7 +91,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
     protected val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
     protected val controller = new EnhancedNotificationsController(mockQueueService, mockFieldsService, mockUuidService, mockDateTimeProvider, controllerComponents, mockLogger)
     protected val payload = "<xml>a</xml>"
-    protected val unpulledNotification = Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), None)
+    protected val unpulledNotification = Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, DateTime.now(), None)
     protected val time = DateTime.now()
     protected val pulledNotification = unpulledNotification.copy(datePulled = Some(time))
 
@@ -113,17 +113,17 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
       status(result) shouldBe OK
       bodyOf(result) shouldBe payload
       verify(mockQueueService).update(clientId, pulledNotification)
-      header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
+      header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("eaca01f9-ec3b-4ede-b263-61b626dde231")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
       verifyLogWithHeaders(mockLogger, "info", "getting unpulled notificationId 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
-      verifyLogWithHeaders(mockLogger, "debug", "Pulling unpulled notification for conversationId: 5 with notificationId: 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "debug", "Pulling unpulled notification for conversationId: eaca01f9-ec3b-4ede-b263-61b626dde231 with notificationId: 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
 
     }
 
     "return 400 if requested notification has already been pulled" in new Setup {
       private val minutes = 10
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(
-        Some(Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), Some(DateTime.now().minusMinutes(minutes))))))
+        Some(Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, DateTime.now(), Some(DateTime.now().minusMinutes(minutes))))))
 
       val result: Result = await(controller.getUnpulledByNotificationId(uuid)(unpulledRequest))
 
@@ -161,14 +161,14 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
 
       status(result) shouldBe OK
       bodyOf(result) shouldBe payload
-      header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("5")
+      header(CONVERSATION_ID_HEADER_NAME, result) shouldBe Some("eaca01f9-ec3b-4ede-b263-61b626dde231")
       header(CLIENT_ID_HEADER_NAME, result) shouldBe None
       verifyLogWithHeaders(mockLogger, "info", "getting pulled notificationId 7c422a91-1df6-439c-b561-f2cf2d8978ef", unpulledRequest.headers.headers)
-      verifyLogWithHeaders(mockLogger, "debug", "Pulling pulled notification for conversationId: 5 with notificationId: 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
+      verifyLogWithHeaders(mockLogger, "debug", "Pulling pulled notification for conversationId: eaca01f9-ec3b-4ede-b263-61b626dde231 with notificationId: 7c422a91-1df6-439c-b561-f2cf2d8978ef", pulledRequest.headers.headers)
     }
 
     "return 400 if requested notification is unpulled" in new Setup {
-      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "5"), payload, DateTime.now(), None))))
+      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, DateTime.now(), None))))
 
       val result: Result = await(controller.getPulledByNotificationId(uuid)(pulledRequest))
 

@@ -42,7 +42,12 @@ object NotificationWithIdAndPulled {
   implicit val notificationWithIdAndPulledStatusJF = Json.format[NotificationWithIdAndPulled]
 }
 
-case class Notification(notificationId: UUID, headers: Map[String, String], payload: String, dateReceived: DateTime, datePulled: Option[DateTime])
+case class Notification(notificationId: UUID,
+                        conversationId: UUID,
+                        headers: Map[String, String],
+                        payload: String,
+                        dateReceived: DateTime,
+                        datePulled: Option[DateTime])
 
 object Notification {
   implicit val dateTimeJF = ReactiveMongoFormats.dateTimeFormats

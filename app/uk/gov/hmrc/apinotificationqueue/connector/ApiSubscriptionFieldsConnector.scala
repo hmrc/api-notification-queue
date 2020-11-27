@@ -23,7 +23,8 @@ import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.ApiNotificationQueueConfig
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 

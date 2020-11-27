@@ -40,7 +40,7 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
     val clientId: String = "clientId"
 
-    val notification1: Notification = Notification(UUID.randomUUID(), Map.empty, "<xml></xml>", DateTime.now(), None)
+    val notification1: Notification = Notification(UUID.randomUUID(), ConversationId1Uuid, Map.empty, "<xml></xml>", DateTime.now(), None)
     val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(DateTime.now()))
 
     val notificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(notification1.notificationId))

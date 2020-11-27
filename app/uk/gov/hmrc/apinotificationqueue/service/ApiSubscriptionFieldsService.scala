@@ -18,9 +18,10 @@ package uk.gov.hmrc.apinotificationqueue.service
 
 import java.util.UUID
 
+import controllers.Assets.NOT_FOUND
 import javax.inject.Inject
 import uk.gov.hmrc.apinotificationqueue.connector.ApiSubscriptionFieldsConnector
-import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,7 +30,11 @@ class ApiSubscriptionFieldsService @Inject()(apiSubscriptionFieldsConnector: Api
 
   def getClientId(fieldsId: UUID)(implicit hc: HeaderCarrier): Future[Option[String]] = {
     apiSubscriptionFieldsConnector.lookupClientId(fieldsId).map(resp => Some(resp.clientId)) recover {
-      case _: NotFoundException => None
+      case error: UpstreamErrorResponse => if (error.statusCode == NOT_FOUND) {
+        None
+      } else {
+        throw error
+      }
     }
   }
 }

@@ -18,12 +18,14 @@ package unit.service
 
 import java.util.UUID
 
+import controllers.Assets.NOT_FOUND
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.Helpers
+import play.api.test.Helpers.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
 import uk.gov.hmrc.apinotificationqueue.service.ApiSubscriptionFieldsService
-import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import util.UnitSpec
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,11 +51,17 @@ class ApiSubscriptionFieldsServiceSpec extends UnitSpec with MockitoSugar {
     }
 
     "Return none when NOT_FOUND" in new Setup {
-      when(mockConnector.lookupClientId(uuid)).thenReturn(Future.failed(new NotFoundException("Not Found")))
+      when(mockConnector.lookupClientId(uuid)).thenReturn(Future.failed(UpstreamErrorResponse("Not Found", NOT_FOUND)))
 
       val result: Option[String] = await(apiSubscriptionFieldsService.getClientId(uuid))
 
       result shouldBe None
+    }
+
+    "throw an UpstreamErrorResponse if error is not a NOT_FOUND error" in new Setup {
+      when(mockConnector.lookupClientId(uuid)).thenReturn(Future.failed(UpstreamErrorResponse("Internal Server Error", INTERNAL_SERVER_ERROR)))
+
+      intercept[UpstreamErrorResponse](await(apiSubscriptionFieldsService.getClientId(uuid)))
     }
   }
 }
