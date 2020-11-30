@@ -26,9 +26,9 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
-import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException, Upstream5xxResponse}
-import util.{UnitSpec, _}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import util.externalservices.ApiSubscriptionFieldsService
+import util.{UnitSpec, _}
 
 class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   with ScalaFutures
@@ -79,16 +79,16 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
       verifyGetSubscriptionFieldsCalled(fieldsId)
     }
 
-    "throw an http-verbs Upstream5xxResponse exception if the API Subscription Fields responds with an error" in new Setup {
+    "throw an http-verbs UpstreamErrorResponse exception if the API Subscription Fields responds with an error" in new Setup {
       startApiSubscriptionFieldsService(INTERNAL_SERVER_ERROR, fieldsId, clientId)
 
-      intercept[Upstream5xxResponse](await(connector.lookupClientId(fieldsId)))
+      intercept[UpstreamErrorResponse](await(connector.lookupClientId(fieldsId)))
     }
 
-    "throw a NotFoundException if the fieldsId does not exist in the API Subscription Fields service" in new Setup {
+    "throw an UpstreamErrorResponse if the fieldsId does not exist in the API Subscription Fields service" in new Setup {
       startApiSubscriptionFieldsService(NOT_FOUND, fieldsId, clientId)
 
-      intercept[NotFoundException](await(connector.lookupClientId(fieldsId)))
+      intercept[UpstreamErrorResponse](await(connector.lookupClientId(fieldsId)))
     }
   }
 }

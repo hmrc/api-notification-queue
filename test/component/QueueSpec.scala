@@ -32,7 +32,7 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
 import util.externalservices.ApiSubscriptionFieldsService
-import util.TestData.ConversationId
+import util.TestData.ConversationId1
 
 import scala.concurrent.ExecutionContext
 
@@ -89,7 +89,7 @@ class QueueSpec extends FeatureSpec
       val xmlBody = <xml><node>Stuff</node></xml>
       startApiSubscriptionFieldsService(fieldsId = UUID.fromString(fieldsId), clientId = clientId)
 
-      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location = queueResponse.header.headers("Location")
 
       When("you make a GET based on the location header")
@@ -120,7 +120,7 @@ class QueueSpec extends FeatureSpec
       val xmlBody = <xml><node>Stuff</node></xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
       startApiSubscriptionFieldsService(fieldsId = UUID.fromString(fieldsId), clientId = clientId)
-      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location = queueResponse.header.headers("Location")
       val notificationId = location.substring(location.length() - 36)
 
@@ -155,10 +155,10 @@ class QueueSpec extends FeatureSpec
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
-      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
       val notificationId1 = location1.substring(location1.length() - 36)
-      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location2 = queueResponse2.header.headers("Location")
       val notificationId2 = location2.substring(location2.length() - 36)
 
@@ -192,10 +192,10 @@ class QueueSpec extends FeatureSpec
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
-      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
       val notificationId1 = location1.substring(location1.length() - 36)
-      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location2 = queueResponse2.header.headers("Location")
       val notificationId2 = location2.substring(location2.length() - 36)
 
@@ -217,15 +217,15 @@ class QueueSpec extends FeatureSpec
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
-      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId,  "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1,  "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
       val notificationId1 = location1.substring(location1.length() - 36)
-      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location2 = queueResponse2.header.headers("Location")
       val notificationId2 = location2.substring(location2.length() - 36)
 
       When("you get a list of all messages by conversationId")
-      val listResult = route(app, FakeRequest(GET, s"/notifications/conversationId/$ConversationId", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+      val listResult = route(app, FakeRequest(GET, s"/notifications/conversationId/$ConversationId1", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
 
       Then("you will receive a list of two messages")
       contentAsString(listResult) shouldBe s"""{"notifications":["/notifications/unpulled/$notificationId1","/notifications/unpulled/$notificationId2"]}"""
@@ -242,15 +242,15 @@ class QueueSpec extends FeatureSpec
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
-      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId,  "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1,  "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
       val notificationId1 = location1.substring(location1.length() - 36)
-      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location2 = queueResponse2.header.headers("Location")
       val notificationId2 = location2.substring(location2.length() - 36)
 
       When("you get a list of all messages by conversationId")
-      val listResult = route(app, FakeRequest(GET, s"/notifications/conversationId/$ConversationId/unpulled", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
+      val listResult = route(app, FakeRequest(GET, s"/notifications/conversationId/$ConversationId1/unpulled", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
 
       Then("you will receive a list of two messages")
       contentAsString(listResult) shouldBe s"""{"notifications":["/notifications/unpulled/$notificationId1","/notifications/unpulled/$notificationId2"]}"""

@@ -20,6 +20,7 @@ import java.util.UUID
 
 import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
+import play.api.libs.json.Json.JsValueWrapper
 import play.api.libs.json.{Format, Json}
 import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
@@ -65,6 +66,9 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     with NotificationRepository {
 
   private implicit val format: Format[ClientNotification] = ClientNotificationJF
+  private def conversationIdSelectCriteria(conversationId: UUID): (String, JsValueWrapper) = {
+    "$or" -> Json.arr( Json.obj("notification.headers.x-conversation-id" -> conversationId), Json.obj("notification.headers.X-Conversation-ID"-> conversationId))
+  }
 
   private val ttlIndexName = "dateReceived-Index"
   private val ttlInSeconds = config.ttlInSeconds
@@ -104,6 +108,16 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
       Index(
         key = Seq("clientId" -> IndexType.Ascending, "notification.headers.X-Conversation-ID" -> IndexType.Ascending, "notification.datePulled" -> IndexType.Ascending),
         name = Some("clientId-xConversationId-datePulled-Index"),
+        unique = false
+      ),
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending, "notification.conversationId" -> IndexType.Ascending),
+        name = Some("clientId-conversationId-Index"),
+        unique = false
+      ),
+      Index(
+        key = Seq("clientId" -> IndexType.Ascending, "notification.conversationId" -> IndexType.Ascending, "notification.datePulled" -> IndexType.Ascending),
+        name = Some("clientId-conversationId-datePulled-Index"),
         unique = false
       ),
       ttlIndex
@@ -184,8 +198,9 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   }
 
   override def fetchNotificationIds(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]] = {
+
     val selector = notificationStatus match {
-      case Pulled => Json.obj("clientId" -> clientId, "notification.headers.X-Conversation-ID" -> conversationId, "notification.datePulled" -> Json.obj("$exists" -> true))
+      case Pulled => Json.obj("clientId" -> clientId, conversationIdSelectCriteria(conversationId), "notification.datePulled" -> Json.obj("$exists" -> true))
       case Unpulled => Json.obj("clientId" -> clientId, "notification.headers.X-Conversation-ID" -> conversationId, "notification.datePulled" -> Json.obj("$exists" -> false))
     }
     val projection = Json.obj("notification.notificationId" -> 1, "_id" -> 0)
@@ -197,7 +212,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     import collection.BatchCommands.AggregationFramework.{Match, Project}
 
     collection.aggregatorContext[NotificationWithIdAndPulled](
-      Match(Json.obj("clientId" -> clientId, "notification.headers.X-Conversation-ID" -> conversationId)),
+      Match(Json.obj("clientId" -> clientId, conversationIdSelectCriteria(conversationId))),
       List(Project(Json.obj("_id" -> 0,
           "notification" -> 1,
           "pulled" ->  Json.obj("$gt" -> Json.arr("$notification.datePulled", BSONNull))

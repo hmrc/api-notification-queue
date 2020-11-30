@@ -31,7 +31,7 @@ import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequ
 import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 import util.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.externalservices.EmailService
