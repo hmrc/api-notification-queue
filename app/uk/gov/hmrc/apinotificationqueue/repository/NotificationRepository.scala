@@ -201,7 +201,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
     val selector = notificationStatus match {
       case Pulled => Json.obj("clientId" -> clientId, conversationIdSelectCriteria(conversationId), "notification.datePulled" -> Json.obj("$exists" -> true))
-      case Unpulled => Json.obj("clientId" -> clientId, "notification.headers.X-Conversation-ID" -> conversationId, "notification.datePulled" -> Json.obj("$exists" -> false))
+      case Unpulled => Json.obj("clientId" -> clientId, conversationIdSelectCriteria(conversationId), "notification.datePulled" -> Json.obj("$exists" -> false))
     }
     val projection = Json.obj("notification.notificationId" -> 1, "_id" -> 0)
 

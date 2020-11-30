@@ -30,7 +30,7 @@ object TestData {
   val ClientId2 = "clientId2"
   val NotificationId1 = UUID.fromString("ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d")
   val NotificationId2 = UUID.fromString("5d60bab0-b866-4179-ba5c-b8e19176cfd9")
-  val NotificationId3 = UUID.randomUUID()
+  val NotificationId3 = UUID.fromString("8f879794-84c4-4a05-96e9-b9432240ff23")
   val Payload = "<foo></foo>"
   val ConversationId1 = "eaca01f9-ec3b-4ede-b263-61b626dde231"
   val ConversationId1Uuid = UUID.fromString(ConversationId1)
@@ -62,6 +62,7 @@ object TestData {
   val LowercaseHeadersConvoId2 = Map("h1" -> "v1", "h2" -> "v2", "x-conversation-id" -> ConversationId2)
   val Notification2WithLowerCaseConvoId1 = Notification2.copy(headers = LowercaseHeadersConvoId1)
   val Notification3WithLowerCaseConvoId2 = Notification3.copy(conversationId = ConversationId2Uuid, headers = LowercaseHeadersConvoId2)
+  val Notification3WithLowerCaseConvoId1Unpulled = Notification3.copy(headers = LowercaseHeadersConvoId1)
   
   val TestSendEmailRequest = SendEmailRequest(List(Email("some-email@domain.com")),
     "customs_pull_notifications_warning",
