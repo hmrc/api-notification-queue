@@ -140,17 +140,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
         notificationIdsWithStatus shouldBe NotificationWithIdAndPulledStatus1 :: NotificationWithIdAndPulledStatus2 :: Nil
       }
 
-      "return all notificationIds and statuses when found ignoring header case" in {
-        await(repository.save(ClientId1, Notification1))
-        await(repository.save(ClientId1, Notification2WithLowerCaseConvoId1))
-        await(repository.save(ClientId2, Notification2WithLowerCaseConvoId1))
-        await(repository.save(ClientId1, Notification3WithLowerCaseConvoId2))
-
-        val notificationIdsWithStatus = await(repository.fetchNotificationIds(ClientId1, ConversationId1Uuid))
-
-        notificationIdsWithStatus shouldBe NotificationWithIdAndPulledStatus1 :: NotificationWithIdAndPulledStatus2 :: Nil
-      }
-
       "return empty list when nothing found" in {
         await(repository.save(ClientId1, Notification1))
         val nonExistentConversationId = UUID.randomUUID()
@@ -173,23 +162,11 @@ class NotificationMongoRepositorySpec extends UnitSpec
         notifications should contain(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))
       }
 
-      "return all notificationIds when found ignoring header case" in {
+      "return all notificationIds for unpulled status when found" in {
         await(repository.save(ClientId1, Notification1))
-        await(repository.save(ClientId1, Notification2WithLowerCaseConvoId1))
-        await(repository.save(ClientId2, Notification2WithLowerCaseConvoId1))
-        await(repository.save(ClientId1, Notification3WithLowerCaseConvoId2))
-
-        val notifications = await(repository.fetchNotificationIds(ClientId1, ConversationId1Uuid, Unpulled))
-
-        notifications.size shouldBe 1
-        notifications should contain(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))
-      }
-
-      "return all notificationIds for unpulled status when found ignoring header case" in {
-        await(repository.save(ClientId1, Notification1)) //yes
-        await(repository.save(ClientId1, Notification2WithLowerCaseConvoId1)) //no
-        await(repository.save(ClientId2, Notification2WithLowerCaseConvoId1)) //no
-        await(repository.save(ClientId1, Notification3WithLowerCaseConvoId1Unpulled)) //yes
+        await(repository.save(ClientId1, Notification2))
+        await(repository.save(ClientId2, Notification2))
+        await(repository.save(ClientId1, Notification3))
 
         val notifications = await(repository.fetchNotificationIds(ClientId1, ConversationId1Uuid, Unpulled))
 

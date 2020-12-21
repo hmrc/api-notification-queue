@@ -58,12 +58,6 @@ object TestData {
   val NotificationWithIdAndPulledStatus1 = NotificationWithIdAndPulled(NotificationId(NotificationId1), pulled = false)
   val NotificationWithIdAndPulledStatus2 = NotificationWithIdAndPulled(NotificationId(NotificationId2), pulled = true)
 
-  val LowercaseHeadersConvoId1 = Map("h1" -> "v1", "h2" -> "v2", "x-conversation-id" -> ConversationId1)
-  val LowercaseHeadersConvoId2 = Map("h1" -> "v1", "h2" -> "v2", "x-conversation-id" -> ConversationId2)
-  val Notification2WithLowerCaseConvoId1 = Notification2.copy(headers = LowercaseHeadersConvoId1)
-  val Notification3WithLowerCaseConvoId2 = Notification3.copy(conversationId = ConversationId2Uuid, headers = LowercaseHeadersConvoId2)
-  val Notification3WithLowerCaseConvoId1Unpulled = Notification3.copy(headers = LowercaseHeadersConvoId1)
-  
   val TestSendEmailRequest = SendEmailRequest(List(Email("some-email@domain.com")),
     "customs_pull_notifications_warning",
     Map("clientId_0" -> "clientId1",
