@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-//TODO: there needs to be a separate validation stage before main processing. At the moment validation responsibilities are sprayed throughout the code
 @Singleton()
 class QueueController @Inject()(queueService: QueueService,
                                 fieldsService: ApiSubscriptionFieldsService,
