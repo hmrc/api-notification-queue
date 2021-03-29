@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,6 @@ class WarningEmailPollingServiceSpec extends UnitSpec
       new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
-      //TODO investigate a way of not requiring sleep
       Thread.sleep(oneThousand)
       eventually(verify(mockEmailConnector).send(emailRequestCaptor.capture()))
 
@@ -94,7 +93,6 @@ class WarningEmailPollingServiceSpec extends UnitSpec
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List.empty))
       new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
 
-      //TODO investigate a way of not requiring sleep
       Thread.sleep(oneThousand)
       verify(mockEmailConnector, never()).send(any[SendEmailRequest]())
     }
@@ -106,7 +104,6 @@ class WarningEmailPollingServiceSpec extends UnitSpec
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
       new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
 
-      //TODO investigate a way of not requiring sleep
       Thread.sleep(oneThousand)
       verify(mockEmailConnector, never()).send(any[SendEmailRequest]())
     }

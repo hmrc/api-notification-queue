@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,6 @@ class QueueSpec extends FeatureSpec
       status(unpulledResult) shouldBe OK
       And("the message will be the same")
       contentAsString(unpulledResult) shouldBe xmlBody.toString()
-      //TODO db update occurs after pulled request below without this sleep. Investigate potential for removal.
       Thread.sleep(500)
 
       When("you re-pull the message")

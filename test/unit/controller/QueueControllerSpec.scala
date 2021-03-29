@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,9 +132,6 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
       header(LOCATION, result) shouldBe Some(s"/notification/53d1c27f-7af9-4310-8313-2e4f24766995")
     }
 
-    // TODO: exceptions should not be propagated all to way up as they will get handled by the Play2 error handler
-    // TODO: we need to handle all exceptions and wrap them with out standard Customs error model
-    // TODO: this is a lower priority as this is a protected service ie not public facing
     "Propagate and log exceptions thrown in subscription fields id connector" in new Setup {
       private val xml = <xml>
         <node>Stuff</node>

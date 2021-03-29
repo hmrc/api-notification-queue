@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,15 @@ class AppStart @Inject()(notificationRepository: NotificationMongoRepository,
                          logger: CdsLogger)
                         (implicit ec: ExecutionContext) {
 
+  logger.info("running AppStart module to drop indexes")
   notificationRepository.collection.indexesManager.list().flatMap { indexes =>
     indexes.find { index =>
       index.name.contains("clientId-xConversationId-Index")
     }.map { _ =>
       logger.info("dropping clientId-xConversationId-Index")
-      notificationRepository.collection.indexesManager.drop("clientId-xConversationId-Index")
+      notificationRepository.collection.indexesManager.drop("clientId-xConversationId-Index").map { res =>
+        logger.info(s"number of indexes dropped for clientId-xConversationId-Index: $res")
+      }
     }.getOrElse(Future.successful(()))
   }
 
@@ -46,7 +49,9 @@ class AppStart @Inject()(notificationRepository: NotificationMongoRepository,
       index.name.contains("clientId-xConversationId-datePulled-Index")
     }.map { _ =>
       logger.info("dropping clientId-xConversationId-datePulled-Index")
-      notificationRepository.collection.indexesManager.drop("clientId-xConversationId-datePulled-Index")
+      notificationRepository.collection.indexesManager.drop("clientId-xConversationId-datePulled-Index").map { res =>
+        logger.info(s"number of indexes dropped for clientId-xConversationId-datePulled-Index: $res")
+      }
     }.getOrElse(Future.successful(()))
   }
 
