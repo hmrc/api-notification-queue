@@ -2,12 +2,12 @@ import sbt._
 
 object AppDependencies {
 
-  val scalaTestPlusPlayVersion = "3.1.3"
-  val mockitoVersion = "3.5.9"
-  val wireMockVersion = "2.27.2"
-  val customsApiCommonVersion = "1.53.0"
-  val simpleReactiveMongoVersion = "7.30.0-play-27"
-  val reactiveMongoTestVersion = "4.21.0-play-27"
+  val scalaTestPlusPlayVersion = "4.0.3"
+  val mockitoVersion = "3.11.1"
+  val wireMockVersion = "2.28.1"
+  val customsApiCommonVersion = "1.55.0"
+  val simpleReactiveMongoVersion = "8.0.0-play-26"
+  val reactiveMongoTestVersion = "4.21.0-play-26"
   val testScope = "test,it"
 
   val simpleReactiveMongo = "uk.gov.hmrc" %% "simple-reactivemongo" % simpleReactiveMongoVersion
@@ -23,5 +23,8 @@ object AppDependencies {
   val customsApiCommon = "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion withSources()
 
   val customsApiCommonTests = "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion % testScope classifier "tests"
+
+  val silencerPlugin = compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.5" cross CrossVersion.full)
+  val silencerLib = "com.github.ghik" % "silencer-lib" % "1.7.5" % Provided cross CrossVersion.full
 
 }

@@ -22,10 +22,10 @@ import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, NotificationWithIdAndPulled, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 @Singleton()
-class QueueService @Inject()(notificationRepo: NotificationRepository)(implicit ec:ExecutionContext) {
+class QueueService @Inject()(notificationRepo: NotificationRepository) {
 
   def get(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
     notificationRepo.fetchNotificationIds(clientId, notificationStatus)
