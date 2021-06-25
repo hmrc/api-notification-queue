@@ -6,7 +6,7 @@ import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, targetJvm}
 import uk.gov.hmrc.PublishingSettings._
 import uk.gov.hmrc.gitstamp.GitStampPlugin._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-
+import play.sbt.PlayImport.PlayKeys.playDefaultPort
 import scala.language.postfixOps
 
 name := "api-notification-queue"
@@ -30,6 +30,7 @@ lazy val microservice = (project in file("."))
   .enablePlugins(SbtDistributablesPlugin)
   .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
   .configs(testConfig: _*)
+  .settings(playDefaultPort := 9648)
   .settings(
     commonSettings,
     unitTestSettings,
