@@ -17,7 +17,7 @@
 package uk.gov.hmrc.apinotificationqueue.repository
 
 import com.google.inject.ImplementedBy
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Json
 import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong, BSONNull, BSONObjectID}
@@ -63,7 +63,6 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
     with NotificationRepository {
 
-  private implicit val format: Format[ClientNotification] = ClientNotificationJF
   private val ttlIndexName = "dateReceived-Index"
   private val ttlInSeconds = config.ttlInSeconds
   private val ttlIndex = Index(

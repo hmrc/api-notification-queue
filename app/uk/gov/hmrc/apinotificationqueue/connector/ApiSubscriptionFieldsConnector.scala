@@ -22,8 +22,7 @@ import javax.inject.Inject
 import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.ApiNotificationQueueConfig
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, HttpClient}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,7 +42,9 @@ class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
 
   def lookupClientId(subscriptionFieldsId: UUID)(implicit hc: HeaderCarrier): Future[ApiSubscriptionFieldResponse] = {
     val url = s"$serviceUrl/$subscriptionFieldsId"
-    logger.debug(s"looking up clientId for $url", hc.headers)
+    val headerNames: Seq[String] = HeaderNames.explicitlyIncludedHeaders
+    val headersToLog = hc.headers(headerNames) ++ hc.extraHeaders
+    logger.debug(s"looking up clientId for $url", headersToLog)
     http.GET[ApiSubscriptionFieldResponse](url)
   }
 

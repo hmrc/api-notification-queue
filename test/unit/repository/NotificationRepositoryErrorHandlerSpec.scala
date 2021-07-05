@@ -116,13 +116,16 @@ class NotificationRepositoryErrorHandlerSpec extends UnitSpec with MockitoSugar 
 
   private def writeResult(alteredRecords: Int, writeErrors: Seq[WriteError] = Nil,
                           writeConcernError: Option[WriteConcernError] = None): WriteResult = {
-    DefaultWriteResult(
+    UpdateWriteResult(
       ok = true,
       n = alteredRecords,
       writeErrors = writeErrors,
       writeConcernError = writeConcernError,
       code = None,
-      errmsg = None)
+      errmsg = None,
+      nModified = 1,
+      upserted = Seq.empty
+    )
   }
 
   private def findAndModifyResult(lstError: UpdateLastError): FindAndModifyCommand.Result[JSONSerializationPack.type] = {
