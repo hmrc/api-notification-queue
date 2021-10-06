@@ -9,26 +9,33 @@ The upstream client is the `api-notification-pull` service.
 
 ## Endpoints
 
+#### *Prerequisite data set-up*
+The endpoints below require some dependent data to already exist. 
 
 ### POST `/queue`
 
-Payload must be text based, e.g. XML.
-If a `notification-id` header is supplied then this is used as the notification ID otherwise it is generated when each notification is saved.
-This id will be used for retrieving the notification.
-The `api-subscription-fields-id` header must be included in the request. The client ID will be retrieved from the `api-subscription-fields` service.
+Payload must be text based, e.g. XML. \
+If a `notification-id` header is supplied then this is used as the notification ID otherwise it is generated when each notification is saved. 
+This id will be used for retrieving the notification. \
+The `api-subscription-fields-id` header must be included in the request. The ID used must match a `fieldsId` that exists in the `subscriptionFields` table in the `api-notification-queue` database in the environment you are testing in. \
+The client ID will be retrieved from the `api-subscription-fields` service.\
+The conversation ID must be populated.
 
 ```
 curl -v -X POST \
   http://localhost:9648/queue \
   -H 'Accept: application/xml' \
   -H 'Content-Type: application/xml' \
-  -H 'api-subscription-fields-id: d2a985e9-dbef-4bb6-bd8d-4e9e9594473f' \
+  -H 'X-Client-ID: {clientId}' \
+  -H 'X-Conversation-ID: {conversationId}' \
+  -H 'api-subscription-fields-id: {fieldsId}' \
   -d '<xml>foo</xml>'
 ```
 
 #### Response
 
-201 Created status and the Location header will contain the URL, e.g. `/notification/ba544f92-b2dd-413e-becf-874b35eb3724`.
+201 Created status and the Location header will contain the URL, e.g. `/notification/ba544f92-b2dd-413e-becf-874b35eb3724`. \
+A record will also be created in the `notifications` table in the `api-notification-queue` database. 
 
 ---
 
@@ -36,11 +43,11 @@ curl -v -X POST \
 
 Retrieves a specific notification.
 
-Required header: `X-Client-ID`.
+Required header: `X-Client-ID`. \
+`notificationId` to be used in the URL can be found in the `notifications` table in the `api-notification-queue` database, as created by the POST `/queue` request above. 
 
 ```
-curl -v -X GET "http://localhost:9648/notification/ba544f92-b2dd-413e-becf-874b35eb3724" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+curl -X GET -H 'X-Client-ID: {clientId}' 'http://localhost:9648/notification/{notificationId}'
 ```
 
 #### Response
@@ -53,11 +60,11 @@ Note that all headers in the above `POST` are replayed in the response with the 
 
 Retrieves a specific notification and sets `datePulled` field in MongoDB.
 
-Required header: `X-Client-ID`.
+Required header: `X-Client-ID`. \
+`notificationId` to be used in the URL can be found in the `notifications` table in the `api-notification-queue` database, as created by the POST `/queue` request above. 
 
 ```
-curl -v -X GET "http://localhost:9648/notifications/unpulled/ba544f92-b2dd-413e-becf-874b35eb3724" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+curl -X GET -H 'X-Client-ID: {clientId}' 'http://localhost:9648/notifications/unpulled/{notificationId}'
 ```
 
 #### Response
@@ -67,13 +74,13 @@ curl -v -X GET "http://localhost:9648/notifications/unpulled/ba544f92-b2dd-413e-
 
 ### GET `/notifications/pulled/[id]`
 
-Retrieves a specific, previously pulled notification.
+Retrieves a specific, previously pulled notification. For a notification to be pulled the `datePulled` field must be set in MongoDB by the above request.
 
-Required header: `X-Client-ID`.
+Required header: `X-Client-ID`. \
+`notificationId` to be used in the URL can be found in the `notifications` table in the `api-notification-queue` database, as created by the POST `/queue` request above. 
 
 ```
-curl -v -X GET "http://localhost:9648/notifications/pulled/ba544f92-b2dd-413e-becf-874b35eb3724" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+curl -X GET -H 'X-Client-ID: {clientId}' 'http://localhost:9648/notifications/pulled/{notificationId}'
 ```
 
 #### Response
@@ -88,8 +95,7 @@ Retrieves a list of unpulled notifications.
 Required header: `X-Client-ID`.
 
 ```
-curl -v -X GET "http://localhost:9648/notifications/unpulled" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+curl -X GET -H 'X-Client-ID: {clientId}' 'http://localhost:9648/notifications/unpulled'
 ```
 
 #### Response
@@ -104,8 +110,7 @@ Retrieves a list of previously pulled notifications.
 Required header: `X-Client-ID`.
 
 ```
-curl -v -X GET "http://localhost:9648/notifications/pulled" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+curl -X GET -H 'X-Client-ID: {clientId}' 'http://localhost:9648/notifications/pulled'
 ```
 
 #### Response
@@ -120,8 +125,7 @@ Retrieves a list of notifications with the supplied conversationId. Both pulled 
 Required header: `X-Client-ID`.
 
 ```
-curl -v -X GET "http://localhost:9648/notifications/conversationId/e83ad4fc-16a3-4ff9-92d4-87fa468ee733" \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+curl -X GET -H 'X-Client-ID: {clientId}' 'http://localhost:9648/notifications/conversationId/{conversationId}'
 ```
 
 #### Response
@@ -146,8 +150,7 @@ Retrieves a list of pulled notifications with the supplied conversationId.
 Required header: `X-Client-ID`.
 
 ```
-curl -v -X GET "http://localhost:9648/notifications/conversationId/e83ad4fc-16a3-4ff9-92d4-87fa468ee733"/pulled \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+curl -X GET -H 'X-Client-ID: {clientId}' 'http://localhost:9648/notifications/conversationId/{conversationId}/pulled'
 ```
 
 #### Response
@@ -170,8 +173,7 @@ Retrieves a list of unpulled notifications with the supplied conversationId.
 Required header: `X-Client-ID`.
 
 ```
-curl -v -X GET "http://localhost:9648/notifications/conversationId/e83ad4fc-16a3-4ff9-92d4-87fa468ee733"/unpulled \
-  -H "X-Client-ID: pHnwo74C0y4SckQUbcoL2DbFAZ0b"
+curl -X GET -H 'X-Client-ID: {clientId}' 'http://localhost:9648/notifications/conversationId/{conversationId}/unpulled'
 ```
 
 #### Response
