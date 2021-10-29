@@ -17,9 +17,10 @@
 package component
 
 import java.util.UUID
-
 import org.scalatest.OptionValues._
+import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest._
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -36,7 +37,7 @@ import util.TestData.ConversationId1
 
 import scala.concurrent.ExecutionContext
 
-class QueueSpec extends FeatureSpec
+class QueueSpec extends AnyFeatureSpec
   with GivenWhenThen
   with Matchers
   with GuiceOneAppPerSuite

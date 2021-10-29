@@ -1,4 +1,3 @@
-import AppDependencies._
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt.{Resolver, Setting, _}
@@ -10,7 +9,7 @@ import play.sbt.PlayImport.PlayKeys.playDefaultPort
 import scala.language.postfixOps
 
 name := "api-notification-queue"
-scalaVersion := "2.12.13"
+scalaVersion := "2.12.14"
 targetJvm := "jvm-1.8"
 
 lazy val CdsIntegrationComponentTest = config("it") extend Test
@@ -77,8 +76,4 @@ def unitTestFilter(name: String): Boolean = name startsWith "unit"
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
-val compileDependencies = Seq(customsApiCommon, simpleReactiveMongo, silencerLib, silencerPlugin)
-
-val testDependencies = Seq(scalaTestPlusPlay, wireMock, mockito, reactiveMongoTest, customsApiCommonTests)
-
-libraryDependencies ++= compileDependencies ++ testDependencies
+libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test

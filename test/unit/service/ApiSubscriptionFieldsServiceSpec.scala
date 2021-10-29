@@ -18,11 +18,10 @@ package unit.service
 
 import java.util.UUID
 
-import controllers.Assets.NOT_FOUND
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.Helpers
-import play.api.test.Helpers.INTERNAL_SERVER_ERROR
+import play.api.test.Helpers.{INTERNAL_SERVER_ERROR, NOT_FOUND}
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
 import uk.gov.hmrc.apinotificationqueue.service.ApiSubscriptionFieldsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}

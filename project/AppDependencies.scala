@@ -2,29 +2,22 @@ import sbt._
 
 object AppDependencies {
 
-  val scalaTestPlusPlayVersion = "4.0.3"
-  val mockitoVersion = "3.11.1"
-  val wireMockVersion = "2.28.1"
-  val customsApiCommonVersion = "1.56.0"
-  val simpleReactiveMongoVersion = "8.0.0-play-27"
-  val reactiveMongoTestVersion = "4.21.0-play-27"
+  val customsApiCommonVersion = "1.57.0"
   val testScope = "test,it"
 
-  val simpleReactiveMongo = "uk.gov.hmrc" %% "simple-reactivemongo" % simpleReactiveMongoVersion
+  val compile = Seq(
+    "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion withSources(),
+    "uk.gov.hmrc" %% "simple-reactivemongo" % "8.0.0-play-28",
+    "com.github.ghik" % "silencer-lib" % "1.7.5" % Provided cross CrossVersion.full,
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.5" cross CrossVersion.full)
+  )
 
-  val reactiveMongoTest = "uk.gov.hmrc" %% "reactivemongo-test" % reactiveMongoTestVersion % testScope
-
-  val scalaTestPlusPlay = "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusPlayVersion % testScope
-
-  val wireMock = "com.github.tomakehurst" % "wiremock-jre8" % wireMockVersion % testScope
-
-  val mockito =  "org.mockito" % "mockito-core" % mockitoVersion % testScope
-
-  val customsApiCommon = "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion withSources()
-
-  val customsApiCommonTests = "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion % testScope classifier "tests"
-
-  val silencerPlugin = compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.5" cross CrossVersion.full)
-  val silencerLib = "com.github.ghik" % "silencer-lib" % "1.7.5" % Provided cross CrossVersion.full
-
+  val test = Seq(
+    "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % testScope,
+    "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion % testScope classifier "tests",
+    "com.github.tomakehurst" % "wiremock-standalone" % "2.27.1" % testScope,
+    "org.scalatestplus" %% "mockito-3-4" % "3.2.9.0" % testScope,
+    "uk.gov.hmrc" %% "reactivemongo-test" % "5.0.0-play-28" % testScope,
+    "com.vladsch.flexmark" % "flexmark-all" % "0.35.10" % testScope
+  )
 }
