@@ -18,9 +18,11 @@ package unit.service
 
 import akka.actor.ActorSystem
 import org.joda.time.DateTime
+import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
+import org.mockito.junit.MockitoJUnitRunner
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.Helpers
