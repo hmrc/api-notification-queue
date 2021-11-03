@@ -18,11 +18,9 @@ package unit.service
 
 import akka.actor.ActorSystem
 import org.joda.time.DateTime
-import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.mockito.junit.MockitoJUnitRunner
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.Helpers
@@ -81,14 +79,15 @@ class WarningEmailPollingServiceSpec extends UnitSpec
       new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
-      Thread.sleep(oneThousand)
-      eventually(verify(mockEmailConnector).send(emailRequestCaptor.capture()))
+      eventually {
+        verify(mockEmailConnector).send(emailRequestCaptor.capture())
 
-      val request = emailRequestCaptor.getValue
-      request.to.head.value shouldBe "some-email@address.com"
-      request.templateId shouldBe "customs_pull_notifications_warning"
-      ((request.parameters.keySet -- sendEmailRequest.parameters.keySet)
-        ++ (sendEmailRequest.parameters.keySet -- request.parameters.keySet)).size shouldBe 0
+        val request = emailRequestCaptor.getValue
+        request.to.head.value shouldBe "some-email@address.com"
+        request.templateId shouldBe "customs_pull_notifications_warning"
+        ((request.parameters.keySet -- sendEmailRequest.parameters.keySet)
+          ++ (sendEmailRequest.parameters.keySet -- request.parameters.keySet)).size shouldBe 0
+      }
     }
 
     "not send an email when no clients breach queue threshold" in new Setup {
