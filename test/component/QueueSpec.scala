@@ -17,9 +17,10 @@
 package component
 
 import java.util.UUID
-
 import org.scalatest.OptionValues._
+import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest._
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -36,7 +37,7 @@ import util.TestData.ConversationId1
 
 import scala.concurrent.ExecutionContext
 
-class QueueSpec extends FeatureSpec
+class QueueSpec extends AnyFeatureSpec
   with GivenWhenThen
   with Matchers
   with GuiceOneAppPerSuite
@@ -76,13 +77,13 @@ class QueueSpec extends FeatureSpec
     await(repo.drop)
   }
 
-  feature("Post, retrieve and delete a message from the queue") {
+  Feature("Post, retrieve and delete a message from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist a notification")
     info("So that I can retrieve it when needed")
     info("And delete it when needed")
 
-    scenario("3rd party system gets a message previously queued") {
+    Scenario("3rd party system gets a message previously queued") {
       Given("a message has already been queued")
       val clientId = "aaaa"
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
@@ -108,13 +109,13 @@ class QueueSpec extends FeatureSpec
     }
   }
 
-  feature("Post, pull and re-pull a message from the queue") {
+  Feature("Post, pull and re-pull a message from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist a notification")
     info("So that I can pull it when needed")
     info("And pull it again when needed")
 
-    scenario("3rd party system gets a message previously queued") {
+    Scenario("3rd party system gets a message previously queued") {
       Given("a message has already been queued")
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
@@ -143,13 +144,13 @@ class QueueSpec extends FeatureSpec
     }
   }
 
-  feature("Post, pull messages and then get a list of all previously pulled messages from the queue") {
+  Feature("Post, pull messages and then get a list of all previously pulled messages from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist notifications")
     info("So that I can pull them when needed")
     info("And then pull a list of all previously pulled messages")
 
-    scenario("3rd party system gets a list of previously pulled messages") {
+    Scenario("3rd party system gets a list of previously pulled messages") {
       Given("two messages have already been queued")
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
@@ -181,12 +182,12 @@ class QueueSpec extends FeatureSpec
     }
   }
 
-  feature("Post and then get a list of all unpulled messages from the queue") {
+  Feature("Post and then get a list of all unpulled messages from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist notifications")
     info("And then pull a list of all unpulled messages")
 
-    scenario("3rd party system gets a list of unpulled messages") {
+    Scenario("3rd party system gets a list of unpulled messages") {
       Given("two messages have already been queued")
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
@@ -206,12 +207,12 @@ class QueueSpec extends FeatureSpec
     }
   }
 
-  feature("Post and then get a list of all messages by conversationId from the queue") {
+  Feature("Post and then get a list of all messages by conversationId from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist notifications")
     info("And then pull a list of all messages by conversationId")
 
-    scenario("3rd party system gets a list of messages by conversationId") {
+    Scenario("3rd party system gets a list of messages by conversationId") {
       Given("two messages have already been queued")
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>
@@ -231,12 +232,12 @@ class QueueSpec extends FeatureSpec
     }
   }
 
-  feature("Post and then get a list of all unpulled messages by conversationId from the queue") {
+  Feature("Post and then get a list of all unpulled messages by conversationId from the queue") {
     info("As a 3rd Party system")
     info("I want to successfully persist notifications")
     info("And then get a list of all unpulled messages by conversationId")
 
-    scenario("3rd party system gets a list of messages by conversationId") {
+    Scenario("3rd party system gets a list of messages by conversationId") {
       Given("two messages have already been queued")
       val clientId = "aaaa"
       val xmlBody = <xml><node>Stuff</node></xml>

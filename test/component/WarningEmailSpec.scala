@@ -23,6 +23,8 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
+import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
@@ -39,7 +41,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-class WarningEmailSpec extends FeatureSpec
+class WarningEmailSpec extends AnyFeatureSpec
   with GivenWhenThen
   with Matchers
   with GuiceOneAppPerSuite
@@ -83,9 +85,9 @@ class WarningEmailSpec extends FeatureSpec
     wireMockServer.stop()
   }
 
-  feature("Pull notifications warning email") {
+  Feature("Pull notifications warning email") {
 
-    scenario("notifications breaching threshold") {
+    Scenario("notifications breaching threshold") {
       Given("notifications breaching threshold")
 
       When("scheduler queries database")

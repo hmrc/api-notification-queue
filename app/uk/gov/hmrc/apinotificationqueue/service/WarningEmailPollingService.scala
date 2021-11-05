@@ -44,17 +44,18 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
   private val emailEnabled = config.emailConfig.notificationEmailEnabled
 
   if (emailEnabled) {
-    actorSystem.scheduler.schedule(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
-
-      cdsLogger.debug(s"running warning email scheduler with delay of $delay, interval of $interval and queue threshold of $queueThreshold")
-      notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
-        if (results.nonEmpty) {
-          val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
-          cdsLogger.debug(s"sending email with ${results.size} clientId rows")
-          emailConnector.send(sendEmailRequest)
-        } else {
-          cdsLogger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
-        })
+    actorSystem.scheduler.scheduleWithFixedDelay(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
+      () => {
+        cdsLogger.debug(s"running warning email scheduler with delay of $delay, interval of $interval and queue threshold of $queueThreshold")
+        notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
+          if (results.nonEmpty) {
+            val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
+            cdsLogger.debug(s"sending email with ${results.size} clientId rows")
+            emailConnector.send(sendEmailRequest)
+          } else {
+            cdsLogger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
+          })
+      }
     }
   }
 

@@ -79,14 +79,15 @@ class WarningEmailPollingServiceSpec extends UnitSpec
       new WarningEmailPollingService(mockNotificationRepository, mockEmailConnector, testActorSystem, cdsLogger, mockConfig)
       val emailRequestCaptor: ArgumentCaptor[SendEmailRequest] = ArgumentCaptor.forClass(classOf[SendEmailRequest])
 
-      Thread.sleep(oneThousand)
-      eventually(verify(mockEmailConnector).send(emailRequestCaptor.capture()))
+      eventually {
+        verify(mockEmailConnector).send(emailRequestCaptor.capture())
 
-      val request = emailRequestCaptor.getValue
-      request.to.head.value shouldBe "some-email@address.com"
-      request.templateId shouldBe "customs_pull_notifications_warning"
-      ((request.parameters.keySet -- sendEmailRequest.parameters.keySet)
-        ++ (sendEmailRequest.parameters.keySet -- request.parameters.keySet)).size shouldBe 0
+        val request = emailRequestCaptor.getValue
+        request.to.head.value shouldBe "some-email@address.com"
+        request.templateId shouldBe "customs_pull_notifications_warning"
+        ((request.parameters.keySet -- sendEmailRequest.parameters.keySet)
+          ++ (sendEmailRequest.parameters.keySet -- request.parameters.keySet)).size shouldBe 0
+      }
     }
 
     "not send an email when no clients breach queue threshold" in new Setup {
