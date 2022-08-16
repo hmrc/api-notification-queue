@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,22 @@
 
 package component
 
-import java.util.UUID
 import org.scalatest.OptionValues._
-import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest._
+import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers.{await, _}
-import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider}
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
-import util.externalservices.ApiSubscriptionFieldsService
+import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.apinotificationqueue.repository.NotificationMongoRepository
 import util.TestData.ConversationId1
+import util.externalservices.ApiSubscriptionFieldsService
+import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
 
+import java.util.UUID
 import scala.concurrent.ExecutionContext
 
 class QueueSpec extends AnyFeatureSpec
@@ -55,11 +52,8 @@ class QueueSpec extends AnyFeatureSpec
 
   implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(componentTestConfigs).build()
-  private val repo = new ReactiveRepository[ClientNotification, BSONObjectID](
-    collectionName = "notifications",
-    mongo = app.injector.instanceOf[MongoDbProvider].mongo,
-    domainFormat = ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats) {
-  }
+
+  val repo: NotificationMongoRepository = app.injector.instanceOf[NotificationMongoRepository]
 
   override protected def beforeAll() {
     startMockServer()
@@ -70,11 +64,11 @@ class QueueSpec extends AnyFeatureSpec
   }
 
   override def beforeEach() {
-    await(repo.drop)
+    await(repo.collection.drop().toFuture())
   }
 
-  override def afterEach(): Unit = {
-    await(repo.drop)
+  override def afterEach() {
+    await(repo.collection.drop().toFuture())
   }
 
   Feature("Post, retrieve and delete a message from the queue") {
@@ -87,7 +81,9 @@ class QueueSpec extends AnyFeatureSpec
       Given("a message has already been queued")
       val clientId = "aaaa"
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
-      val xmlBody = <xml><node>Stuff</node></xml>
+      val xmlBody = <xml>
+        <node>Stuff</node>
+      </xml>
       startApiSubscriptionFieldsService(fieldsId = UUID.fromString(fieldsId), clientId = clientId)
 
       val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
@@ -118,7 +114,9 @@ class QueueSpec extends AnyFeatureSpec
     Scenario("3rd party system gets a message previously queued") {
       Given("a message has already been queued")
       val clientId = "aaaa"
-      val xmlBody = <xml><node>Stuff</node></xml>
+      val xmlBody = <xml>
+        <node>Stuff</node>
+      </xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
       startApiSubscriptionFieldsService(fieldsId = UUID.fromString(fieldsId), clientId = clientId)
       val queueResponse = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
@@ -153,7 +151,9 @@ class QueueSpec extends AnyFeatureSpec
     Scenario("3rd party system gets a list of previously pulled messages") {
       Given("two messages have already been queued")
       val clientId = "aaaa"
-      val xmlBody = <xml><node>Stuff</node></xml>
+      val xmlBody = <xml>
+        <node>Stuff</node>
+      </xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
       val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
@@ -190,7 +190,9 @@ class QueueSpec extends AnyFeatureSpec
     Scenario("3rd party system gets a list of unpulled messages") {
       Given("two messages have already been queued")
       val clientId = "aaaa"
-      val xmlBody = <xml><node>Stuff</node></xml>
+      val xmlBody = <xml>
+        <node>Stuff</node>
+      </xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
       val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml", "X-Conversation-Id" -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
@@ -215,9 +217,11 @@ class QueueSpec extends AnyFeatureSpec
     Scenario("3rd party system gets a list of messages by conversationId") {
       Given("two messages have already been queued")
       val clientId = "aaaa"
-      val xmlBody = <xml><node>Stuff</node></xml>
+      val xmlBody = <xml>
+        <node>Stuff</node>
+      </xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
-      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1,  "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
       val notificationId1 = location1.substring(location1.length() - 36)
       val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
@@ -226,13 +230,13 @@ class QueueSpec extends AnyFeatureSpec
 
       When("you get a list of all messages by conversationId")
       val listResult = route(app, FakeRequest(GET, s"/notifications/conversationId/$ConversationId1", Headers("x-client-id" -> clientId), AnyContentAsEmpty)).value
-
       Then("you will receive a list of two messages")
       contentAsString(listResult) shouldBe s"""{"notifications":["/notifications/unpulled/$notificationId1","/notifications/unpulled/$notificationId2"]}"""
     }
   }
 
   Feature("Post and then get a list of all unpulled messages by conversationId from the queue") {
+
     info("As a 3rd Party system")
     info("I want to successfully persist notifications")
     info("And then get a list of all unpulled messages by conversationId")
@@ -240,9 +244,11 @@ class QueueSpec extends AnyFeatureSpec
     Scenario("3rd party system gets a list of messages by conversationId") {
       Given("two messages have already been queued")
       val clientId = "aaaa"
-      val xmlBody = <xml><node>Stuff</node></xml>
+      val xmlBody = <xml>
+        <node>Stuff</node>
+      </xml>
       val fieldsId = "1f95578f-2eba-4ce7-8afa-08dc71d580eb"
-      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1,  "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
+      val queueResponse1 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)
       val location1 = queueResponse1.header.headers("Location")
       val notificationId1 = location1.substring(location1.length() - 36)
       val queueResponse2 = await(route(app = app, FakeRequest(POST, "/queue", Headers("X-Conversation-ID" -> ConversationId1, "api-subscription-fields-id" -> fieldsId, "content-type" -> "application/xml"), AnyContentAsEmpty).withXmlBody(xmlBody)).value)

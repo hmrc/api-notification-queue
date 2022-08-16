@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package uk.gov.hmrc.apinotificationqueue.repository
 
 import org.joda.time.DateTime
 import play.api.libs.json.Json
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 
 case class ClientOverThreshold(clientId: String, notificationTotal: Int, oldestNotification: DateTime, latestNotification: DateTime)
 
 object ClientOverThreshold {
-  implicit val dateTimeJF = ReactiveMongoFormats.dateTimeFormats
+  implicit val dateTimeJF = MongoJodaFormats.dateTimeFormat
   implicit val ClientOverThresholdJF = Json.format[ClientOverThreshold]
 }

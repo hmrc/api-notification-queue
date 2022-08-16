@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,63 +16,56 @@
 
 package integration
 
-import java.util.UUID
-
-import org.joda.time.{DateTime, DateTimeZone}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.mongodb.scala.model.Filters
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.libs.json.Json
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.Helpers
-import reactivemongo.api.DB
-import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
-import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, NotificationId, NotificationWithIdOnly}
-import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, MongoDbProvider, NotificationMongoRepository, NotificationRepositoryErrorHandler}
-import uk.gov.hmrc.mongo.MongoSpecSupport
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import util.UnitSpec
-import util.StubCdsLogger
+import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus.{Pulled, Unpulled}
+import uk.gov.hmrc.apinotificationqueue.model.{NotificationId, NotificationWithIdOnly}
+import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, NotificationMongoRepository}
+import uk.gov.hmrc.http.InternalServerException
+import uk.gov.hmrc.mongo.play.json.formats.MongoUuidFormats
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import util.TestData._
+import util.UnitSpec
+
+import java.util.UUID
+import scala.concurrent.ExecutionContext
 
 class NotificationMongoRepositorySpec extends UnitSpec
   with BeforeAndAfterAll
   with BeforeAndAfterEach
   with MockitoSugar
-  with MongoSpecSupport  { self =>
+  with GuiceOneAppPerSuite
+  with MongoUuidFormats.Implicits {
 
-  private val mongoDbProvider: MongoDbProvider = new MongoDbProvider {
-    override val mongo: () => DB = self.mongo
+  implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
+
+  lazy val repository: NotificationMongoRepository = app.injector.instanceOf[NotificationMongoRepository]
+
+  override def beforeEach(): Unit = {
+    await(repository.collection.drop().toFuture())
   }
 
-  implicit val ec = Helpers.stubControllerComponents().executionContext
-  private val cdsLogger = new StubCdsLogger(mock[ServicesConfig])
-  private val mockErrorHandler = mock[NotificationRepositoryErrorHandler]
-  private val mockConfigService = mock[ApiNotificationQueueConfig]
-  private val repository = new NotificationMongoRepository(mongoDbProvider, mockErrorHandler, cdsLogger, mockConfigService)
-
-  override def beforeEach() {
-    dropTestCollection("notifications")
-  }
-
-  override def afterAll() {
-    dropTestCollection("notifications")
+  override def afterAll(): Unit = {
+    await(repository.collection.drop().toFuture())
   }
 
   private def collectionSize: Int = {
-    await(repository.count(Json.obj()))
+    await(repository.collection.countDocuments().toFuture().toInt)
   }
 
   "repository" can {
     "save a single notification" should {
       "be successful" in {
-        when(mockErrorHandler.handleSaveError(any(), any(), any())).thenReturn(Notification1)
 
-        val actualMessage = await(repository.save(ClientId1, Notification1))
+        val saveResult = await(repository.save(ClientId1, Notification1))
 
         collectionSize shouldBe 1
-        actualMessage shouldBe Notification1
-        fetchNotification shouldBe Client1Notification1
+        saveResult shouldBe Notification1
+
+        fetchNotifications shouldBe Seq(Client1Notification1)
       }
 
       "be successful when called multiple times" in {
@@ -81,30 +74,31 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId2, Notification3))
 
         collectionSize shouldBe 3
-        val clientNotifications = await(repository.find("clientId" -> ClientId1))
+        val clientNotifications = await(fetchNotifications)
         clientNotifications.size shouldBe 2
-        clientNotifications should contain(Client1Notification1)
-        clientNotifications should contain(Client1Notification2)
+
+        clientNotifications shouldBe Seq(Client1Notification1, Client1Notification2)
+
       }
     }
 
     "update a single notification" should {
       "be successful" in {
-        val time = DateTime.now(DateTimeZone.UTC)
-        val updatedNotification = Notification1.copy(datePulled = Some(time))
+        val updatedNotification = Notification1.copy(
+          payload = "<foo>THIS HAS BEEN UPDATED</foo>"
+        )
 
-        when(mockErrorHandler.handleUpdateError(any(), any(), any())).thenReturn(Notification1)
-        val actualMessage1 = await(repository.save(ClientId1, Notification1))
+        val saveResult = await(repository.save(ClientId1, Notification1))
         collectionSize shouldBe 1
-        actualMessage1 shouldBe Notification1
+        saveResult shouldBe Notification1
 
-        when(mockErrorHandler.handleUpdateError(any(), any(), any())).thenReturn(updatedNotification)
-        val actualMessage2 = await(repository.update(ClientId1, updatedNotification))
+        val updateResult = await(repository.update(ClientId1, updatedNotification))
         collectionSize shouldBe 1
-        actualMessage2 shouldBe updatedNotification
+
+        updateResult shouldBe updatedNotification
 
         val expectedNotification = ClientNotification(ClientId1, updatedNotification)
-        fetchNotification shouldBe expectedNotification
+        fetchNotifications shouldBe Seq(expectedNotification)
       }
     }
 
@@ -113,9 +107,11 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId1, Notification1))
         await(repository.save(ClientId1, Notification2))
 
+        collectionSize shouldBe 2
+
         val maybeNotification = await(repository.fetch(ClientId1, Notification1.notificationId))
 
-        maybeNotification.get shouldBe Notification1
+        maybeNotification shouldBe Some(Notification1)
       }
 
       "return None when not found" in {
@@ -191,6 +187,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
         val notifications: List[NotificationWithIdOnly] = await(repository.fetchNotificationIds(ClientId1, None))
 
+
         notifications.size shouldBe 2
         notifications should contain(NotificationWithIdOnly(NotificationId(Notification1.notificationId)))
         notifications should contain(NotificationWithIdOnly(NotificationId(Notification2.notificationId)))
@@ -228,7 +225,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
     "delete by clientId and notificationId" should {
       "return true when record found and deleted" in {
-        when(mockErrorHandler.handleDeleteError(any(), any())).thenReturn(true)
 
         await(repository.save(ClientId1, Notification1))
         await(repository.save(ClientId1, Notification2))
@@ -242,7 +238,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
       }
 
       "return false when record not found" in {
-        when(mockErrorHandler.handleDeleteError(any(), any())).thenReturn(false)
 
         await(repository.save(ClientId1, Notification1))
         await(repository.save(ClientId1, Notification2))
@@ -277,7 +272,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         excessive shouldBe 'Empty
       }
     }
-    
+
     "delete all" should {
       "successfully delete all notifications" in {
         await(repository.save(ClientId1, Notification1))
@@ -288,10 +283,23 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
         collectionSize shouldBe 0
       }
-
     }
-    
+
+    "handleError" must {
+
+      "throw runtime error" in {
+
+        val exception = new InternalServerException("there has been an error")
+
+        val logMessage = "an error has occurred"
+
+        intercept[RuntimeException] {
+
+          await(repository.handleError(exception, logMessage))
+        }
+      }
+    }
   }
 
-  private def fetchNotification: ClientNotification = await(repository.find("clientId" -> ClientId1).head)
+  private def fetchNotifications: Seq[ClientNotification] = await(repository.collection.find(Filters.equal("clientId", ClientId1)).toFuture())
 }

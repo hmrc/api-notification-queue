@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,27 @@
 package uk.gov.hmrc.apinotificationqueue.repository
 
 import com.google.inject.ImplementedBy
-import play.api.libs.json.Json
-import reactivemongo.api.Cursor
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.{BSONDocument, BSONLong, BSONNull, BSONObjectID}
-import reactivemongo.play.json._
+import com.mongodb.client.model.Indexes.{ascending, descending}
+import com.mongodb.client.model.Projections._
+import com.mongodb.client.model.ReturnDocument
+import com.mongodb.client.model.Updates._
+import org.bson.UuidRepresentation
+import org.bson.codecs.UuidCodec
+import org.bson.conversions.Bson
+import org.mongodb.scala.bson.BsonValue
+import org.mongodb.scala.model.Aggregates._
+import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model._
+import org.mongodb.scala.result.{DeleteResult, InsertOneResult}
+import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model._
-import uk.gov.hmrc.apinotificationqueue.repository.ClientNotification.ClientNotificationJF
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -52,59 +60,74 @@ trait NotificationRepository {
   def delete(clientId: String, notificationId: UUID): Future[Boolean]
 
   def deleteAll(): Future[Unit]
+
+  def jsonToBson(json: (String, Json.JsValueWrapper)*): BsonValue = {
+    Codecs.toBson(Json.obj(json :_*))
+  }
 }
 
 @Singleton
-class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
-                                            notificationRepositoryErrorHandler: NotificationRepositoryErrorHandler,
+class NotificationMongoRepository @Inject()(mongo: MongoComponent,
                                             cdsLogger: CdsLogger,
                                             config: ApiNotificationQueueConfig)(implicit ec: ExecutionContext)
-  extends ReactiveRepository[ClientNotification, BSONObjectID]("notifications", mongoDbProvider.mongo,
-    ClientNotification.ClientNotificationJF, ReactiveMongoFormats.objectIdFormats)
+  extends PlayMongoRepository[ClientNotification](
+    mongoComponent = mongo,
+    collectionName = "notifications",
+    domainFormat = ClientNotification.ClientNotificationJF,
+    indexes = Seq(
+      IndexModel(
+        keys = ascending("clientId"),
+        indexOptions = IndexOptions()
+          .name("clientId-Index")
+          .unique(false)
+      ),
+      IndexModel(
+        keys = ascending("clientId", "notification.notificationId"),
+        indexOptions = IndexOptions()
+          .name("clientId-notificationId-Index")
+          .unique(true)
+      ),
+      IndexModel(
+        keys = ascending("clientId", "notification.datePulled"),
+        indexOptions = IndexOptions()
+          .name("clientId-datePulled-Index")
+          .unique(false)
+      ),
+      IndexModel(
+        keys = ascending("clientId", "notification.conversationId"),
+        indexOptions = IndexOptions()
+          .name("clientId-conversationId-Index")
+          .unique(false)
+      ),
+      IndexModel(
+        keys = ascending("clientId", "notification.conversationId", "notification.datePulled"),
+        indexOptions = IndexOptions()
+          .name("clientId-conversationId-datePulled-Index")
+          .unique(false)
+      ),
+      IndexModel(
+        keys = descending("notification.dateReceived"),
+        indexOptions = IndexOptions()
+          .name("dateReceived-Index")
+          .unique(false)
+          .expireAfter(config.ttlInSeconds, TimeUnit.SECONDS)
+      )
+    ),
+    extraCodecs = Seq(
+      new UuidCodec(UuidRepresentation.STANDARD),
+      Codecs.playFormatCodec(NotificationWithIdAndPulled.notificationWithIdAndPulledStatusJF),
+      Codecs.playFormatCodec(NotificationWithIdOnly.notificationWithIdOnlyJF),
+      Codecs.playFormatCodec(ClientOverThreshold.ClientOverThresholdJF)
+    )
+  )
     with NotificationRepository {
 
-  private val ttlIndexName = "dateReceived-Index"
-  private val ttlInSeconds = config.ttlInSeconds
-  private val ttlIndex = Index(
-    key = Seq("notification.dateReceived" -> IndexType.Descending),
-    name = Some(ttlIndexName),
-    unique = false,
-    options = BSONDocument("expireAfterSeconds" -> BSONLong(ttlInSeconds))
-  )
+  dropInvalidIndexes()
 
-  dropInvalidIndexes.flatMap { _ =>
-    collection.indexesManager.ensure(ttlIndex)
-  }
-
-  override def indexes: Seq[Index] = {
-    Seq(
-      Index(
-        key = Seq("clientId" -> IndexType.Ascending),
-        name = Some("clientId-Index"),
-        unique = false
-      ),
-      Index(
-        key = Seq("clientId" -> IndexType.Ascending, "notification.notificationId" -> IndexType.Ascending),
-        name = Some("clientId-notificationId-Index"),
-        unique = true
-      ),
-      Index(
-        key = Seq("clientId" -> IndexType.Ascending, "notification.datePulled" -> IndexType.Ascending),
-        name = Some("clientId-datePulled-Index"),
-        unique = false
-      ),
-      Index(
-        key = Seq("clientId" -> IndexType.Ascending, "notification.conversationId" -> IndexType.Ascending),
-        name = Some("clientId-conversationId-Index"),
-        unique = false
-      ),
-      Index(
-        key = Seq("clientId" -> IndexType.Ascending, "notification.conversationId" -> IndexType.Ascending, "notification.datePulled" -> IndexType.Ascending),
-        name = Some("clientId-conversationId-datePulled-Index"),
-        unique = false
-      ),
-      ttlIndex
-    )
+  def handleError(e: Exception, errorLogMessage: String): Nothing = {
+    lazy val errorMsg = errorLogMessage + s"\n ${e.getMessage}"
+    cdsLogger.error(errorMsg)
+    throw new RuntimeException(errorMsg)
   }
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
@@ -112,119 +135,202 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
     val clientNotification = ClientNotification(clientId, notification)
 
-    lazy val errorMsg = s"Notification not saved for client $clientId"
-
-    insert(clientNotification).map {
-      writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
+    collection.insertOne(clientNotification).toFuture().map {
+      case result: InsertOneResult if result.wasAcknowledged() =>
+        notification
+    }.recover {
+      case e: Exception =>
+        handleError(e, s"Notification not saved for client $clientId.")
     }
   }
 
   override def update(clientId: String, notification: Notification): Future[Notification] = {
     cdsLogger.debug(s"updating clientId: $clientId, notificationId: ${notification.notificationId}")
 
-    val clientNotification = ClientNotification(clientId, notification)
+    val query: Bson = and(
+      equal("clientId", clientId),
+      equal("notification.notificationId", Codecs.toBson(notification.notificationId))
+    )
 
-    lazy val errorMsg = s"Notification not updated for clientId $clientId, notificationId: ${notification.notificationId}"
+    val update = combine(
+      Updates.set("notification", Codecs.toBson(notification))
+    )
 
-    val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notification.notificationId)
-
-    findAndUpdate(selector, ClientNotificationJF.writes(clientNotification)).map {
-      result =>
-        notificationRepositoryErrorHandler.handleUpdateError(result, errorMsg, notification)
+    collection.findOneAndUpdate(
+      filter = query,
+      update = update,
+      options = FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+    ).toFutureOption().map {
+      case Some(clientNotification: ClientNotification) =>
+        clientNotification.notification
+      case None =>
+        lazy val errorLogMessage = s"Notification not found. clientId: $clientId, notificationId: ${notification.notificationId}"
+        handleError(new RuntimeException(errorLogMessage), errorLogMessage)
     }.recoverWith {
-      case error =>
-        Future.failed(error)
+      case e =>
+        lazy val errorLogMessage = s"Notification not updated for clientId $clientId, notificationId: ${notification.notificationId}"
+        lazy val errorMsg = errorLogMessage + s"\n ${e.getMessage}"
+        cdsLogger.error(errorMsg)
+        Future.failed(e)
     }
   }
 
   override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
-    find("clientId" -> clientId, "notification.notificationId" -> notificationId).map {
-      _.headOption.map (cn => cn.notification)
-    }
+
+    val filter = and(
+      equal("clientId", clientId),
+      equal("notification.notificationId", Codecs.toBson(notificationId))
+    )
+
+    collection.find(filter).headOption().map(_.map(_.notification))
   }
 
   override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
-    import collection.BatchCommands.AggregationFramework.{Group, Match, MaxField, MinField, Project, SumAll}
 
-    collection.aggregatorContext[ClientOverThreshold](
-      Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,
-                                                 "oldestNotification" -> MinField("notification.dateReceived"),
-                                                 "latestNotification" -> MaxField("notification.dateReceived")
-      ),
-      List(Match(Json.obj("notificationTotal" -> Json.obj("$gte" -> threshold))),
-           Project(Json.obj("_id" -> 0,
-                            "clientId" -> "$_id.clientId",
-                            "notificationTotal" -> "$notificationTotal",
-                            "oldestNotification" -> "$oldestNotification",
-                            "latestNotification" -> "$latestNotification"
-           ))))
-      .prepared
-      .cursor
-      .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[ClientOverThreshold]]())
+    val groupByClientId = {
+
+      Aggregates.group(
+        id = jsonToBson("clientId" -> "$clientId"),
+        fieldAccumulators =
+          Accumulators.sum("notificationTotal", 1),
+        Accumulators.min("oldestNotification", "$notification.dateReceived"),
+        Accumulators.max("latestNotification", "$notification.dateReceived")
+      )
+    }
+
+    val filterByThreshold = Aggregates.filter(
+      gte("notificationTotal", threshold)
+    )
+
+    val projection =
+      project(fields(
+        computed("_id", 0),
+        computed("clientId", "$_id.clientId"),
+        include("notificationTotal", "oldestNotification", "latestNotification")
+      ))
+
+    collection.aggregate[ClientOverThreshold](
+      pipeline = Seq(groupByClientId, filterByThreshold, projection)
+    ).toFuture().map(_.toList)
   }
 
   override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
-    val selector = Json.obj("clientId" -> clientId, "notification.notificationId" -> notificationId)
-    lazy val errorMsg = s"Could not delete entity for selector: $selector"
-    remove("clientId" -> clientId, "notification.notificationId" -> notificationId).map(notificationRepositoryErrorHandler.handleDeleteError(_, errorMsg))
+
+    val filter = and(
+      equal("clientId", clientId),
+      equal("notification.notificationId", Codecs.toBson(notificationId))
+    )
+
+    collection.deleteOne(filter = filter).toFuture()
+      .map(deleteResult => deleteResult.getDeletedCount > 0)
+      .recover {
+        case e: Exception =>
+          handleError(e, s"Could not delete entity for clientId: $clientId, notificationId: $notificationId")
+      }
   }
 
   override def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
-    val selector = notificationStatus match {
-      case Some(Pulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> true))
-      case Some(Unpulled) => Json.obj("clientId" -> clientId, "notification.datePulled" -> Json.obj("$exists" -> false))
-      case _ => Json.obj("clientId" -> clientId)
-    }
-    val projection = Json.obj("notification.notificationId" -> 1, "_id" -> 0)
 
-    collection.find(selector, Some(projection)).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
+    def notificationExistsFilter(isPulled: Boolean): Bson = {
+      and(
+        equal("clientId", clientId),
+        exists("notification.datePulled", isPulled)
+      )
+    }
+
+    val filter = Aggregates.filter(
+      notificationStatus match {
+        case Some(Pulled) => notificationExistsFilter(true)
+        case Some(Unpulled) => notificationExistsFilter(false)
+        case _ => equal("clientId", clientId)
+      }
+    )
+
+    val projection: Bson =
+      project(fields(
+        computed("notification.notificationId", 1),
+        computed("_id", 0)
+      ))
+
+    collection.aggregate[NotificationWithIdOnly](
+      pipeline = Seq(filter, projection)
+    ).toFuture().map(_.toList)
   }
 
   override def fetchNotificationIds(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]] = {
 
-    val selector = notificationStatus match {
-      case Pulled => Json.obj("clientId" -> clientId, "notification.conversationId" -> conversationId, "notification.datePulled" -> Json.obj("$exists" -> true))
-      case Unpulled => Json.obj("clientId" -> clientId, "notification.conversationId" -> conversationId, "notification.datePulled" -> Json.obj("$exists" -> false))
+    def notificationFilter(isPulled: Boolean): Bson = {
+      Aggregates.filter(
+        and(
+          equal("clientId", clientId),
+          equal("notification.conversationId", Codecs.toBson(conversationId)),
+          exists("notification.datePulled", isPulled)
+        )
+      )
     }
-    val projection = Json.obj("notification.notificationId" -> 1, "_id" -> 0)
 
-    collection.find(selector, Some(projection)).cursor[NotificationWithIdOnly]().collect[List](Int.MaxValue, Cursor.FailOnError[List[NotificationWithIdOnly]]())
+    val filter = notificationStatus match {
+      case Pulled => notificationFilter(true)
+      case Unpulled => notificationFilter(false)
+    }
+
+    val projection: Bson =
+      project(fields(
+        computed("notification.notificationId", 1),
+        computed("_id", 0)
+      ))
+
+    collection.aggregate[NotificationWithIdOnly](
+      pipeline = Seq(filter, projection)
+    ).toFuture().map(_.toList)
   }
 
   override def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulled]] = {
-    import collection.BatchCommands.AggregationFramework.{Match, Project}
 
-    collection.aggregatorContext[NotificationWithIdAndPulled](
-      Match(Json.obj("clientId" -> clientId, "notification.conversationId" -> conversationId)),
-      List(Project(Json.obj("_id" -> 0,
-          "notification" -> 1,
-          "pulled" ->  Json.obj("$gt" -> Json.arr("$notification.datePulled", BSONNull))
-        ))))
-      .prepared
-      .cursor
-      .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[NotificationWithIdAndPulled]]())
+    val filter: Bson = {
+      Aggregates.filter(
+        and(
+          equal("clientId", clientId),
+          equal("notification.conversationId", Codecs.toBson(conversationId))
+        )
+      )
+    }
+
+    val projection: Bson =
+      project(fields(
+        computed("_id", 0),
+        computed("notification", 1),
+        computed("pulled", jsonToBson("$gt" -> Json.arr("$notification.datePulled", JsNull)))
+      ))
+
+    collection.aggregate[BsonValue](
+      pipeline = Seq(filter, projection)
+    ).toFuture().map(_.toList.map(Codecs.fromBson[NotificationWithIdAndPulled]))
   }
 
   override def deleteAll(): Future[Unit] = {
     cdsLogger.debug(s"deleting all notifications")
-
-    removeAll().map {result =>
-      cdsLogger.debug(s"deleted ${result.n} notifications")
+    collection.deleteMany(
+      exists("clientId")
+    ).toFuture().map { deleteResult: DeleteResult =>
+      cdsLogger.debug(s"deleted ${deleteResult.getDeletedCount} notifications")
     }
   }
 
-  private def dropInvalidIndexes: Future[_] =
-    collection.indexesManager.list().flatMap { indexes =>
-      indexes
-        .find { index =>
-          index.name.contains(ttlIndexName) &&
-            !index.options.getAs[Int]("expireAfterSeconds").contains(ttlInSeconds)
-        }
-        .map { _ =>
-          logger.debug(s"dropping $ttlIndexName index as ttl value is incorrect")
-          collection.indexesManager.drop(ttlIndexName)
-        }
-        .getOrElse(Future.successful(()))
+  private def dropInvalidIndexes(): Future[_] = {
+    collection.listIndexes[IndexModel].toFuture().map { indexes: Seq[IndexModel] =>
+      indexes.find { index: IndexModel =>
+        val indexName = index.getOptions.getName
+        val verifyIndexName = indexName.contains("ttlIndexName")
+        val verifyIndexExpiry = index.getOptions.getExpireAfter(TimeUnit.SECONDS).toInt != config.ttlInSeconds
+        verifyIndexName && verifyIndexExpiry
+      }.map { index =>
+        val indexName = index.getOptions.getName
+        cdsLogger.debug(s"dropping $indexName index as ttl value is incorrect")
+        collection.dropIndex(indexName)
+      }
+        .getOrElse(Future.successful())
     }
+  }
 
 }

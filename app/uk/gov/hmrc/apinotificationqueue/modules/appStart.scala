@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package uk.gov.hmrc.apinotificationqueue.modules
 
 import com.google.inject.AbstractModule
+import org.mongodb.scala.model.IndexModel
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationMongoRepository
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
@@ -33,28 +34,30 @@ class AppStart @Inject()(notificationRepository: NotificationMongoRepository,
                         (implicit ec: ExecutionContext) {
 
   logger.info("running AppStart module to drop indexes")
-  notificationRepository.collection.indexesManager.list().flatMap { indexes =>
-    indexes.find { index =>
-      index.name.contains("clientId-xConversationId-Index")
-    }.map { _ =>
+
+  notificationRepository.collection.listIndexes[IndexModel].toFuture().map { indexes: Seq[IndexModel] =>
+    val clientIdxConversationIdIndexes: Seq[IndexModel] = indexes.filter { index =>
+      index.getOptions.getName.contains("clientId-xConversationId-Index")
+    }
+    clientIdxConversationIdIndexes.headOption.map { _: IndexModel =>
       logger.info("dropping clientId-xConversationId-Index")
-      notificationRepository.collection.indexesManager.drop("clientId-xConversationId-Index").map { res =>
-        logger.info(s"number of indexes dropped for clientId-xConversationId-Index: $res")
+      notificationRepository.collection.dropIndex("clientId-xConversationId-Index").toFuture().map { _ =>
+        logger.info(s"number of indexes dropped for clientId-xConversationId-Index: ${clientIdxConversationIdIndexes.length}")
       }
-    }.getOrElse(Future.successful(()))
+    }.getOrElse(Future.successful())
   }
 
-  notificationRepository.collection.indexesManager.list().flatMap { indexes =>
-    indexes.find { index =>
-      index.name.contains("clientId-xConversationId-datePulled-Index")
-    }.map { _ =>
+  notificationRepository.collection.listIndexes[IndexModel]().toFuture().map { indexes: Seq[IndexModel] =>
+    val datePulledIndexes = indexes.filter { index =>
+      index.getOptions.getName.contains("clientId-xConversationId-datePulled-Index")
+    }
+    datePulledIndexes.headOption.map { _ =>
       logger.info("dropping clientId-xConversationId-datePulled-Index")
-      notificationRepository.collection.indexesManager.drop("clientId-xConversationId-datePulled-Index").map { res =>
-        logger.info(s"number of indexes dropped for clientId-xConversationId-datePulled-Index: $res")
+      notificationRepository.collection.dropIndex("clientId-xConversationId-datePulled-Index").map { _ =>
+        logger.info(s"number of indexes dropped for clientId-xConversationId-datePulled-Index: ${datePulledIndexes.length}")
       }
-    }.getOrElse(Future.successful(()))
+    }.getOrElse(Future.successful())
   }
-
 }
 
 class StartModule extends AbstractModule {
