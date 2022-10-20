@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package util.externalservices
 
-import java.util.UUID
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers.OK
 import util.ApiNotificationQueueExternalServicesConfig.ApiSubscriptionFieldsContext
+
+import java.util.UUID
 
 trait ApiSubscriptionFieldsService {
 
