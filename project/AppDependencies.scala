@@ -4,7 +4,7 @@ object AppDependencies {
 
   val customsApiCommonVersion = "1.57.0"
   val testScope = "test,it"
-  val mongoVersion = "0.68.0"
+  val mongoVersion = "0.73.0"
 
   val compile = Seq(
     "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion withSources(),
