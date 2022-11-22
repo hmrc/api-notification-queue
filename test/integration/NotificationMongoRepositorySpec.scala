@@ -53,6 +53,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
   override def beforeEach() {
     dropTestCollection("notifications")
+    await(repository.ensureIndexes)
   }
 
   override def afterAll() {
@@ -88,7 +89,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
       }
 
       "error if duplicated" in {
-        await(repository.ensureIndexes)
         await(repository.save(ClientId1, Notification1))
         collectionSize shouldBe 1
         await(repository.save(ClientId1, Notification1))
