@@ -21,6 +21,7 @@ import play.api.libs.json.Json
 import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong, BSONNull, BSONObjectID}
+import reactivemongo.core.errors.DatabaseException
 import reactivemongo.play.json._
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model._
@@ -65,6 +66,8 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     with NotificationRepository {
 
   private val ttlIndexName = "dateReceived-Index"
+  private val uniqueIndex = "clientId-notificationId-Index" //TODO use this
+
   private val ttlInSeconds = config.ttlInSeconds
   private val ttlIndex = Index(
     key = Seq("notification.dateReceived" -> IndexType.Descending),
@@ -76,6 +79,8 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   dropInvalidIndexes.flatMap { _ =>
     collection.indexesManager.ensure(ttlIndex)
   }
+
+
 
   override def indexes: Seq[Index] = {
     Seq(
@@ -118,7 +123,8 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     insert(clientNotification).map {
       writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
     }.recover {
-      case NonFatal(e) => logger.error(errorMsg, e)
+      case d: DatabaseException if d.code == Some(11000) =>
+        logger.error(s"Duplicate Key [$uniqueIndex] [$errorMsg]", d)
         notification
     }
 
