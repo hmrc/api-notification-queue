@@ -92,7 +92,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId1, Notification1))
         collectionSize shouldBe 1
         await(repository.save(ClientId1, Notification1))
-        // TODO: This will throw an exception at the moment - recreating the issue ready for fix
         collectionSize shouldBe 1
       }
     }

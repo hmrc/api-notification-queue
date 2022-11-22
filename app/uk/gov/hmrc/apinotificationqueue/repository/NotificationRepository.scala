@@ -32,6 +32,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[NotificationMongoRepository])
 trait NotificationRepository {
@@ -108,15 +109,19 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   }
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
-    cdsLogger.debug(s"saving clientId: $clientId from notification: $notification")
+    cdsLogger.debug(s"saving clientId: [$clientId] from notification: [$notification]")
 
     val clientNotification = ClientNotification(clientId, notification)
 
-    lazy val errorMsg = s"Notification not saved for client $clientId"
+    lazy val errorMsg = s"Notification not saved for client [$clientId]"
 
     insert(clientNotification).map {
       writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
+    }.recover {
+      case NonFatal(e) => logger.error(errorMsg, e)
+        notification
     }
+
   }
 
   override def update(clientId: String, notification: Notification): Future[Notification] = {
@@ -139,7 +144,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
   override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
     find("clientId" -> clientId, "notification.notificationId" -> notificationId).map {
-      _.headOption.map (cn => cn.notification)
+      _.headOption.map(cn => cn.notification)
     }
   }
 
@@ -148,16 +153,16 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
     collection.aggregatorContext[ClientOverThreshold](
       Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,
-                                                 "oldestNotification" -> MinField("notification.dateReceived"),
-                                                 "latestNotification" -> MaxField("notification.dateReceived")
+        "oldestNotification" -> MinField("notification.dateReceived"),
+        "latestNotification" -> MaxField("notification.dateReceived")
       ),
       List(Match(Json.obj("notificationTotal" -> Json.obj("$gte" -> threshold))),
-           Project(Json.obj("_id" -> 0,
-                            "clientId" -> "$_id.clientId",
-                            "notificationTotal" -> "$notificationTotal",
-                            "oldestNotification" -> "$oldestNotification",
-                            "latestNotification" -> "$latestNotification"
-           ))))
+        Project(Json.obj("_id" -> 0,
+          "clientId" -> "$_id.clientId",
+          "notificationTotal" -> "$notificationTotal",
+          "oldestNotification" -> "$oldestNotification",
+          "latestNotification" -> "$latestNotification"
+        ))))
       .prepared
       .cursor
       .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[ClientOverThreshold]]())
@@ -197,9 +202,9 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     collection.aggregatorContext[NotificationWithIdAndPulled](
       Match(Json.obj("clientId" -> clientId, "notification.conversationId" -> conversationId)),
       List(Project(Json.obj("_id" -> 0,
-          "notification" -> 1,
-          "pulled" ->  Json.obj("$gt" -> Json.arr("$notification.datePulled", BSONNull))
-        ))))
+        "notification" -> 1,
+        "pulled" -> Json.obj("$gt" -> Json.arr("$notification.datePulled", BSONNull))
+      ))))
       .prepared
       .cursor
       .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[NotificationWithIdAndPulled]]())
@@ -208,7 +213,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   override def deleteAll(): Future[Unit] = {
     cdsLogger.debug(s"deleting all notifications")
 
-    removeAll().map {result =>
+    removeAll().map { result =>
       cdsLogger.debug(s"deleted ${result.n} notifications")
     }
   }
