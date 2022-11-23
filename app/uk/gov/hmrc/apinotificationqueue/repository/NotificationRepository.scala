@@ -114,11 +114,11 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   }
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
-    cdsLogger.debug(s"saving clientId: [$clientId] from notification: [$notification]")
+    cdsLogger.debug(s"saving clientId: [$clientId]'s notification: [$notification]")
 
     val clientNotification = ClientNotification(clientId, notification)
 
-    lazy val errorMsg = s"Notification not saved for client [$clientId]"
+    lazy val errorMsg = s"Notification not saved for client: [$clientId] notification: [$notification]"
 
     insert(clientNotification).map {
       writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
