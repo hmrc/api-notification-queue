@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import play.api.libs.json.Json
 import reactivemongo.api.Cursor
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong, BSONNull, BSONObjectID}
+import reactivemongo.core.errors.DatabaseException
 import reactivemongo.play.json._
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model._
@@ -32,6 +33,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[NotificationMongoRepository])
 trait NotificationRepository {
@@ -64,6 +66,8 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     with NotificationRepository {
 
   private val ttlIndexName = "dateReceived-Index"
+  private val uniqueIndex = "clientId-notificationId-Index" //TODO use this
+
   private val ttlInSeconds = config.ttlInSeconds
   private val ttlIndex = Index(
     key = Seq("notification.dateReceived" -> IndexType.Descending),
@@ -75,6 +79,8 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   dropInvalidIndexes.flatMap { _ =>
     collection.indexesManager.ensure(ttlIndex)
   }
+
+
 
   override def indexes: Seq[Index] = {
     Seq(
@@ -108,15 +114,20 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   }
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
-    cdsLogger.debug(s"saving clientId: $clientId from notification: $notification")
+    cdsLogger.debug(s"saving clientId: [$clientId]'s notification: [$notification]")
 
     val clientNotification = ClientNotification(clientId, notification)
 
-    lazy val errorMsg = s"Notification not saved for client $clientId"
+    lazy val errorMsg = s"Notification not saved for client: [$clientId] notification: [$notification]"
 
     insert(clientNotification).map {
       writeResult => notificationRepositoryErrorHandler.handleSaveError(writeResult, errorMsg, notification)
+    }.recover {
+      case d: DatabaseException if d.code == Some(11000) =>
+        logger.error(s"Duplicate Key [$uniqueIndex] [$errorMsg]", d)
+        notification
     }
+
   }
 
   override def update(clientId: String, notification: Notification): Future[Notification] = {
@@ -139,7 +150,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
   override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
     find("clientId" -> clientId, "notification.notificationId" -> notificationId).map {
-      _.headOption.map (cn => cn.notification)
+      _.headOption.map(cn => cn.notification)
     }
   }
 
@@ -148,16 +159,16 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
 
     collection.aggregatorContext[ClientOverThreshold](
       Group(Json.obj("clientId" -> "$clientId"))("notificationTotal" -> SumAll,
-                                                 "oldestNotification" -> MinField("notification.dateReceived"),
-                                                 "latestNotification" -> MaxField("notification.dateReceived")
+        "oldestNotification" -> MinField("notification.dateReceived"),
+        "latestNotification" -> MaxField("notification.dateReceived")
       ),
       List(Match(Json.obj("notificationTotal" -> Json.obj("$gte" -> threshold))),
-           Project(Json.obj("_id" -> 0,
-                            "clientId" -> "$_id.clientId",
-                            "notificationTotal" -> "$notificationTotal",
-                            "oldestNotification" -> "$oldestNotification",
-                            "latestNotification" -> "$latestNotification"
-           ))))
+        Project(Json.obj("_id" -> 0,
+          "clientId" -> "$_id.clientId",
+          "notificationTotal" -> "$notificationTotal",
+          "oldestNotification" -> "$oldestNotification",
+          "latestNotification" -> "$latestNotification"
+        ))))
       .prepared
       .cursor
       .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[ClientOverThreshold]]())
@@ -197,9 +208,9 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
     collection.aggregatorContext[NotificationWithIdAndPulled](
       Match(Json.obj("clientId" -> clientId, "notification.conversationId" -> conversationId)),
       List(Project(Json.obj("_id" -> 0,
-          "notification" -> 1,
-          "pulled" ->  Json.obj("$gt" -> Json.arr("$notification.datePulled", BSONNull))
-        ))))
+        "notification" -> 1,
+        "pulled" -> Json.obj("$gt" -> Json.arr("$notification.datePulled", BSONNull))
+      ))))
       .prepared
       .cursor
       .collect[List](-1, reactivemongo.api.Cursor.FailOnError[List[NotificationWithIdAndPulled]]())
@@ -208,7 +219,7 @@ class NotificationMongoRepository @Inject()(mongoDbProvider: MongoDbProvider,
   override def deleteAll(): Future[Unit] = {
     cdsLogger.debug(s"deleting all notifications")
 
-    removeAll().map {result =>
+    removeAll().map { result =>
       cdsLogger.debug(s"deleted ${result.n} notifications")
     }
   }

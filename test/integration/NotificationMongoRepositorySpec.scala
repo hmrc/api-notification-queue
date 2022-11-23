@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
   override def beforeEach() {
     dropTestCollection("notifications")
+    await(repository.ensureIndexes)
   }
 
   override def afterAll() {
@@ -85,6 +86,13 @@ class NotificationMongoRepositorySpec extends UnitSpec
         clientNotifications.size shouldBe 2
         clientNotifications should contain(Client1Notification1)
         clientNotifications should contain(Client1Notification2)
+      }
+
+      "error if duplicated" in {
+        await(repository.save(ClientId1, Notification1))
+        collectionSize shouldBe 1
+        await(repository.save(ClientId1, Notification1))
+        collectionSize shouldBe 1
       }
     }
 
