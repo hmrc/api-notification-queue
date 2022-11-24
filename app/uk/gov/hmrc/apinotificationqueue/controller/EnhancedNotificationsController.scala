@@ -111,7 +111,13 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
   private def generateResponse(notificationIdPaths: Future[List[String]], headers: Headers) = {
     notificationIdPaths.map { idPaths =>
-      val json = Json.toJson(Notifications(idPaths))
+
+      //TODO fix   to use this properly appContext.notificationsLimit.toInt
+       val sizeLimit = 30000;
+      val originalList = idPaths
+      val list = originalList.slice(0, sizeLimit)
+      logger.info(s"Returning notifications list. There are [${originalList.size}] returning first [$sizeLimit]", headers.headers)
+      val json = Json.toJson(Notifications(list))
       logger.debug(s"returning notifications $json", headers.headers)
       Ok(json)
     }
