@@ -34,13 +34,13 @@ import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
 import uk.gov.hmrc.apinotificationqueue.model._
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.MongoUtils.DuplicateKey
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[NotificationMongoRepository])
 trait NotificationRepository {
@@ -143,8 +143,8 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
       case result: InsertOneResult if result.wasAcknowledged() =>
         notification
     }.recover {
-      case d: DatabaseException if d.code == Some(11000) =>
-        logger.error(s"Duplicate Key [$uniqueIndex] [$errorMsg]", d)
+      case DuplicateKey(d) =>
+        cdsLogger.error(s"Duplicate Key [$uniqueIndex] [$errorMsg]", d)
         notification
       case e: Exception =>
         handleError(e, errorMsg)

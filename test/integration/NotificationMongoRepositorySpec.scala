@@ -46,6 +46,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
   override def beforeEach(): Unit = {
     await(repository.collection.drop().toFuture())
+    await(repository.ensureIndexes)
   }
 
   override def afterAll(): Unit = {
