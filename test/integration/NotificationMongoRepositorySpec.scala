@@ -80,6 +80,13 @@ class NotificationMongoRepositorySpec extends UnitSpec
         clientNotifications shouldBe Seq(Client1Notification1, Client1Notification2)
 
       }
+
+      "error if duplicated" in {
+        await(repository.save(ClientId1, Notification1))
+        collectionSize shouldBe 1
+        await(repository.save(ClientId1, Notification1))
+        collectionSize shouldBe 1
+      }
     }
 
     "update a single notification" should {

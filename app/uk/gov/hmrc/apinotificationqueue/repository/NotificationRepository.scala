@@ -40,6 +40,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[NotificationMongoRepository])
 trait NotificationRepository {
@@ -122,6 +123,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
   )
     with NotificationRepository {
 
+    private val uniqueIndex = "clientId-notificationId-Index"
   dropInvalidIndexes()
 
   def handleError(e: Exception, errorLogMessage: String): Nothing = {
@@ -131,16 +133,21 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
   }
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
-    cdsLogger.debug(s"saving clientId: $clientId from notification: $notification")
+    cdsLogger.debug(s"saving clientId: [$clientId]'s notification: [$notification]")
 
     val clientNotification = ClientNotification(clientId, notification)
+
+    lazy val errorMsg = s"Notification not saved for client: [$clientId] notification: [$notification]"
 
     collection.insertOne(clientNotification).toFuture().map {
       case result: InsertOneResult if result.wasAcknowledged() =>
         notification
     }.recover {
+      case d: DatabaseException if d.code == Some(11000) =>
+        logger.error(s"Duplicate Key [$uniqueIndex] [$errorMsg]", d)
+        notification
       case e: Exception =>
-        handleError(e, s"Notification not saved for client $clientId.")
+        handleError(e, errorMsg)
     }
   }
 
