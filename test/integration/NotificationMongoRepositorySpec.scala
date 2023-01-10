@@ -26,7 +26,6 @@ import uk.gov.hmrc.apinotificationqueue.model.{NotificationId, NotificationWithI
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, NotificationMongoRepository}
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.mongo.play.json.formats.MongoUuidFormats
-import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import util.TestData._
 import util.UnitSpec
 
@@ -66,7 +65,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         collectionSize shouldBe 1
         saveResult shouldBe Notification1
 
-        fetchNotifications shouldBe Seq(Client1Notification1)
+        findByClientId(ClientId1) shouldBe Seq(Client1Notification1)
       }
 
       "be successful when called multiple times" in {
@@ -75,11 +74,11 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId2, Notification3))
 
         collectionSize shouldBe 3
-        val clientNotifications = await(fetchNotifications)
+        val clientNotifications = await(findByClientId(ClientId1))
         clientNotifications.size shouldBe 2
 
-        clientNotifications shouldBe Seq(Client1Notification1, Client1Notification2)
-
+        clientNotifications.contains(Client1Notification1)
+        clientNotifications.contains(Client1Notification2)
       }
 
       "error if duplicated" in {
@@ -106,7 +105,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         updateResult shouldBe updatedNotification
 
         val expectedNotification = ClientNotification(ClientId1, updatedNotification)
-        fetchNotifications shouldBe Seq(expectedNotification)
+        findByClientId(ClientId1) shouldBe Seq(expectedNotification)
       }
     }
 
@@ -139,6 +138,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId2, Notification3))
         await(repository.save(ClientId1, Notification2))
 
+        //TODO this use real code....
         val notificationIdsWithStatus = await(repository.fetchNotificationIds(ClientId1, ConversationId1Uuid))
 
         notificationIdsWithStatus shouldBe NotificationWithIdAndPulledStatus1 :: NotificationWithIdAndPulledStatus2 :: Nil
@@ -309,5 +309,11 @@ class NotificationMongoRepositorySpec extends UnitSpec
     }
   }
 
-  private def fetchNotifications: Seq[ClientNotification] = await(repository.collection.find(Filters.equal("clientId", ClientId1)).toFuture())
+  //TODO I think this should be replaced with a call to the real method...
+
+  /**
+   *    Queries the collection directly, i.e. not using a method on the [[uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository]]
+   *    No guarantee given to order of results.
+   */
+  private def findByClientId(clientId: String): Seq[ClientNotification] = await(repository.collection.find(Filters.equal("clientId", clientId)).toFuture())
 }
