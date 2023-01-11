@@ -310,12 +310,12 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         computed("pulled", jsonToBson("$gt" -> Json.arr("$notification.datePulled", JsNull)))
       ))
 
-    val sortByDateReceived: Bson = {
+    val sort: Bson = {
       Aggregates.sort(ascending("notification.dateReceived"))
     }
 
     collection.aggregate[BsonValue](
-      pipeline = Seq(filter, projection, sortByDateReceived)
+      pipeline = Seq(filter, projection, sort)
     ).toFuture().map(_.toList.map(Codecs.fromBson[NotificationWithIdAndPulled]))
   }
 
