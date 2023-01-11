@@ -259,8 +259,12 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         computed("_id", 0)
       ))
 
+    val sort: Bson = {
+      Aggregates.sort(ascending("notification.dateReceived"))
+    }
+
     collection.aggregate[NotificationWithIdOnly](
-      pipeline = Seq(filter, projection)
+      pipeline = Seq(filter, projection, sort)
     ).toFuture().map(_.toList)
   }
 
@@ -287,8 +291,12 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         computed("_id", 0)
       ))
 
+    val sort: Bson = {
+      Aggregates.sort(ascending("notification.dateReceived"))
+    }
+
     collection.aggregate[NotificationWithIdOnly](
-      pipeline = Seq(filter, projection)
+      pipeline = Seq(filter, projection, sort)
     ).toFuture().map(_.toList)
   }
 
