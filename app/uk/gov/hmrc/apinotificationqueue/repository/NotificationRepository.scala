@@ -152,7 +152,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
   }
 
   override def update(clientId: String, notification: Notification): Future[Notification] = {
-    cdsLogger.debug(s"updating clientId: $clientId, notificationId: ${notification.notificationId}")
+    cdsLogger.debug(s"updating clientId: [$clientId]'s, notificationId: [${notification.notificationId}]")
 
     val query: Bson = and(
       equal("clientId", clientId),
@@ -171,11 +171,11 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
       case Some(clientNotification: ClientNotification) =>
         clientNotification.notification
       case None =>
-        lazy val errorLogMessage = s"Notification not found. clientId: $clientId, notificationId: ${notification.notificationId}"
+        lazy val errorLogMessage = s"Notification not found. clientId: [$clientId], notificationId: [${notification.notificationId}]"
         handleError(new RuntimeException(errorLogMessage), errorLogMessage)
     }.recoverWith {
       case e =>
-        lazy val errorLogMessage = s"Notification not updated for clientId $clientId, notificationId: ${notification.notificationId}"
+        lazy val errorLogMessage = s"Notification not updated for clientId [$clientId], notificationId: [${notification.notificationId}]"
         lazy val errorMsg = errorLogMessage + s"\n ${e.getMessage}"
         cdsLogger.error(errorMsg)
         Future.failed(e)
@@ -232,7 +232,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
       .map(deleteResult => deleteResult.getDeletedCount > 0)
       .recover {
         case e: Exception =>
-          handleError(e, s"Could not delete entity for clientId: $clientId, notificationId: $notificationId")
+          handleError(e, s"Could not delete entity for clientId: [$clientId], notificationId: [$notificationId]")
       }
   }
 
@@ -337,7 +337,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         verifyIndexName && verifyIndexExpiry
       }.map { index =>
         val indexName = index.getOptions.getName
-        cdsLogger.debug(s"dropping $indexName index as ttl value is incorrect")
+        cdsLogger.debug(s"dropping [$indexName] index as ttl value is incorrect")
         collection.dropIndex(indexName)
       }
         .getOrElse(Future.successful())
