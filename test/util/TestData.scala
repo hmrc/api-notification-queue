@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ object TestData {
   val ClientId1 = "clientId1"
   val ClientId2 = "clientId2"
   val NotificationId1 = UUID.fromString("ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d")
+                                       //ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d,
+                                       //eaca01f9-ec3b-4ede-b263-61b626dde231
   val NotificationId2 = UUID.fromString("5d60bab0-b866-4179-ba5c-b8e19176cfd9")
   val NotificationId3 = UUID.fromString("8f879794-84c4-4a05-96e9-b9432240ff23")
   val Payload = "<foo></foo>"
@@ -47,7 +49,7 @@ object TestData {
   val TimePulled = LatestReceived.plus(1)
 
   val Headers = Map("h1" -> "v1", "h2" -> "v2", "X-Conversation-ID" -> ConversationId1)
-  val Notification1 = Notification(NotificationId1, ConversationId1Uuid, Headers, Payload, TimeReceived, None)
+  val Notification1 = Notification(notificationId = NotificationId1, conversationId = ConversationId1Uuid, headers = Headers, payload = Payload, dateReceived = TimeReceived, datePulled = None)
   val Notification2 = Notification(NotificationId2, ConversationId1Uuid, Headers, Payload, LatestReceived, Some(TimePulled))
   val Notification3 = Notification(NotificationId3, ConversationId1Uuid, Headers, Payload, TimeReceived, None)
   val Client1Notification1 = ClientNotification(ClientId1, Notification1)
