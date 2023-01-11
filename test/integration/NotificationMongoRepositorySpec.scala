@@ -138,7 +138,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
         await(repository.save(ClientId2, Notification3))
         await(repository.save(ClientId1, Notification2))
 
-        //TODO this use real code....
         val notificationIdsWithStatus = await(repository.fetchNotificationIds(ClientId1, ConversationId1Uuid))
 
         notificationIdsWithStatus shouldBe NotificationWithIdAndPulledStatus1 :: NotificationWithIdAndPulledStatus2 :: Nil
