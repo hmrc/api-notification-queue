@@ -44,7 +44,7 @@ class AppStart @Inject()(notificationRepository: NotificationMongoRepository,
       notificationRepository.collection.dropIndex("clientId-xConversationId-Index").toFuture().map { _ =>
         logger.info(s"number of indexes dropped for clientId-xConversationId-Index: ${clientIdxConversationIdIndexes.length}")
       }
-    }.getOrElse(Future.successful())
+    }.getOrElse(Future.successful(()))
   }
 
   notificationRepository.collection.listIndexes[IndexModel]().toFuture().map { indexes: Seq[IndexModel] =>
@@ -56,7 +56,7 @@ class AppStart @Inject()(notificationRepository: NotificationMongoRepository,
       notificationRepository.collection.dropIndex("clientId-xConversationId-datePulled-Index").map { _ =>
         logger.info(s"number of indexes dropped for clientId-xConversationId-datePulled-Index: ${datePulledIndexes.length}")
       }
-    }.getOrElse(Future.successful())
+    }.getOrElse(Future.successful(()))
   }
 }
 

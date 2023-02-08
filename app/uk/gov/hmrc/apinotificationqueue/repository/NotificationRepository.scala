@@ -348,7 +348,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         cdsLogger.debug(s"dropping [$indexName] index as ttl value is incorrect")
         collection.dropIndex(indexName)
       }
-        .getOrElse(Future.successful())
+        .getOrElse(Future.successful(()))
     }
   }
 
