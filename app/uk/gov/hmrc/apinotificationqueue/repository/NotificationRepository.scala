@@ -259,12 +259,8 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         computed("_id", 0)
       ))
 
-    val sort: Bson = {
-      Aggregates.sort(ascending("notification.dateReceived", "_id"))
-    }
-
     collection.aggregate[NotificationWithIdOnly](
-      pipeline = Seq(filter, sort, projection)
+      pipeline = Seq(filter, projection)
     ).toFuture().map(_.toList)
   }
 
@@ -291,12 +287,8 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         computed("_id", 0)
       ))
 
-    val sort: Bson = {
-      Aggregates.sort(ascending("notification.dateReceived", "_id"))
-    }
-
     collection.aggregate[NotificationWithIdOnly](
-      pipeline = Seq(filter, sort, projection)
+      pipeline = Seq(filter, projection)
     ).toFuture().map(_.toList)
   }
 
@@ -318,12 +310,8 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         computed("pulled", jsonToBson("$gt" -> Json.arr("$notification.datePulled", JsNull)))
       ))
 
-    val sort: Bson = {
-      Aggregates.sort(ascending("notification.dateReceived", "_id"))
-    }
-
     collection.aggregate[BsonValue](
-      pipeline = Seq(filter, sort, projection)
+      pipeline = Seq(filter, projection)
     ).toFuture().map(_.toList.map(Codecs.fromBson[NotificationWithIdAndPulled]))
   }
 
