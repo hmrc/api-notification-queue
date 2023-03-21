@@ -77,8 +77,8 @@ class NotificationMongoRepositorySpec extends UnitSpec
         val clientNotifications = await(findByClientId(ClientId1))
         clientNotifications.size shouldBe 2
 
-        clientNotifications.contains(Client1Notification1)
-        clientNotifications.contains(Client1Notification2)
+        assert(clientNotifications.contains(Client1Notification1))
+        assert(clientNotifications.contains(Client1Notification2))
       }
 
       "error if duplicated" in {
@@ -140,7 +140,8 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
         val notificationIdsWithStatus = await(repository.fetchNotificationIds(ClientId1, ConversationId1Uuid))
 
-        notificationIdsWithStatus shouldBe NotificationWithIdAndPulledStatus1 :: NotificationWithIdAndPulledStatus2 :: Nil
+        notificationIdsWithStatus should contain(NotificationWithIdAndPulledStatus1)
+        notificationIdsWithStatus should contain(NotificationWithIdAndPulledStatus2)
       }
 
       "return empty list when nothing found" in {
@@ -311,8 +312,8 @@ class NotificationMongoRepositorySpec extends UnitSpec
   //TODO I think this should be replaced with a call to the real method...
 
   /**
-   *    Queries the collection directly, i.e. not using a method on the [[uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository]]
-   *    No guarantee given to order of results.
+   * Queries the collection directly, i.e. not using a method on the [[uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository]]
+   * No guarantee given to order of results.
    */
   private def findByClientId(clientId: String): Seq[ClientNotification] = await(repository.collection.find(Filters.equal("clientId", clientId)).toFuture())
 }
