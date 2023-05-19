@@ -45,7 +45,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
   override def beforeEach(): Unit = {
     await(repository.collection.drop().toFuture())
-    await(repository.ensureIndexes)
+    await(repository.ensureIndexes())
   }
 
   override def afterAll(): Unit = {
@@ -277,7 +277,7 @@ class NotificationMongoRepositorySpec extends UnitSpec
 
         val excessive = await(repository.fetchOverThreshold(3))
 
-        excessive shouldBe 'Empty
+        excessive shouldBe Symbol("Empty")
       }
     }
 

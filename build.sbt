@@ -9,8 +9,6 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import scala.language.postfixOps
 
 name := "api-notification-queue"
-scalaVersion := "2.12.16"
-targetJvm := "jvm-1.8"
 
 lazy val CdsIntegrationComponentTest = config("it") extend Test
 val testConfig = Seq(CdsIntegrationComponentTest, Test)
@@ -31,14 +29,16 @@ lazy val microservice = (project in file("."))
   .configs(testConfig: _*)
   .settings(playDefaultPort := 9648)
   .settings(
+    scalaVersion := "2.13.10",
+    targetJvm := "jvm-11",
     commonSettings,
     unitTestSettings,
     integrationComponentTestSettings,
     allTest,
-    scoverageSettings
+    scoverageSettings,
+    libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
   )
   .settings(majorVersion := 1)
-  .settings(scalacOptions ++= Seq("-P:silencer:pathFilters=routes", "-P:silencer:globalFilters=Unused import"))
 
 lazy val unitTestSettings =
   inConfig(Test)(Defaults.testTasks) ++

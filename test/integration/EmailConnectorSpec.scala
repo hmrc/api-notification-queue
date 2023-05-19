@@ -53,17 +53,17 @@ class EmailConnectorSpec extends UnitSpec
   private val mockCdsLogger = mock[CdsLogger]
   private val mockEmailConfig = mock[EmailConfig]
 
-  override protected def beforeAll() {
+  override protected def beforeAll(): Unit = {
     startMockServer()
   }
 
-  override protected def beforeEach() {
+  override protected def beforeEach(): Unit = {
     when(mockConfig.emailConfig).thenReturn(mockEmailConfig)
     when(mockEmailConfig.emailServiceUrl).thenReturn("http://some-url/hmrc/email")
     resetMockServer()
   }
 
-  override protected def afterAll() {
+  override protected def afterAll(): Unit = {
     stopMockServer()
   }
 

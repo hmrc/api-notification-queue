@@ -2,15 +2,13 @@ import sbt._
 
 object AppDependencies {
 
-  val customsApiCommonVersion = "1.57.0"
+  val customsApiCommonVersion = "1.60.0"
   val testScope = "test,it"
-  val mongoVersion = "0.74.0"
+  val mongoVersion = "1.2.0"
 
   val compile = Seq(
     "uk.gov.hmrc"                                %% "customs-api-common" % customsApiCommonVersion withSources(),
-    "uk.gov.hmrc.mongo"                          %% "hmrc-mongo-play-28" % mongoVersion,
-    "com.github.ghik"                            %  "silencer-lib"       % "1.7.12" % Provided cross CrossVersion.full,
-    compilerPlugin("com.github.ghik" %  "silencer-plugin"    % "1.7.12" cross CrossVersion.full)
+    "uk.gov.hmrc.mongo"                          %% "hmrc-mongo-play-28" % mongoVersion
   )
 
   val test = Seq(

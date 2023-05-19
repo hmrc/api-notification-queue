@@ -31,6 +31,7 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers
+import scala.language.postfixOps
 import play.api.test.Helpers.{ACCEPTED, await}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationMongoRepository
 import util.TestData._
@@ -68,7 +69,7 @@ class WarningEmailSpec extends AnyFeatureSpec
   private val Wait = 10
   override implicit def patienceConfig: PatienceConfig = super.patienceConfig.copy(timeout = Span(Wait, Seconds))
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     setupEmailService()
     setupDatabase()
   }
@@ -97,7 +98,7 @@ class WarningEmailSpec extends AnyFeatureSpec
     setupEmailServiceToReturn(ACCEPTED)
   }
 
-  private def startMockServer() {
+  private def startMockServer(): Unit = {
     if (!wireMockServer.isRunning) wireMockServer.start()
     WireMock.configureFor(Host, Port)
   }

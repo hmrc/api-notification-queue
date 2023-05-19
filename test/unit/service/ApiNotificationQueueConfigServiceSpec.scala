@@ -26,7 +26,6 @@ import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import util.UnitSpec
 
-import scala.language.postfixOps
 
 class ApiNotificationQueueConfigServiceSpec extends UnitSpec with MockitoSugar with Matchers {
 
