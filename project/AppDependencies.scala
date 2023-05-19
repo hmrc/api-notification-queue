@@ -17,6 +17,7 @@ object AppDependencies {
     "com.github.tomakehurst" %  "wiremock-standalone"     % "2.27.2"                % testScope,
     "org.scalatestplus"      %% "mockito-3-4"             % "3.2.10.0"              % testScope,
     "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28" % mongoVersion            % testScope,
-    "com.vladsch.flexmark"   %  "flexmark-all"            % "0.35.10"               % testScope
+    "com.vladsch.flexmark"   %  "flexmark-all"            % "0.35.10"               % testScope,
+    "uk.gov.hmrc"            %% "bootstrap-test-play-28"  % "7.15.0"                % testScope
   )
 }
