@@ -18,7 +18,7 @@ package uk.gov.hmrc.apinotificationqueue.model
 
 import org.joda.time.DateTime
 import play.api.libs.json.{Format, Json, OFormat}
-import uk.gov.hmrc.mongo.play.json.formats.{MongoJodaFormats, MongoUuidFormats}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 
 import java.util.UUID
 

@@ -55,19 +55,19 @@ class QueueSpec extends AnyFeatureSpec
 
   val repo: NotificationMongoRepository = app.injector.instanceOf[NotificationMongoRepository]
 
-  override protected def beforeAll() {
+  override protected def beforeAll(): Unit = {
     startMockServer()
   }
 
-  override protected def afterAll() {
+  override protected def afterAll(): Unit = {
     stopMockServer()
   }
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     await(repo.collection.drop().toFuture())
   }
 
-  override def afterEach() {
+  override def afterEach(): Unit = {
     await(repo.collection.drop().toFuture())
   }
 

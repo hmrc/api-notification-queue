@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule
 import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
 
 class ApiNotificationQueueModule extends AbstractModule {
-  override def configure() {
+  override def configure() :Unit = {
     // asEagerSingleton forces evaluation at application startup time
     bind(classOf[ApiNotificationQueueConfigService]).asEagerSingleton()
   }
