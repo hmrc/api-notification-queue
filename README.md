@@ -34,19 +34,19 @@ To run performance tests, see [here](https://github.com/HMRC/api-notification-pu
 For Customs Declarations API documentation, see [here](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/customs-declarations).
 
 ### API Notification Queue specific routes
-| Path - internal routes prefixed by `/api-notification-queue` | Supported Methods | Description                                                                                                |
-|--------------------------------------------------------------|:-----------------:|------------------------------------------------------------------------------------------------------------|
-| `/queue`                                                     |       POST        | Submit and save a notification.                                                                            |
-| `/notification/:id`                                          |        GET        | Retrieves a specific notification.                                                                         |
-| `/notifications`                                             |        GET        | Gets all notifications of a specific third-party application. [DEPRECATED]                                 |
-| `/notification/:id`                                          |      DELETE       | Deletes a specific notification. [DEPRECATED]                                                              |
-| `/notifications/unpulled/:id`                                |        GET        | Retrieves a specific notification and sets `datePulled` field in MongoDB..                                 |
-| `/notifications/pulled/:id`                                  |        GET        | Retrieves a specific, previously pulled notification.                                                      |
-| `/notifications/pulled`                                      |        GET        | Retrieves a list of previously pulled notifications.                                                       |
-| `/notifications/unpulled`                                    |        GET        | Retrieves a list of unpulled notifications.                                                                |
-| `/notifications/conversationId/:id`                          |        GET        | Retrieves a list of notifications with the supplied conversationId. Both pulled and unpulled are returned. |
-| `/notifications/conversationId/:id/unpulled`                 |        GET        | Retrieves a list of unpulled notifications with the supplied conversationId.                               |
-| `/notifications/conversationId/:id/pulled`                   |        GET        | Retrieves a list of pulled notifications with the supplied conversationId.                                 |
+| Path                                         | Supported Methods | Description                                                                                                |
+|----------------------------------------------|:-----------------:|------------------------------------------------------------------------------------------------------------|
+| `/queue`                                     |       POST        | Submit and save a notification.                                                                            |
+| `/notification/:id`                          |        GET        | Retrieves a specific notification.                                                                         |
+| `/notifications`                             |        GET        | Gets all notifications of a specific third-party application. [DEPRECATED]                                 |
+| `/notification/:id`                          |      DELETE       | Deletes a specific notification. [DEPRECATED]                                                              |
+| `/notifications/unpulled/:id`                |        GET        | Retrieves a specific notification and sets `datePulled` field in MongoDB..                                 |
+| `/notifications/pulled/:id`                  |        GET        | Retrieves a specific, previously pulled notification.                                                      |
+| `/notifications/pulled`                      |        GET        | Retrieves a list of previously pulled notifications.                                                       |
+| `/notifications/unpulled`                    |        GET        | Retrieves a list of unpulled notifications.                                                                |
+| `/notifications/conversationId/:id`          |        GET        | Retrieves a list of notifications with the supplied conversationId. Both pulled and unpulled are returned. |
+| `/notifications/conversationId/:id/unpulled` |        GET        | Retrieves a list of unpulled notifications with the supplied conversationId.                               |
+| `/notifications/conversationId/:id/pulled`   |        GET        | Retrieves a list of pulled notifications with the supplied conversationId.                                 |
 
 
 ### Test-only specific routes
