@@ -40,7 +40,7 @@ For Customs Declarations API documentation, see [here](https://developer.service
 | `/notification/:id`                          |        GET        | Retrieves a specific notification.                                                                         |
 | `/notifications`                             |        GET        | Gets all notifications of a specific third-party application. [DEPRECATED]                                 |
 | `/notification/:id`                          |      DELETE       | Deletes a specific notification. [DEPRECATED]                                                              |
-| `/notifications/unpulled/:id`                |        GET        | Retrieves a specific notification and sets `datePulled` field in MongoDB..                                 |
+| `/notifications/unpulled/:id`                |        GET        | Retrieves a specific notification and sets `datePulled` field in MongoDB.                                  |
 | `/notifications/pulled/:id`                  |        GET        | Retrieves a specific, previously pulled notification.                                                      |
 | `/notifications/pulled`                      |        GET        | Retrieves a list of previously pulled notifications.                                                       |
 | `/notifications/unpulled`                    |        GET        | Retrieves a list of unpulled notifications.                                                                |
