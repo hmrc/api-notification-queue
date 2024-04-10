@@ -9,7 +9,7 @@ The API Notification Queue service actively 'pushes' notifications as they are c
 - Run with test endpoints: `sbt 'run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes'`
 
 ##  Service Manager Profiles
-The Customs Declarations service can be run locally from Service Manager, using the following profiles:
+The API Notification Queue service can be run locally from Service Manager, using the following profiles:
 
 | Profile Details                       | Command                                                           | Description                                                    |
 |---------------------------------------|:------------------------------------------------------------------|----------------------------------------------------------------|
