@@ -1,6 +1,6 @@
 # API Notification Queue
 
-The API Notification Queue service actively 'pushes' notifications as they are created, delivering them through the specified channel directly to the trade systems. The `api-notification-pull` service acts as the upstream client, facilitating the retrieval of these notifications.
+The API Notification Queue service provides a means to persist and actively retrieve notifications, as this is where all the pull notifications are processed and saved. Allowing the `api-notification-pull` service to act as the upstream client, facilitating the retrieval of these notifications.
 
 
 ## Development Setup
