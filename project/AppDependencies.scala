@@ -11,6 +11,7 @@ object AppDependencies {
     "uk.gov.hmrc.mongo"      %% "hmrc-mongo-play-28"        % mongoVersion,
     "org.typelevel"          %% "cats-core"                 % "2.10.0"
   )
+
   val test = Seq(
     "uk.gov.hmrc"            %% "bootstrap-test-play-28"    % bootstrapVersion  % testScope,
     "com.github.tomakehurst" %  "wiremock-standalone"       % "2.27.2"          % testScope,
