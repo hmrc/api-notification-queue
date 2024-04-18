@@ -2,22 +2,20 @@ import sbt._
 
 object AppDependencies {
 
-  val customsApiCommonVersion = "1.60.0"
   val testScope = "test,it"
   val mongoVersion = "1.2.0"
+  val bootstrapVersion = "7.23.0"
 
   val compile = Seq(
-    "uk.gov.hmrc"                                %% "customs-api-common" % customsApiCommonVersion withSources(),
-    "uk.gov.hmrc.mongo"                          %% "hmrc-mongo-play-28" % mongoVersion
+    "uk.gov.hmrc"            %% "bootstrap-backend-play-28" % bootstrapVersion,
+    "uk.gov.hmrc.mongo"      %% "hmrc-mongo-play-28"        % mongoVersion,
+    "org.typelevel"          %% "cats-core"                 % "2.10.0"
   )
-
   val test = Seq(
-    "org.scalatestplus.play" %% "scalatestplus-play"      % "5.1.0"                 % testScope,
-    "uk.gov.hmrc"            %% "customs-api-common"      % customsApiCommonVersion % testScope classifier "tests",
-    "com.github.tomakehurst" %  "wiremock-standalone"     % "2.27.2"                % testScope,
-    "org.scalatestplus"      %% "mockito-3-4"             % "3.2.10.0"              % testScope,
-    "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28" % mongoVersion            % testScope,
-    "com.vladsch.flexmark"   %  "flexmark-all"            % "0.35.10"               % testScope,
-    "uk.gov.hmrc"            %% "bootstrap-test-play-28"  % "7.15.0"                % testScope
+    "uk.gov.hmrc"            %% "bootstrap-test-play-28"    % bootstrapVersion  % testScope,
+    "com.github.tomakehurst" %  "wiremock-standalone"       % "2.27.2"          % testScope,
+    "org.scalatestplus"      %% "mockito-4-2"               % "3.2.11.0"        % testScope,
+    "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-28"   % mongoVersion      % testScope,
+    "com.vladsch.flexmark"   %  "flexmark-all"              % "0.64.8"          % testScope,
   )
 }
