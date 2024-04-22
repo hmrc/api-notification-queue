@@ -16,8 +16,6 @@
 
 package integration
 
-import java.util.UUID
-
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.mockito.MockitoSugar
@@ -28,7 +26,9 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import util.externalservices.ApiSubscriptionFieldsService
-import util.{UnitSpec, _}
+import util._
+
+import java.util.UUID
 
 class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   with ScalaFutures

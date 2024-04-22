@@ -16,10 +16,10 @@
 
 package util
 
-import java.util
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.verification.LoggedRequest
+
+import java.util
 
 trait ExternalClientService extends WireMockRunner {
   private val urlMatchingRequestPath = urlMatching(ExternalServicesConfiguration.ExternalClientServiceContext)

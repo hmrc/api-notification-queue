@@ -16,19 +16,18 @@
 
 package unit.service
 
-import java.util.UUID
-
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.Helpers
-import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdAndPulled, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
+import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationId, NotificationWithIdAndPulled, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 import uk.gov.hmrc.apinotificationqueue.service.QueueService
-import util.UnitSpec
 import util.TestData.{ConversationId1Uuid, Notification1}
+import util.UnitSpec
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 class QueueServiceSpec extends UnitSpec with MockitoSugar {

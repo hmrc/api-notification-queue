@@ -16,11 +16,11 @@
 
 package util.externalservices
 
-import java.util.UUID
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers.OK
 import util.ApiNotificationQueueExternalServicesConfig.ApiSubscriptionFieldsContext
+
+import java.util.UUID
 
 trait ApiSubscriptionFieldsService {
 

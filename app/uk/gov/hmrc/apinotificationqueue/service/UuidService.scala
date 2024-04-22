@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.apinotificationqueue.service
 
-import java.util.UUID
-
 import com.google.inject.Singleton
+
+import java.util.UUID
 
 @Singleton
 class UuidService {

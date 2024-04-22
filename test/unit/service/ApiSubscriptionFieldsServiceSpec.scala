@@ -16,8 +16,6 @@
 
 package unit.service
 
-import java.util.UUID
-
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.Helpers
@@ -27,6 +25,7 @@ import uk.gov.hmrc.apinotificationqueue.service.ApiSubscriptionFieldsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import util.UnitSpec
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 class ApiSubscriptionFieldsServiceSpec extends UnitSpec with MockitoSugar {

@@ -16,13 +16,13 @@
 
 package util
 
-import java.util.UUID
-
 import org.joda.time.{DateTime, DateTimeZone}
 import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{X_CLIENT_ID_HEADER_NAME, X_CONVERSATION_ID_HEADER_NAME}
-import uk.gov.hmrc.apinotificationqueue.model.{Email, Notification, NotificationId, NotificationWithIdAndPulled, SendEmailRequest}
+import uk.gov.hmrc.apinotificationqueue.model._
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, ClientOverThreshold}
 import util.TestData._
+
+import java.util.UUID
 
 object TestData {
 

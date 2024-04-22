@@ -30,12 +30,10 @@ import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.service.ApiNotificationQueueConfigService
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
-import uk.gov.hmrc.http.HttpClient
-import util.UnitSpec
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.externalservices.EmailService
-import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
+import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, UnitSpec, WireMockRunner}
 
 import scala.concurrent.{ExecutionContext, Future}
 

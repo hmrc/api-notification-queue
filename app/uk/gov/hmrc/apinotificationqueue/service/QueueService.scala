@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.apinotificationqueue.service
 
-import java.util.UUID
-
-import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.apinotificationqueue.model.{Notification, NotificationStatus, NotificationWithIdAndPulled, NotificationWithIdOnly}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
 
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton()

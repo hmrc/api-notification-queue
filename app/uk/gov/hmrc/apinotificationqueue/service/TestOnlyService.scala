@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.apinotificationqueue.service
 
-import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository
+
+import javax.inject.{Inject, Singleton}
 
 @Singleton
 class TestOnlyService @Inject()(notificationRepository: NotificationRepository) {

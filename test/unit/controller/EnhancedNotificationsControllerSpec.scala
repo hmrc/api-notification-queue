@@ -16,7 +16,6 @@
 
 package unit.controller
 
-import java.util.UUID
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
@@ -36,6 +35,7 @@ import util.TestData.{ConversationId1, ConversationId1Uuid, NotificationWithIdAn
 import util.XmlUtil.string2xml
 import util.{MaterializerSupport, UnitSpec}
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.Utility.trim
 

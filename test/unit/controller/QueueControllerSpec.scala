@@ -16,7 +16,6 @@
 
 package unit.controller
 
-import java.util.UUID
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => mockEq, _}
 import org.mockito.Mockito._
@@ -35,6 +34,7 @@ import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData._
 import util.{MaterializerSupport, UnitSpec}
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSupport {
