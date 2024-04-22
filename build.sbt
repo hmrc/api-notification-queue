@@ -29,7 +29,7 @@ lazy val microservice = (project in file("."))
   .configs(testConfig: _*)
   .settings(playDefaultPort := 9648)
   .settings(
-    scalaVersion := "2.13.10",
+    scalaVersion := "2.13.13",
     targetJvm := "jvm-11",
     commonSettings,
     unitTestSettings,
