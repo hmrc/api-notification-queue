@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.apinotificationqueue.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class SendEmailRequest(to: List[Email],
                             templateId: String,
@@ -24,5 +24,5 @@ case class SendEmailRequest(to: List[Email],
                             force: Boolean)
 
 object SendEmailRequest {
-  implicit val SendEmailRequestJF = Json.format[SendEmailRequest]
+  implicit val SendEmailRequestJF: OFormat[SendEmailRequest] = Json.format[SendEmailRequest]
 }

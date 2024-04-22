@@ -17,7 +17,6 @@
 package unit.controller
 
 import java.util.UUID
-
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => mockEq, _}
 import org.mockito.Mockito._
@@ -36,11 +35,11 @@ import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData._
 import util.{MaterializerSupport, UnitSpec}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSupport {
 
-  private implicit val ec = Helpers.stubControllerComponents().executionContext
+  private implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
 
   private val CLIENT_ID_HEADER_NAME = "x-client-id"
   private val SUBSCRIPTION_FIELDS_ID_HEADER_NAME = "api-subscription-fields-id"

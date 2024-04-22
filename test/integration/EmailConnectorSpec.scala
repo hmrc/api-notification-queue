@@ -77,7 +77,7 @@ class EmailConnectorSpec extends UnitSpec
     val sendEmailRequest = SendEmailRequest(List(Email("some-email@address.com")), "some-template-id",
       Map("parameters" -> "some-parameter"), force = false)
 
-    implicit val hc = HeaderCarrier()
+    implicit val hc: HeaderCarrier = HeaderCarrier()
     val emulatedHttpVerbsException = new RuntimeException("an error")
 
     val connector: EmailConnector = new EmailConnector(mockHttpClient, mockConfig, mockCdsLogger)

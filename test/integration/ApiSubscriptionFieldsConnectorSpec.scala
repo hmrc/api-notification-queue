@@ -52,7 +52,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
     val fieldsId: UUID = UUID.randomUUID()
     val clientId = "abc123"
 
-    implicit val hc = HeaderCarrier()
+    implicit val hc: HeaderCarrier = HeaderCarrier()
     val connector: ApiSubscriptionFieldsConnector = app.injector.instanceOf[ApiSubscriptionFieldsConnector]
   }
 

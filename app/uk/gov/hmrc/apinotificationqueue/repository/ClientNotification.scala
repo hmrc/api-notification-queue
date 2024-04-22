@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.apinotificationqueue.repository
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.apinotificationqueue.model.Notification
 
 case class ClientNotification(clientId: String, notification: Notification)
 
 object ClientNotification {
-  implicit val ClientNotificationJF = Json.format[ClientNotification]
+  implicit val ClientNotificationJF: OFormat[ClientNotification] = Json.format[ClientNotification]
 }

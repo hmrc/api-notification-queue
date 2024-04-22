@@ -17,12 +17,12 @@
 package uk.gov.hmrc.apinotificationqueue.repository
 
 import org.joda.time.DateTime
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json, OFormat}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 
 case class ClientOverThreshold(clientId: String, notificationTotal: Int, oldestNotification: DateTime, latestNotification: DateTime)
 
 object ClientOverThreshold {
-  implicit val dateTimeJF = MongoJodaFormats.dateTimeFormat
-  implicit val ClientOverThresholdJF = Json.format[ClientOverThreshold]
+  implicit val dateTimeJF: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+  implicit val ClientOverThresholdJF: OFormat[ClientOverThreshold] = Json.format[ClientOverThreshold]
 }
