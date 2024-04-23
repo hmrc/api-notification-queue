@@ -16,10 +16,7 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
-import java.util.UUID
-
 import akka.util.ByteString
-import javax.inject.{Inject, Singleton}
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -30,6 +27,8 @@ import uk.gov.hmrc.apinotificationqueue.model.{Notification, Notifications}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, QueueService, UuidService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 

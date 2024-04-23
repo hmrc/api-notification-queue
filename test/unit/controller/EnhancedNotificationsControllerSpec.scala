@@ -16,8 +16,6 @@
 
 package unit.controller
 
-import java.util.UUID
-
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
@@ -37,12 +35,13 @@ import util.TestData.{ConversationId1, ConversationId1Uuid, NotificationWithIdAn
 import util.XmlUtil.string2xml
 import util.{MaterializerSupport, UnitSpec}
 
-import scala.concurrent.Future
+import java.util.UUID
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.Utility.trim
 
 class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupport with MockitoSugar {
 
-  private implicit val ec = Helpers.stubControllerComponents().executionContext
+  private implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
 
   private val CLIENT_ID_HEADER_NAME = "x-client-id"
   private val CONVERSATION_ID_HEADER_NAME = "X-Conversation-ID"

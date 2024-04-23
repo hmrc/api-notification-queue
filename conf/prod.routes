@@ -1,8 +1,6 @@
 ->            /                                               health.Routes
 
-GET           /admin/metrics                                  @com.kenshoo.play.metrics.MetricsController.metrics
-
-POST          /queue                                          @uk.gov.hmrc.apinotificationqueue.controller.QueueController.save
+POST          /queue                                          @uk.gov.hmrc.apinotificationqueue.controller.QueueController.save()
 
 GET           /notification/:id                               @uk.gov.hmrc.apinotificationqueue.controller.QueueController.get(id: java.util.UUID)
 GET           /notifications                                  @uk.gov.hmrc.apinotificationqueue.controller.QueueController.getAllByClientId

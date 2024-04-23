@@ -17,10 +17,11 @@
 package uk.gov.hmrc.apinotificationqueue.service
 
 import cats.implicits._
-import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, EmailConfig}
 import uk.gov.hmrc.customs.api.common.config.{ConfigValidatedNelAdaptor, CustomsValidatedNel}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
+
+import javax.inject.{Inject, Singleton}
 
 @Singleton
 class ApiNotificationQueueConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdaptor, cdsLogger: CdsLogger) extends ApiNotificationQueueConfig {

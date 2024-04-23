@@ -31,13 +31,13 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers
-import scala.language.postfixOps
 import play.api.test.Helpers.{ACCEPTED, await}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationMongoRepository
 import util.TestData._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class WarningEmailSpec extends AnyFeatureSpec
   with GivenWhenThen

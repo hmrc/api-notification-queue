@@ -325,7 +325,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
   }
 
   private def dropInvalidIndexes(): Future[_] = {
-    collection.listIndexes[IndexModel].toFuture().map { indexes: Seq[IndexModel] =>
+    collection.listIndexes[IndexModel]().toFuture().map { indexes: Seq[IndexModel] =>
       indexes.find { index: IndexModel =>
         val indexName = index.getOptions.getName
         val verifyIndexName = indexName.contains("ttlIndexName")

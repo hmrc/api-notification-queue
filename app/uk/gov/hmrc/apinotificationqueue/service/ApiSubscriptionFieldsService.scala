@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.apinotificationqueue.service
 
-import java.util.UUID
 import play.api.http.Status.NOT_FOUND
-
-import javax.inject.Inject
 import uk.gov.hmrc.apinotificationqueue.connector.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
+import java.util.UUID
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ApiSubscriptionFieldsService @Inject()(apiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector)

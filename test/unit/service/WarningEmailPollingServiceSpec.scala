@@ -28,9 +28,8 @@ import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 import uk.gov.hmrc.apinotificationqueue.service.{ApiNotificationQueueConfigService, WarningEmailPollingService}
-import util.UnitSpec
-import util.StubCdsLogger
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import util.{StubCdsLogger, UnitSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
 

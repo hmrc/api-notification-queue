@@ -17,10 +17,11 @@
 package uk.gov.hmrc.apinotificationqueue.logging
 
 import com.google.inject.Inject
-import javax.inject.Singleton
-import uk.gov.hmrc.apinotificationqueue.model.SeqOfHeader
 import uk.gov.hmrc.apinotificationqueue.logging.LoggingHelper.formatWithHeaders
+import uk.gov.hmrc.apinotificationqueue.model.SeqOfHeader
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
+
+import javax.inject.Singleton
 
 @Singleton
 class NotificationLogger @Inject()(logger: CdsLogger) {

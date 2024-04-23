@@ -16,10 +16,7 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
-import java.util.UUID
-
 import akka.util.ByteString
-import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import play.api.http.HttpEntity
@@ -32,6 +29,8 @@ import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, Q
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorNotFound, errorBadRequest}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton

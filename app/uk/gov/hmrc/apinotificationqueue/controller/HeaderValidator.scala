@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
-import java.util.UUID
-
 import play.api.mvc.Headers
 import uk.gov.hmrc.apinotificationqueue.controller.CustomErrorResponses.ErrorClientIdMissing
 import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME, X_CLIENT_ID_HEADER_NAME}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 
+import java.util.UUID
 import scala.util.{Failure, Success, Try}
 
 trait HeaderValidator {
