@@ -9,6 +9,3 @@ addSbtPlugin("uk.gov.hmrc"        %  "sbt-distributables"     % "2.2.0")
 addSbtPlugin("org.scoverage"      %  "sbt-scoverage"          % "2.0.11")
 addSbtPlugin("org.scalastyle"     %% "scalastyle-sbt-plugin"  % "1.0.0" exclude("org.scala-lang.modules", "scala-xml_2.12"))
 addSbtPlugin("com.timushev.sbt"   % "sbt-updates"             % "0.6.3")
-
-// To resolve a bug with version 2.x.x of the scoverage plugin - https://github.com/sbt/sbt/issues/6997
-libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always //TODO DCWL-2277 can this be removed?
