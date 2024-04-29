@@ -33,7 +33,7 @@ import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData._
 import util.{MaterializerSupport, UnitSpec}
 
-import java.time.{Instant}
+import java.time.Instant
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -19,7 +19,7 @@ package uk.gov.hmrc.apinotificationqueue.model
 import play.api.libs.json.{Format, Json, OFormat}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-import java.time.{Instant}
+import java.time.Instant
 import java.util.UUID
 
 object NotificationStatus extends Enumeration {

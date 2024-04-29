@@ -34,8 +34,8 @@ import util.TestData.{ConversationId1, ConversationId1Uuid, NotificationWithIdAn
 import util.XmlUtil.string2xml
 import util.{MaterializerSupport, UnitSpec}
 
+import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.time.{Instant, LocalDateTime}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.Utility.trim
