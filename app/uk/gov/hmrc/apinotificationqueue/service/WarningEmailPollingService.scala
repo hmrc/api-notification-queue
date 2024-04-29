@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.apinotificationqueue.service
 
-import akka.actor.ActorSystem
-import org.joda.time.format.ISODateTimeFormat
+import org.apache.pekko.actor.ActorSystem
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Email, SendEmailRequest}
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
@@ -41,18 +41,19 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
   private val toAddress = config.emailConfig.notificationEmailAddress
   private val queueThreshold = config.emailConfig.notificationEmailQueueThreshold
   private val emailEnabled = config.emailConfig.notificationEmailEnabled
+  private val toISODateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss.SSS'Z'").withZone(java.time.ZoneOffset.UTC)
 
   if (emailEnabled) {
     actorSystem.scheduler.scheduleWithFixedDelay(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
       () => {
-        cdsLogger.debug(s"running warning email scheduler with delay of $delay, interval of $interval and queue threshold of $queueThreshold")
+        cdsLogger.debug(s"running warning email scheduler with delay of [$delay], interval of [$interval] and queue threshold of [$queueThreshold]")
         notificationRepo.fetchOverThreshold(queueThreshold).map(results =>
           if (results.nonEmpty) {
             val sendEmailRequest = SendEmailRequest(List(Email(toAddress)), templateId, buildParameters(results, queueThreshold), force = false)
-            cdsLogger.debug(s"sending email with ${results.size} clientId rows")
+            cdsLogger.debug(s"sending email with [${results.size}] clientId rows")
             emailConnector.send(sendEmailRequest)
           } else {
-            cdsLogger.info(s"No notification warning email sent as no clients have more notifications than threshold of $queueThreshold")
+            cdsLogger.info(s"No notification warning email sent as no clients have more notifications than threshold of [$queueThreshold]")
           })
       }
     }
@@ -62,9 +63,9 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
     Map("queueThreshold" -> queueThreshold.toString) ++
       results.zipWithIndex.flatMap { case (client, idx) =>
         Map(s"clientId_$idx" -> client.clientId,
-            s"notificationTotal_$idx" -> client.notificationTotal.toString,
-            s"oldestNotification_$idx" -> client.oldestNotification.toString(ISODateTimeFormat.basicDateTime()),
-            s"latestNotification_$idx" -> client.latestNotification.toString(ISODateTimeFormat.basicDateTime()))
+          s"notificationTotal_$idx" -> client.notificationTotal.toString,
+          s"oldestNotification_$idx" -> toISODateFormatter.format(client.oldestNotification),
+          s"latestNotification_$idx" -> toISODateFormatter.format(client.latestNotification))
       }
   }
 }

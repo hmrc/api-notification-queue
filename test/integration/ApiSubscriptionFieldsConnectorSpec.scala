@@ -25,8 +25,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import util.externalservices.ApiSubscriptionFieldsService
 import util._
+import util.externalservices.ApiSubscriptionFieldsService
 
 import java.util.UUID
 

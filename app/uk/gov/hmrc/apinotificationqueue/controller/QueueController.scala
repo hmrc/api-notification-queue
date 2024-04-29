@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._

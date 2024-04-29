@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.apinotificationqueue.controller
 
-import akka.util.ByteString
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
+import org.apache.pekko.util.ByteString
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -29,6 +27,7 @@ import uk.gov.hmrc.apinotificationqueue.service.{ApiSubscriptionFieldsService, Q
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorNotFound, errorBadRequest}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.Instant
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -162,5 +161,5 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
 @Singleton
 class DateTimeProvider {
-  def now(): DateTime = DateTime.now(UTC)
+  def now(): Instant = Instant.now()
 }

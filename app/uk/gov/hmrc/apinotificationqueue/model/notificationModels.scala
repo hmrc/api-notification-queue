@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.apinotificationqueue.model
 
-import org.joda.time.DateTime
 import play.api.libs.json.{Format, Json, OFormat}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
+import java.time.Instant
 import java.util.UUID
 
 object NotificationStatus extends Enumeration {
@@ -46,11 +46,11 @@ case class Notification(notificationId: UUID,
                         conversationId: UUID,
                         headers: Map[String, String],
                         payload: String,
-                        dateReceived: DateTime,
-                        datePulled: Option[DateTime])
+                        dateReceived: Instant,
+                        datePulled: Option[Instant])
 
 object Notification {
-  implicit val dateTimeJF: Format[DateTime] = MongoJodaFormats.dateTimeFormat
+  implicit val dateTimeJF: Format[Instant] = MongoJavatimeFormats.instantFormat
   implicit val notificationJF: OFormat[Notification] = Json.format[Notification]
 }
 
