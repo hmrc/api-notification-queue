@@ -22,7 +22,6 @@ import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, Email
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientOverThreshold, NotificationRepository}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 
-import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
@@ -42,6 +41,7 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
   private val toAddress = config.emailConfig.notificationEmailAddress
   private val queueThreshold = config.emailConfig.notificationEmailQueueThreshold
   private val emailEnabled = config.emailConfig.notificationEmailEnabled
+  private val toISODateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss.SSS'Z'").withZone(java.time.ZoneOffset.UTC)
 
   if (emailEnabled) {
     actorSystem.scheduler.scheduleWithFixedDelay(Duration(delay, TimeUnit.SECONDS), Duration(interval, TimeUnit.MINUTES)) {
@@ -59,18 +59,13 @@ class WarningEmailPollingService @Inject()(notificationRepo: NotificationReposit
     }
   }
 
-  private def formatToISODate(i: Instant) = {
-    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss.SSS'Z'").withZone(java.time.ZoneOffset.UTC)
-    formatter.format(i)
-  }
-
   private def buildParameters(results: List[ClientOverThreshold], queueThreshold: Int): Map[String, String] = {
     Map("queueThreshold" -> queueThreshold.toString) ++
       results.zipWithIndex.flatMap { case (client, idx) =>
         Map(s"clientId_$idx" -> client.clientId,
-            s"notificationTotal_$idx" -> client.notificationTotal.toString,
-            s"oldestNotification_$idx" -> formatToISODate(client.oldestNotification),
-            s"latestNotification_$idx" -> formatToISODate(client.latestNotification))
+          s"notificationTotal_$idx" -> client.notificationTotal.toString,
+          s"oldestNotification_$idx" -> toISODateFormatter.format(client.oldestNotification),
+          s"latestNotification_$idx" -> toISODateFormatter.format(client.latestNotification))
       }
   }
 }
