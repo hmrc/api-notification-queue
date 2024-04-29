@@ -16,7 +16,6 @@
 
 package unit.controller
 
-import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => mockEq, _}
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
@@ -34,6 +33,7 @@ import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData._
 import util.{MaterializerSupport, UnitSpec}
 
+import java.time.{Instant}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -102,8 +102,12 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
       private val xml = <xml>
         <node>Stuff</node>
       </xml>
-      private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> fieldsId, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xml)
-      private val notification = Notification(notificationId, ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
+      private val request = FakeRequest(POST, "/queue",
+        Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> fieldsId,
+                CONTENT_TYPE -> XML,
+                CONVERSATION_ID_HEADER_NAME -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xml)
+
+      private val notification = Notification(notificationId, ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), Instant.now(), None)
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Some(clientId))
 
@@ -121,7 +125,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
       private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> fieldsId,
         CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "eaca01f9-ec3b-4ede-b263-61b626dde231",
         NOTIFICATION_ID_HEADER_NAME -> notificationIdHeaderValue), AnyContentAsEmpty).withXmlBody(xml)
-      private val notification = Notification(UUID.fromString(notificationIdHeaderValue), ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
+      private val notification = Notification(UUID.fromString(notificationIdHeaderValue), ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), Instant.now(), None)
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Some(clientId))
 
@@ -135,8 +139,12 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
       private val xml = <xml>
         <node>Stuff</node>
       </xml>
-      private val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> fieldsId, CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
-      private val notification = Notification(notificationId, ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), DateTime.now(), None)
+      private val request = FakeRequest(POST, "/queue",
+        Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> fieldsId,
+                CONTENT_TYPE -> XML,
+                CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
+
+      private val notification = Notification(notificationId, ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), Instant.now(), None)
       when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
       when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Future.failed(emulatedServiceFailure))
 
@@ -192,7 +200,11 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
 
     "return 200" in new Setup {
       val payload = "<xml>a</xml>"
-      when(mockQueueService.get(clientId, notificationId)).thenReturn(Future.successful(Some(Notification(notificationId, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, DateTime.now(), None))))
+      when(mockQueueService.get(clientId, notificationId)).thenReturn(
+        Future.successful(Some(Notification(notificationId, ConversationId1Uuid,
+          Map(CONTENT_TYPE -> XML,
+            CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, Instant.now(), None))))
+
       val request = FakeRequest(GET, s"/notification/$notificationId", Headers(CLIENT_ID_HEADER_NAME -> clientId), AnyContentAsEmpty)
 
       val result = await(queueController.get(notificationId)(request))

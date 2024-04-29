@@ -16,7 +16,6 @@
 
 package unit.service
 
-import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.Helpers
@@ -27,6 +26,7 @@ import uk.gov.hmrc.apinotificationqueue.service.QueueService
 import util.TestData.{ConversationId1Uuid, Notification1}
 import util.UnitSpec
 
+import java.time.Instant
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,8 +39,8 @@ class QueueServiceSpec extends UnitSpec with MockitoSugar {
 
     val clientId: String = "clientId"
 
-    val notification1: Notification = Notification(UUID.randomUUID(), ConversationId1Uuid, Map.empty, "<xml></xml>", DateTime.now(), None)
-    val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(DateTime.now()))
+    val notification1: Notification = Notification(UUID.randomUUID(), ConversationId1Uuid, Map.empty, "<xml></xml>", Instant.now(), None)
+    val notification2: Notification = notification1.copy(notificationId = UUID.randomUUID(), datePulled = Some(Instant.now()))
 
     val notificationWithIdOnly1 = NotificationWithIdOnly(NotificationId(notification1.notificationId))
     val notificationWithIdOnly2 = NotificationWithIdOnly(NotificationId(notification2.notificationId))

@@ -16,12 +16,13 @@
 
 package util
 
-import org.joda.time.{DateTime, DateTimeZone}
 import uk.gov.hmrc.apinotificationqueue.controller.CustomHeaderNames.{X_CLIENT_ID_HEADER_NAME, X_CONVERSATION_ID_HEADER_NAME}
 import uk.gov.hmrc.apinotificationqueue.model._
 import uk.gov.hmrc.apinotificationqueue.repository.{ClientNotification, ClientOverThreshold}
 import util.TestData._
 
+import java.time.temporal.ChronoUnit
+import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 object TestData {
@@ -44,9 +45,9 @@ object TestData {
   val DayOfMonth = 4
   val HourOfDay = 13
   val MinuteOfHour = 45
-  val TimeReceived = new DateTime(Year, MonthOfYear, DayOfMonth, HourOfDay, MinuteOfHour, DateTimeZone.UTC)
-  val LatestReceived = TimeReceived.plus(1)
-  val TimePulled = LatestReceived.plus(1)
+  val TimeReceived = ZonedDateTime.of(Year, MonthOfYear, DayOfMonth, HourOfDay, MinuteOfHour,0, 0,ZoneId.of("UTC")).toInstant
+  val LatestReceived = TimeReceived.plus(1, ChronoUnit.MILLIS)
+  val TimePulled = LatestReceived.plus(1, ChronoUnit.MILLIS)
 
   val Headers = Map("h1" -> "v1", "h2" -> "v2", "X-Conversation-ID" -> ConversationId1)
   val Notification1 = Notification(notificationId = NotificationId1, conversationId = ConversationId1Uuid, headers = Headers, payload = Payload, dateReceived = TimeReceived, datePulled = None)

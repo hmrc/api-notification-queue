@@ -16,8 +16,7 @@
 
 package unit.service
 
-import akka.actor.ActorSystem
-import org.joda.time.DateTime
+import org.apache.pekko.actor.ActorSystem
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -31,6 +30,8 @@ import uk.gov.hmrc.apinotificationqueue.service.{ApiNotificationQueueConfigServi
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import util.{StubCdsLogger, UnitSpec}
 
+import java.time.temporal.ChronoUnit
+import java.time.{ZoneId, ZonedDateTime}
 import scala.concurrent.{ExecutionContext, Future}
 
 class WarningEmailPollingServiceSpec extends UnitSpec
@@ -55,8 +56,8 @@ class WarningEmailPollingServiceSpec extends UnitSpec
     val dayOfMonth = 4
     val hourOfDay = 13
     val minuteOfHour = 45
-    val timeReceived = new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour)
-    val latestReceived = timeReceived.plus(1)
+    val timeReceived = ZonedDateTime.of(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, 0, 0, ZoneId.of("UTC")).toInstant
+    val latestReceived = timeReceived.plus(1, ChronoUnit.HOURS)
     val clientId1 = "clientId1"
     val clientOverThreshold1 = ClientOverThreshold(clientId1, 2, timeReceived, latestReceived)
 

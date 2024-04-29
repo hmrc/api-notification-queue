@@ -16,7 +16,6 @@
 
 package unit.controller
 
-import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.ContentTypes.XML
@@ -35,6 +34,8 @@ import util.TestData.{ConversationId1, ConversationId1Uuid, NotificationWithIdAn
 import util.XmlUtil.string2xml
 import util.{MaterializerSupport, UnitSpec}
 
+import java.time.temporal.ChronoUnit
+import java.time.{Instant, LocalDateTime}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.Utility.trim
@@ -90,8 +91,8 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
     protected val controllerComponents: ControllerComponents = Helpers.stubControllerComponents()
     protected val controller = new EnhancedNotificationsController(mockQueueService, mockFieldsService, mockUuidService, mockDateTimeProvider, controllerComponents, mockLogger)
     protected val payload = "<xml>a</xml>"
-    protected val unpulledNotification = Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, DateTime.now(), None)
-    protected val time = DateTime.now()
+    protected val unpulledNotification = Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, Instant.now(), None)
+    protected val time = Instant.now()
     protected val pulledNotification = unpulledNotification.copy(datePulled = Some(time))
 
     when(mockDateTimeProvider.now()).thenReturn(time)
@@ -122,7 +123,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
     "return 400 if requested notification has already been pulled" in new Setup {
       private val minutes = 10
       when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(
-        Some(Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, DateTime.now(), Some(DateTime.now().minusMinutes(minutes))))))
+        Some(Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, Instant.now(), Some(Instant.now().minus(minutes, ChronoUnit.MINUTES ))))))
 
       val result: Result = await(controller.getUnpulledByNotificationId(uuid)(unpulledRequest))
 
@@ -167,7 +168,7 @@ class EnhancedNotificationsControllerSpec extends UnitSpec with MaterializerSupp
     }
 
     "return 400 if requested notification is unpulled" in new Setup {
-      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, DateTime.now(), None))))
+      when(mockQueueService.get(clientId, uuid)).thenReturn(Future.successful(Some(Notification(uuid, ConversationId1Uuid, Map(CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> ConversationId1), payload, Instant.now(), None))))
 
       val result: Result = await(controller.getPulledByNotificationId(uuid)(pulledRequest))
 
