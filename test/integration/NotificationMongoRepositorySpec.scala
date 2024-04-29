@@ -309,8 +309,6 @@ class NotificationMongoRepositorySpec extends UnitSpec
     }
   }
 
-  //TODO I think this should be replaced with a call to the real method...
-
   /**
    * Queries the collection directly, i.e. not using a method on the [[uk.gov.hmrc.apinotificationqueue.repository.NotificationRepository]]
    * No guarantee given to order of results.

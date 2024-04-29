@@ -161,5 +161,5 @@ class EnhancedNotificationsController @Inject()(queueService: QueueService,
 
 @Singleton
 class DateTimeProvider {
-  def now(): Instant = Instant.now()// TODO DCWL-2277 does this need a zoneId?
+  def now(): Instant = Instant.now()
 }
