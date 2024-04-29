@@ -30,8 +30,6 @@ object TestData {
   val ClientId1 = "clientId1"
   val ClientId2 = "clientId2"
   val NotificationId1 = UUID.fromString("ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d")
-                                       //ea52e86c-3322-4a5b-8bf7-b2d7d6e3fa8d,
-                                       //eaca01f9-ec3b-4ede-b263-61b626dde231
   val NotificationId2 = UUID.fromString("5d60bab0-b866-4179-ba5c-b8e19176cfd9")
   val NotificationId3 = UUID.fromString("8f879794-84c4-4a05-96e9-b9432240ff23")
   val Payload = "<foo></foo>"
@@ -39,13 +37,13 @@ object TestData {
   val ConversationId1Uuid = UUID.fromString(ConversationId1)
   val ConversationId2 = "47a1311c-2de0-403f-b1bb-b474da5eb0c6"
   val ConversationId2Uuid = UUID.fromString(ConversationId2)
-  
+
   val Year = 2017
   val MonthOfYear = 7
   val DayOfMonth = 4
   val HourOfDay = 13
   val MinuteOfHour = 45
-  val TimeReceived = ZonedDateTime.of(Year, MonthOfYear, DayOfMonth, HourOfDay, MinuteOfHour,0, 0,ZoneId.of("UTC")).toInstant
+  val TimeReceived = ZonedDateTime.of(Year, MonthOfYear, DayOfMonth, HourOfDay, MinuteOfHour, 0, 0, ZoneId.of("UTC")).toInstant
   val LatestReceived = TimeReceived.plus(1, ChronoUnit.MILLIS)
   val TimePulled = LatestReceived.plus(1, ChronoUnit.MILLIS)
 
