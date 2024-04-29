@@ -57,7 +57,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
     val hourOfDay = 13
     val minuteOfHour = 45
     val timeReceived = ZonedDateTime.of(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, 0, 0, ZoneId.of("UTC")).toInstant
-    val latestReceived = timeReceived.plus(1, ChronoUnit.HOURS)
+    val latestReceived = timeReceived.plus(1, ChronoUnit.MILLIS)
     val clientId1 = "clientId1"
     val clientOverThreshold1 = ClientOverThreshold(clientId1, 2, timeReceived, latestReceived)
 
@@ -70,7 +70,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
         "queueThreshold" -> "some-threshold"),
       force = false)
 
-      when(mockConfig.emailConfig).thenReturn(emailConfig)
+    when(mockConfig.emailConfig).thenReturn(emailConfig)
   }
 
   "WarningEmailPollingService" should {
