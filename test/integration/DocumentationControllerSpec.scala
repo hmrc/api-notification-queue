@@ -43,8 +43,7 @@ class DocumentationControllerSpec extends IntegrationTestSpec with MockitoSugar 
         "application.logger.name" -> "customs-api-common",
         "appName" -> "customs-declarations",
         "appUrl" -> "http://customs-wco-declaration.service",
-        "auditing.enabled" -> false,
-        "auditing.traceRequests" -> false
+        "auditing.enabled" -> false
       )
     ).build()
 
