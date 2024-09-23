@@ -47,7 +47,15 @@ case class Notification(notificationId: UUID,
                         headers: Map[String, String],
                         payload: String,
                         dateReceived: Instant,
-                        datePulled: Option[Instant])
+                        datePulled: Option[Instant]) {
+  override def toString: String = {
+        s"[notificationId=${ notificationId }]" +
+        s"[conversationId=${ conversationId }]" +
+        s"[headers=${ headers.mkString(",") }]" +
+        s"[dateReceived=${ dateReceived }]" +
+        s"[datePulled=${ datePulled.getOrElse("[empty]") }]"
+  }
+}
 
 object Notification {
   implicit val dateTimeJF: Format[Instant] = MongoJavatimeFormats.instantFormat

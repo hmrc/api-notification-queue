@@ -47,12 +47,12 @@ class QueueController @Inject()(queueService: QueueService,
 
   def save(): Action[AnyContent] = Action.async { implicit request =>
     val headers: Headers = request.headers
-    logger.info(s"saving request", headers.headers)
+    logger.info(s"Handling queueing of Notification", headers.headers)
     validateApiSubscriptionFieldsHeader(headers, "save") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(fieldsId) => fieldsService.getClientId(UUID.fromString(fieldsId)).flatMap { maybeClientId =>
         if (maybeClientId.isEmpty) {
-          logger.error(s"unable to retrieve clientId from api-subscription-fields service for fieldsId $fieldsId", headers.headers)
+          logger.error(s"[fieldsId=${ fieldsId }] Unable to retrieve clientId from api-subscription-fields service for fieldsId", headers.headers)
           Future.successful(ErrorClientIdMissing.XmlResult)
         }
         else {
@@ -85,7 +85,7 @@ class QueueController @Inject()(queueService: QueueService,
 
   def getAllByClientId: Action[AnyContent] = Action.async { implicit request =>
 
-    logger.info("getting all notifications", request.headers.headers)
+    logger.info("Getting all notifications", request.headers.headers)
     validateClientIdHeader(request.headers, "getAllByClientId") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>

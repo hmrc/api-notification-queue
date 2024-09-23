@@ -133,7 +133,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
   }
 
   override def save(clientId: String, notification: Notification): Future[Notification] = {
-    cdsLogger.debug(s"saving clientId: [$clientId]'s notification: [$notification]")
+    cdsLogger.info(s"[clientId=${ clientId }]${ notification } Saving Notification to Collection: '${ collectionName }'")
 
     val clientNotification = ClientNotification(clientId, notification)
 
