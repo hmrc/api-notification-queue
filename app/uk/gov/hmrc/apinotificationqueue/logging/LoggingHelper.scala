@@ -21,7 +21,7 @@ import uk.gov.hmrc.apinotificationqueue.model.SeqOfHeader
 object LoggingHelper {
 
   def formatWithHeaders(msg: String, headers: SeqOfHeader): String = {
-    s"${formatLogPrefixWithHeaders(headers)} $msg, headers=$headers"
+    s"${formatLogPrefixWithHeaders(headers)} $msg\nheaders=$headers"
   }
 
   private def formatLogPrefixWithHeaders(headers: SeqOfHeader): String = {

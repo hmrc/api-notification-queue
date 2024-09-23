@@ -110,7 +110,7 @@ class QueueController @Inject()(queueService: QueueService,
         val notification = queueService.get(clientId, notificationId)
         notification.map(opt =>
           opt.fold {
-            logger.debug(s"requested notification id ${notificationId.toString} not found", request.headers.headers)
+            logger.info(s"requested notification id ${notificationId.toString} not found", request.headers.headers)
             NotFound("NOT FOUND")
           } {n =>
             logger.debug(s"found notification id ${notificationId.toString}", request.headers.headers)
@@ -131,10 +131,10 @@ class QueueController @Inject()(queueService: QueueService,
         val futureDeleted = queueService.delete(clientId, notificationId)
         futureDeleted.map(deleted =>
           if (deleted) {
-            logger.debug(s"successfully deleted notification id ${notificationId.toString}", request.headers.headers)
+            logger.info(s"successfully deleted notification id ${notificationId.toString}", request.headers.headers)
             NoContent
           } else {
-            logger.debug(s"nothing to delete for notification id ${notificationId.toString}", request.headers.headers)
+            logger.info(s"nothing to delete for notification id ${notificationId.toString}", request.headers.headers)
             NotFound("NOT FOUND")
           }
         )
