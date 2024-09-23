@@ -85,7 +85,7 @@ class QueueController @Inject()(queueService: QueueService,
 
   def getAllByClientId: Action[AnyContent] = Action.async { implicit request =>
 
-    logger.info("Getting all notifications", request.headers.headers)
+    logger.info("getting all notifications", request.headers.headers)
     validateClientIdHeader(request.headers, "getAllByClientId") match {
       case Left(errorResponse) => Future.successful(errorResponse.XmlResult)
       case Right(clientId) =>
