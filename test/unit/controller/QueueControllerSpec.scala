@@ -76,7 +76,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
       val result = await(queueController.save()(request))
 
       status(result) shouldBe BAD_REQUEST
-      verifyLogWithHeaders(mockLogger, "error", s"unable to retrieve clientId from api-subscription-fields service for fieldsId $fieldsId", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "error", s"[fieldsId=${ fieldsId }] Unable to retrieve clientId from api-subscription-fields service for fieldsId", request.headers.headers)
     }
 
     "return 400 when the `api-subscription-fields-id` isn't a UUID" in new Setup {
@@ -225,7 +225,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
 
       status(result) shouldBe NOT_FOUND
       bodyOf(result) shouldBe "NOT FOUND"
-      verifyLogWithHeaders(mockLogger, "debug", s"requested notification id ${notificationId.toString} not found", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "info", s"requested notification id ${notificationId.toString} not found", request.headers.headers)
     }
   }
 
@@ -245,7 +245,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
 
       status(result) shouldBe NO_CONTENT
       verifyLogWithHeaders(mockLogger, "info", s"deleting notification id ${notificationId.toString}", request.headers.headers)
-      verifyLogWithHeaders(mockLogger, "debug", s"successfully deleted notification id ${notificationId.toString}", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "info", s"successfully deleted notification id ${notificationId.toString}", request.headers.headers)
     }
 
     "return 404 if the notification is not found" in new Setup {
@@ -256,7 +256,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
 
       status(result) shouldBe NOT_FOUND
       bodyOf(result) shouldBe "NOT FOUND"
-      verifyLogWithHeaders(mockLogger, "debug", s"nothing to delete for notification id ${notificationId.toString}", request.headers.headers)
+      verifyLogWithHeaders(mockLogger, "info", s"nothing to delete for notification id ${notificationId.toString}", request.headers.headers)
     }
   }
 
