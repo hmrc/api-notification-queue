@@ -16,31 +16,32 @@
 
 package uk.gov.hmrc.apinotificationqueue.connector
 
+import play.api.http.Status.{ACCEPTED, OK}
 import play.api.libs.json.Json
+import play.api.mvc.Results.BadRequest
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, SendEmailRequest}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EmailConnector @Inject()(http: HttpClient, config: ApiNotificationQueueConfig, cdsLogger: CdsLogger)(implicit ec: ExecutionContext) {
+class EmailConnector @Inject()(http: HttpClientV2, config: ApiNotificationQueueConfig, cdsLogger: CdsLogger)(implicit ec: ExecutionContext) {
 
   private val emailUrl = config.emailConfig.emailServiceUrl
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   def send(sendEmailRequest: SendEmailRequest): Future[Unit] = {
+    cdsLogger.info(s"sending notification warnings email:: ${Json.toJson(sendEmailRequest)}")
 
-    cdsLogger.info(s"sending notification warnings email: ${Json.toJson(sendEmailRequest)}")
-
-    http.POST[SendEmailRequest, HttpResponse](s"$emailUrl", sendEmailRequest).map { response =>
-      cdsLogger.debug(s"response status from email service was ${response.status}")
-    }
-    .recover {
-      case e: Throwable =>
-        cdsLogger.error(s"call to email service failed. url=$emailUrl", e)
+    http.post(url"$emailUrl").withBody(Json.toJson(sendEmailRequest)).execute[HttpResponse].map { response =>
+      response.status match {
+        case OK | ACCEPTED => cdsLogger.debug(s"response status from email service was ${response.status}")
+        case _  => cdsLogger.error(s"call to email service failed. url=$emailUrl, with response=${response.body}")
+      }
     }
   }
 }

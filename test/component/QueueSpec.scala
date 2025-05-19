@@ -24,12 +24,13 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.Helpers.{await, _}
+import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationMongoRepository
+import uk.gov.hmrc.http.test.WireMockSupport
 import util.TestData.ConversationId1
 import util.externalservices.ApiSubscriptionFieldsService
-import util.{ApiNotificationQueueExternalServicesConfig, ExternalServicesConfig, WireMockRunner}
+import util.ApiNotificationQueueExternalServicesConfig
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext
@@ -39,14 +40,14 @@ class QueueSpec extends AnyFeatureSpec
   with Matchers
   with GuiceOneAppPerSuite
   with ApiSubscriptionFieldsService
-  with WireMockRunner
+  with WireMockSupport
   with BeforeAndAfterAll
   with BeforeAndAfterEach {
 
   private val componentTestConfigs: Map[String, Any] = Map(
     "notification.email.delay" -> 30,
-    "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
-    "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,
+    "microservice.services.api-subscription-fields.host" -> wireMockHost,
+    "microservice.services.api-subscription-fields.port" -> wireMockPort,
     "microservice.services.api-subscription-fields.context" -> ApiNotificationQueueExternalServicesConfig.ApiSubscriptionFieldsContext
   )
 
@@ -54,14 +55,6 @@ class QueueSpec extends AnyFeatureSpec
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(componentTestConfigs).build()
 
   val repo: NotificationMongoRepository = app.injector.instanceOf[NotificationMongoRepository]
-
-  override protected def beforeAll(): Unit = {
-    startMockServer()
-  }
-
-  override protected def afterAll(): Unit = {
-    stopMockServer()
-  }
 
   override def beforeEach(): Unit = {
     await(repo.collection.drop().toFuture())

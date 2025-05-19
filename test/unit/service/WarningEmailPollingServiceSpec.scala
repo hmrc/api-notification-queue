@@ -41,7 +41,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
   trait Setup {
 
     implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
-    val emailConfig = EmailConfig("some-url", notificationEmailEnabled = true, 2, "some-email@address.com", 1, 0)
+    val emailConfig = EmailConfig("localhost:6001", notificationEmailEnabled = true, 2, "some-email@address.com", 1, 0)
 
     val mockNotificationRepository = mock[NotificationRepository]
     val mockEmailConnector = mock[EmailConnector]
@@ -99,7 +99,7 @@ class WarningEmailPollingServiceSpec extends UnitSpec
     }
 
     "not send an email when email disabled in config" in new Setup {
-      private val emailDisabledConfig = EmailConfig("some-url", notificationEmailEnabled = false, 2, "some-email@address.com", 1, 0)
+      private val emailDisabledConfig = EmailConfig("localhost:6001", notificationEmailEnabled = false, 2, "some-email@address.com", 1, 0)
       when(mockConfig.emailConfig).thenReturn(emailDisabledConfig)
 
       when(mockNotificationRepository.fetchOverThreshold(2)).thenReturn(Future.successful(List(clientOverThreshold1)))
