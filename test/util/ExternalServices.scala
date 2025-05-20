@@ -18,14 +18,17 @@ package util
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.verification.LoggedRequest
+import org.scalatest.Suite
+import uk.gov.hmrc.http.test.WireMockSupport
 
 import java.util
 
-trait ExternalClientService extends WireMockRunner {
+trait ExternalClientService {
+  self: Suite with WireMockSupport =>
   private val urlMatchingRequestPath = urlMatching(ExternalServicesConfiguration.ExternalClientServiceContext)
 
   def stubExternalClientService(status: Int): Unit =
-    stubFor(post(urlMatchingRequestPath).
+    wireMockServer.stubFor(post(urlMatchingRequestPath).
       willReturn(
         aResponse()
           .withStatus(status)
@@ -33,7 +36,7 @@ trait ExternalClientService extends WireMockRunner {
     )
 
   def stubExternalClientService(urlMatching: String,  status: Int): Unit =
-    stubFor(post(urlMatching).
+    wireMockServer.stubFor(post(urlMatching).
       willReturn(
         aResponse()
           .withStatus(status)
@@ -54,14 +57,14 @@ trait ExternalClientService extends WireMockRunner {
 
   object ExternalServicesConfiguration {
   val Protocol = "http"
-  val Port: Int = sys.env.getOrElse("WIREMOCK_SERVICE_LOCATOR_PORT", "11111").toInt
+  val Port: Int = sys.env.getOrElse("WIREMOCK_SERVICE_LOCATOR_PORT", "6001").toInt
   val Host = "localhost"
   val ExternalClientServiceContext = "/some/where/over/the/rainbow"
   val ExternalClientAuth: String = "Basic dXNlcjpwYXNzd29yZA=="
 }
 
 object ExternalServicesConfig {
-  val Port = sys.env.getOrElse("WIREMOCK_SERVICE_LOCATOR_PORT", "11111").toInt
+  val Port: Int = sys.env.getOrElse("WIREMOCK_SERVICE_LOCATOR_PORT", "6001").toInt
   val Host = "localhost"
   val MdgSuppDecServiceContext = "/mdgSuppDecService/submitdeclaration"
   val AuthToken: String = "auth-token"

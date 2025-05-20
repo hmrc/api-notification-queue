@@ -24,6 +24,7 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.apinotificationqueue.connector.{ApiSubscriptionFieldResponse, ApiSubscriptionFieldsConnector}
+import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import util._
 import util.externalservices.ApiSubscriptionFieldsService
@@ -36,14 +37,14 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   with BeforeAndAfterAll
   with GuiceOneAppPerSuite
   with MockitoSugar
-  with WireMockRunner
+  with WireMockSupport
   with ApiSubscriptionFieldsService {
 
   override implicit lazy val app: Application =
     GuiceApplicationBuilder().configure(Map(
       "auditing.enabled" -> false,
-      "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
-      "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,
+      "microservice.services.api-subscription-fields.host" -> wireMockHost,
+      "microservice.services.api-subscription-fields.port" -> wireMockPort,
       "microservice.services.api-subscription-fields.context" -> ApiNotificationQueueExternalServicesConfig.ApiSubscriptionFieldsContext
     )).build()
 
@@ -54,18 +55,6 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
 
     implicit val hc: HeaderCarrier = HeaderCarrier()
     val connector: ApiSubscriptionFieldsConnector = app.injector.instanceOf[ApiSubscriptionFieldsConnector]
-  }
-
-  override protected def beforeAll(): Unit = {
-    startMockServer()
-  }
-
-  override protected def beforeEach(): Unit = {
-    resetMockServer()
-  }
-
-  override protected def afterAll(): Unit = {
-    stopMockServer()
   }
 
   "ApiSubscriptionFieldsConnector.lookupClientId()" should {

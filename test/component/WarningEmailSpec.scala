@@ -16,10 +16,7 @@
 
 package component
 
-import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, postRequestedFor, put, putRequestedFor, urlEqualTo}
 import org.apache.pekko.util.Timeout
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
@@ -33,6 +30,7 @@ import play.api.libs.json.Json
 import play.api.test.Helpers
 import play.api.test.Helpers.{ACCEPTED, await}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationMongoRepository
+import uk.gov.hmrc.http.test.WireMockSupport
 import util.TestData._
 
 import scala.concurrent.ExecutionContext
@@ -44,12 +42,10 @@ class WarningEmailSpec extends AnyFeatureSpec
   with Matchers
   with GuiceOneAppPerSuite
   with Eventually
-  with BeforeAndAfterEach {
+  with BeforeAndAfterEach
+  with WireMockSupport {
 
   private implicit val duration: Timeout = 5 seconds
-  private val Port: Int = sys.env.getOrElse("WIREMOCK_SERVICE_PORT", "11111").toInt
-  private val Host = "localhost"
-  private val wireMockServer = new WireMockServer(wireMockConfig().port(Port))
 
   private val componentTestConfigs: Map[String, Any] = Map(
     "notification.email.queueThreshold" -> 2,
@@ -57,8 +53,8 @@ class WarningEmailSpec extends AnyFeatureSpec
     "notification.email.address" -> "some-email@domain.com",
     "notification.email.interval" -> 1,
     "notification.email.delay" -> 3,
-    "microservice.services.email.host" -> Host,
-    "microservice.services.email.port" -> Port
+    "microservice.services.email.host" -> wireMockHost,
+    "microservice.services.email.port" -> wireMockPort
   )
 
   implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
@@ -76,7 +72,6 @@ class WarningEmailSpec extends AnyFeatureSpec
 
   override def afterEach(): Unit = {
     await(repo.collection.drop().toFuture())
-    wireMockServer.stop()
   }
 
   Feature("Pull notifications warning email") {
@@ -88,23 +83,17 @@ class WarningEmailSpec extends AnyFeatureSpec
       info("automatically occurs when app starts")
 
       Then("a warning email is sent")
-      eventually(verify(1, postRequestedFor(urlEqualTo("/hmrc/email"))
+      eventually(wireMockServer.verify(1, postRequestedFor(urlEqualTo("/hmrc/email"))
         .withRequestBody(equalToJson(Json.toJson(TestSendEmailRequest).toString()))))
     }
   }
 
   private def setupEmailService(): Unit = {
-    startMockServer()
     setupEmailServiceToReturn(ACCEPTED)
   }
 
-  private def startMockServer(): Unit = {
-    if (!wireMockServer.isRunning) wireMockServer.start()
-    WireMock.configureFor(Host, Port)
-  }
-
   private def setupEmailServiceToReturn(status: Int): Unit = {
-    stubFor(post(urlEqualTo("/hmrc/email")).
+    wireMockServer.stubFor(post(urlEqualTo("/hmrc/email")).
       willReturn(
         aResponse()
           .withStatus(status)))

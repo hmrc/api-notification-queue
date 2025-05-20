@@ -20,7 +20,8 @@ import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.ApiNotificationQueueConfig
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, HttpClient}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, StringContextOps}
 
 import java.util.UUID
 import javax.inject.Inject
@@ -32,7 +33,7 @@ object ApiSubscriptionFieldResponse {
   implicit val rds: Format[ApiSubscriptionFieldResponse] = Json.format[ApiSubscriptionFieldResponse]
 }
 
-class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
+class ApiSubscriptionFieldsConnector @Inject()(http: HttpClientV2,
                                                config: ApiNotificationQueueConfig,
                                                logger: NotificationLogger)
                                               (implicit ec: ExecutionContext) {
@@ -44,7 +45,7 @@ class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
     val headerNames: Seq[String] = HeaderNames.explicitlyIncludedHeaders
     val headersToLog = hc.headers(headerNames) ++ hc.extraHeaders
     logger.debug(s"looking up clientId for $url", headersToLog)
-    http.GET[ApiSubscriptionFieldResponse](url)
+    http.get(url"$url").execute[ApiSubscriptionFieldResponse]
   }
 
 }
