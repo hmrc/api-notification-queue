@@ -28,6 +28,8 @@ import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model._
+import org.mongodb.scala.ObservableFuture
+import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.result.{DeleteResult, InsertOneResult}
 import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._
@@ -111,7 +113,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         indexOptions = IndexOptions()
           .name("dateReceived-Index")
           .unique(false)
-          .expireAfter(config.ttlInSeconds, TimeUnit.SECONDS)
+          .expireAfter(config.ttlInSeconds.toLong, TimeUnit.SECONDS)
       )
     ),
     extraCodecs = Seq(
@@ -319,19 +321,19 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     cdsLogger.debug(s"deleting all notifications")
     collection.deleteMany(
       exists("clientId")
-    ).toFuture().map { deleteResult: DeleteResult =>
+    ).toFuture().map {(deleteResult: DeleteResult) =>
       cdsLogger.debug(s"deleted ${deleteResult.getDeletedCount} notifications")
     }
   }
 
   private def dropInvalidIndexes(): Future[_] = {
-    collection.listIndexes[IndexModel]().toFuture().map { indexes: Seq[IndexModel] =>
-      indexes.find { index: IndexModel =>
+    collection.listIndexes[IndexModel]().toFuture().map { (indexes: Seq[IndexModel]) =>
+      indexes.find { (index: IndexModel) =>
         val indexName = index.getOptions.getName
         val verifyIndexName = indexName.contains("ttlIndexName")
         val verifyIndexExpiry = index.getOptions.getExpireAfter(TimeUnit.SECONDS).toInt != config.ttlInSeconds
         verifyIndexName && verifyIndexExpiry
-      }.map { index =>
+      }.map { (index) =>
         val indexName = index.getOptions.getName
         cdsLogger.debug(s"dropping [$indexName] index as ttl value is incorrect")
         collection.dropIndex(indexName)
@@ -339,5 +341,4 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         .getOrElse(Future.successful(()))
     }
   }
-
 }

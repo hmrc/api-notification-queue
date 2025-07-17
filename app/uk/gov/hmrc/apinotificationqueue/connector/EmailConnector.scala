@@ -18,6 +18,7 @@ package uk.gov.hmrc.apinotificationqueue.connector
 
 import play.api.http.Status.{ACCEPTED, OK}
 import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import play.api.mvc.Results.BadRequest
 import uk.gov.hmrc.apinotificationqueue.model.{ApiNotificationQueueConfig, SendEmailRequest}
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger

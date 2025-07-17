@@ -17,6 +17,7 @@
 package uk.gov.hmrc.apinotificationqueue.model
 
 import play.api.libs.json.{Format, Json, OFormat}
+import play.api.libs.json.OFormat.given 
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
@@ -27,7 +28,7 @@ object NotificationStatus extends Enumeration {
   val Pulled: NotificationStatus.Value = Value("pulled")
 }
 
-case class  NotificationId(notificationId: UUID) extends AnyVal
+case class  NotificationId(notificationId: UUID) 
 object NotificationId {
   implicit val notificationIdJF: OFormat[NotificationId] = Json.format[NotificationId]
 }
