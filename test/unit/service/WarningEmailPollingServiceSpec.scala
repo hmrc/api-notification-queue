@@ -22,6 +22,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.test.Helpers
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
@@ -96,6 +97,19 @@ class WarningEmailPollingServiceSpec extends UnitSpec
 
       Thread.sleep(oneThousand)
       verify(mockEmailConnector, never()).send(any[SendEmailRequest]())
+    }
+
+    "ClientOverThreshold JSON formatter" should {
+      "serialize and deserialize correctly" in new Setup {
+        val json: JsValue = Json.toJson(clientOverThreshold1)
+        val parsed = json.validate[ClientOverThreshold]
+        parsed match {
+          case JsSuccess(result, _)=>
+            result shouldEqual clientOverThreshold1
+          case JsError(errors) =>
+            fail("Deserialization failed:" + errors.mkString(", "))
+        }
+      }
     }
 
     "not send an email when email disabled in config" in new Setup {

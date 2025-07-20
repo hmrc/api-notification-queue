@@ -25,6 +25,7 @@ import play.api.Application
 import play.api.http.Status.ACCEPTED
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.libs.json.{JsError, JsSuccess, JsValue, OFormat}
 import play.api.test.Helpers
 import uk.gov.hmrc.apinotificationqueue.connector.EmailConnector
 import uk.gov.hmrc.apinotificationqueue.model.{Email, EmailConfig, SendEmailRequest}
@@ -89,6 +90,19 @@ class EmailConnectorSpec extends UnitSpec
       PassByNameVerifier(mockCdsLogger, "debug")
         .withByNameParam("response status from email service was 202")
         .verify()
+    }
+
+    "SendEmailRequest" should {
+      "should have an implicit JSON formatter in scope" in new Setup {
+        val format: OFormat[SendEmailRequest] = SendEmailRequest.SendEmailRequestJF
+        val json: JsValue = format.writes(sendEmailRequest)
+        format.reads(json) match {
+          case JsSuccess(result, _) =>
+            result shouldEqual sendEmailRequest
+          case JsError(errors) =>
+            fail("Deserialization failed:" + errors.mkString(", "))
+        }
+      }
     }
 
     "log error when email service unavailable" in new Setup {

@@ -17,6 +17,7 @@
 package uk.gov.hmrc.apinotificationqueue.connector
 
 import play.api.libs.json.{Format, Json}
+import play.api.libs.json._
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.ApiNotificationQueueConfig
 import uk.gov.hmrc.http.HttpReads.Implicits._
@@ -30,7 +31,9 @@ import scala.concurrent.{ExecutionContext, Future}
 case class ApiSubscriptionFieldResponse(clientId: String)
 
 object ApiSubscriptionFieldResponse {
-  implicit val rds: Format[ApiSubscriptionFieldResponse] = Json.format[ApiSubscriptionFieldResponse]
+  implicit lazy val rds: Format[ApiSubscriptionFieldResponse] = Format(
+      (__ \ "clientId").read[String].map(ApiSubscriptionFieldResponse(_)),
+      (__ \ "clientId").write[String].contramap(_.clientId))
 }
 
 class ApiSubscriptionFieldsConnector @Inject()(http: HttpClientV2,
