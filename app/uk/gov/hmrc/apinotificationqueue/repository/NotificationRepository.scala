@@ -28,8 +28,6 @@ import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model._
-import org.mongodb.scala.ObservableFuture
-import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.result.{DeleteResult, InsertOneResult}
 import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.apinotificationqueue.model.NotificationStatus._

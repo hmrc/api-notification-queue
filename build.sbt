@@ -30,7 +30,7 @@ lazy val microservice = (project in file("."))
   .configs(testConfig: _*)
   .settings(playDefaultPort := 9648)
   .settings(
-    scalaVersion := "3.4.2",
+    scalaVersion := "3.3.6",
     commonSettings,
     unitTestSettings,
     integrationComponentTestSettings,
@@ -39,8 +39,8 @@ lazy val microservice = (project in file("."))
     libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
   )
   .settings(majorVersion := 1)
-  .settings(scalacOptions  += "-Wconf:src=routes/.*:s")
-  .settings(scalacOptions  += "-Wconf:msg=Flag.*repeatedly:s")
+  .settings(scalacOptions += "-Wconf:src=routes/.*:s")
+  .settings(scalacOptions += "-Wconf:msg=Flag.*repeatedly:s")
 
 lazy val unitTestSettings =
   inConfig(Test)(Defaults.testTasks) ++

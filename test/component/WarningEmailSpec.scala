@@ -16,7 +16,7 @@
 
 package component
 
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, postRequestedFor, put, putRequestedFor, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, postRequestedFor, urlEqualTo}
 import org.apache.pekko.util.Timeout
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
