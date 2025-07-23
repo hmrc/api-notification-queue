@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.apinotificationqueue.connector
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Format
 import play.api.libs.json._
 import uk.gov.hmrc.apinotificationqueue.logging.NotificationLogger
 import uk.gov.hmrc.apinotificationqueue.model.ApiNotificationQueueConfig

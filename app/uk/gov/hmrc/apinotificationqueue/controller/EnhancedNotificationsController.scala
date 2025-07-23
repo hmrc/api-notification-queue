@@ -33,10 +33,10 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EnhancedNotificationsController @Inject()(queueService: QueueService,
-                                                fieldsService: ApiSubscriptionFieldsService,
-                                                uuidService: UuidService,
-                                                dateTimeProvider: DateTimeProvider,
+class EnhancedNotificationsController @Inject()(val queueService: QueueService,
+                                                val  fieldsService: ApiSubscriptionFieldsService,
+                                                val uuidService: UuidService,
+                                                val dateTimeProvider: DateTimeProvider,
                                                 cc: ControllerComponents,
                                                 logger: NotificationLogger)
                                                (implicit ec: ExecutionContext)

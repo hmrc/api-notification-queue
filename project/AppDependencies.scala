@@ -3,7 +3,7 @@ import sbt._
 object AppDependencies {
 
   val mongoVersion      = "2.7.0"
-  val bootstrapVersion  = "9.17.0"
+  val bootstrapVersion  = "9.18.0"
   val playSuffix        = "-play-30"
 
   val compile = Seq(
