@@ -8,3 +8,6 @@ addSbtPlugin("org.playframework"  %  "sbt-plugin"             % "3.0.8")
 addSbtPlugin("uk.gov.hmrc"        %  "sbt-distributables"     % "2.6.0")
 addSbtPlugin("org.scoverage"      %  "sbt-scoverage"          % "2.3.1")
 addSbtPlugin("com.timushev.sbt"   % "sbt-updates"             % "0.6.3")
+
+// To resolve a bug with version 2.x.x of the scoverage plugin - https://github.com/sbt/sbt/issues/6997
+libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
