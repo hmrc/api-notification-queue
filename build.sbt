@@ -73,4 +73,5 @@ lazy val scoverageSettings: Seq[Setting[_]] = Seq(
 def integrationComponentTestFilter(name: String): Boolean = (name startsWith "integration") || (name startsWith "component")
 def unitTestFilter(name: String): Boolean = name startsWith "unit"
 
+
 libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
