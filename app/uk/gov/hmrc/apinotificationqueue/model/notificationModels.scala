@@ -17,6 +17,8 @@
 package uk.gov.hmrc.apinotificationqueue.model
 
 import play.api.libs.json.{Format, Json, OFormat}
+import play.api.libs.json.OFormat.given
+import play.api.libs.json._
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
@@ -27,14 +29,20 @@ object NotificationStatus extends Enumeration {
   val Pulled: NotificationStatus.Value = Value("pulled")
 }
 
-case class  NotificationId(notificationId: UUID) extends AnyVal
+case class  NotificationId(notificationId: UUID) 
 object NotificationId {
-  implicit val notificationIdJF: OFormat[NotificationId] = Json.format[NotificationId]
+  implicit lazy val notificationIdJF: Format[NotificationId] = Format(
+    (__ \ "notificationId").read[UUID].map(NotificationId(_)),
+    (__ \ "notificationId").write[UUID].contramap(_.notificationId)
+  )
 }
 
 case class NotificationWithIdOnly(notification: NotificationId)
 object NotificationWithIdOnly {
-  implicit val notificationWithIdOnlyJF: OFormat[NotificationWithIdOnly] = Json.format[NotificationWithIdOnly]
+  implicit lazy val notificationWithIdOnlyJF: Format[NotificationWithIdOnly] = Format(
+    (__ \ "notification").read[NotificationId].map(NotificationWithIdOnly(_)),
+    (__ \ "notification").write[NotificationId].contramap(_.notification)
+  )
 }
 
 case class NotificationWithIdAndPulled(notification: NotificationId, pulled: Boolean)
@@ -57,5 +65,8 @@ object Notification {
 case class Notifications(notifications: List[String])
 
 object Notifications {
-  implicit val notificationsJF: OFormat[Notifications] = Json.format[Notifications]
+  implicit lazy val notificationsJF: Format[Notifications] = Format(
+    (__ \ "notifications").read[List[String]].map(Notifications(_)),
+    (__ \ "notifications").write[List[String]].contramap(_.notifications)
+  )
 }

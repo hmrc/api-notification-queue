@@ -70,7 +70,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
     }
 
     "return 400 when the `fieldsId` does not exist in the `api-subscription-fields` service" in new Setup {
-      when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(None)
+      when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Future.successful(None))
 
       val request = FakeRequest(POST, "/queue", Headers(SUBSCRIPTION_FIELDS_ID_HEADER_NAME -> fieldsId), AnyContentAsEmpty)
       val result = await(queueController.save()(request))
@@ -108,8 +108,8 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
                 CONVERSATION_ID_HEADER_NAME -> "eaca01f9-ec3b-4ede-b263-61b626dde231"), AnyContentAsEmpty).withXmlBody(xml)
 
       private val notification = Notification(notificationId, ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), Instant.now(), None)
-      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
-      when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Some(clientId))
+      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(Future.successful(notification))
+      when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Future.successful(Some(clientId)))
 
       val result = queueController.save()(request)
 
@@ -126,8 +126,8 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
         CONTENT_TYPE -> XML, CONVERSATION_ID_HEADER_NAME -> "eaca01f9-ec3b-4ede-b263-61b626dde231",
         NOTIFICATION_ID_HEADER_NAME -> notificationIdHeaderValue), AnyContentAsEmpty).withXmlBody(xml)
       private val notification = Notification(UUID.fromString(notificationIdHeaderValue), ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), Instant.now(), None)
-      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
-      when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Some(clientId))
+      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(Future.successful(notification))
+      when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Future.successful(Some(clientId)))
 
       val result = queueController.save()(request)
 
@@ -145,7 +145,7 @@ class QueueControllerSpec extends UnitSpec with MockitoSugar with MaterializerSu
                 CONVERSATION_ID_HEADER_NAME -> "test-conversation-id"), AnyContentAsEmpty).withXmlBody(xml)
 
       private val notification = Notification(notificationId, ConversationId1Uuid, Map(CONTENT_TYPE -> XML), xml.toString(), Instant.now(), None)
-      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(notification)
+      when(mockQueueService.save(mockEq(clientId), any())).thenReturn(Future.successful(notification))
       when(mockFieldsService.getClientId(mockEq(UUID.fromString(fieldsId)))(any())).thenReturn(Future.failed(emulatedServiceFailure))
 
       await(queueController.save()(request))

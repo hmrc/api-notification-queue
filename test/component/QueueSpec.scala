@@ -16,15 +16,16 @@
 
 package component
 
-import org.scalatest.OptionValues._
-import org.scalatest._
+import org.scalatest.OptionValues.*
+import org.scalatest.*
 import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.mongodb.scala.SingleObservableFuture
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.apinotificationqueue.repository.NotificationMongoRepository
 import uk.gov.hmrc.http.test.WireMockSupport

@@ -111,7 +111,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         indexOptions = IndexOptions()
           .name("dateReceived-Index")
           .unique(false)
-          .expireAfter(config.ttlInSeconds, TimeUnit.SECONDS)
+          .expireAfter(config.ttlInSeconds.toLong, TimeUnit.SECONDS)
       )
     ),
     extraCodecs = Seq(
@@ -124,15 +124,15 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     with NotificationRepository {
 
     private val uniqueIndex = "clientId-notificationId-Index"
-  dropInvalidIndexes()
+    dropInvalidIndexes()
 
-  def handleError(e: Exception, errorLogMessage: String): Nothing = {
+    def handleError(e: Exception, errorLogMessage: String): Nothing = {
     lazy val errorMsg = errorLogMessage + s"\n ${e.getMessage}"
     cdsLogger.error(errorMsg)
     throw new RuntimeException(errorMsg)
-  }
+    }
 
-  override def save(clientId: String, notification: Notification): Future[Notification] = {
+    override def save(clientId: String, notification: Notification): Future[Notification] = {
     cdsLogger.debug(s"saving clientId: [$clientId]'s notification: [$notification]")
 
     val clientNotification = ClientNotification(clientId, notification)
@@ -151,7 +151,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     }
   }
 
-  override def update(clientId: String, notification: Notification): Future[Notification] = {
+    override def update(clientId: String, notification: Notification): Future[Notification] = {
     cdsLogger.debug(s"updating clientId: [$clientId]'s, notificationId: [${notification.notificationId}]")
 
     val query: Bson = and(
@@ -182,7 +182,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     }
   }
 
-  override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
+    override def fetch(clientId: String, notificationId: UUID): Future[Option[Notification]] = {
 
     val filter = and(
       equal("clientId", clientId),
@@ -192,7 +192,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     collection.find(filter).headOption().map(_.map(_.notification))
   }
 
-  override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
+    override def fetchOverThreshold(threshold: Int): Future[List[ClientOverThreshold]] = {
 
     val groupByClientId = {
 
@@ -221,7 +221,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     ).toFuture().map(_.toList)
   }
 
-  override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
+    override def delete(clientId: String, notificationId: UUID): Future[Boolean] = {
 
     val filter = and(
       equal("clientId", clientId),
@@ -236,7 +236,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
       }
   }
 
-  override def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
+    override def fetchNotificationIds(clientId: String, notificationStatus: Option[NotificationStatus.Value]): Future[List[NotificationWithIdOnly]] = {
 
     def notificationExistsFilter(isPulled: Boolean): Bson = {
       and(
@@ -264,7 +264,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     ).toFuture().map(_.toList)
   }
 
-  override def fetchNotificationIds(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]] = {
+    override def fetchNotificationIds(clientId: String, conversationId: UUID, notificationStatus: NotificationStatus.Value): Future[List[NotificationWithIdOnly]] = {
 
     def notificationFilter(isPulled: Boolean): Bson = {
       Aggregates.filter(
@@ -292,7 +292,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     ).toFuture().map(_.toList)
   }
 
-  override def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulled]] = {
+    override def fetchNotificationIds(clientId: String, conversationId: UUID): Future[List[NotificationWithIdAndPulled]] = {
 
     val filter: Bson = {
       Aggregates.filter(
@@ -315,23 +315,23 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     ).toFuture().map(_.toList.map(Codecs.fromBson[NotificationWithIdAndPulled]))
   }
 
-  override def deleteAll(): Future[Unit] = {
+    override def deleteAll(): Future[Unit] = {
     cdsLogger.debug(s"deleting all notifications")
     collection.deleteMany(
       exists("clientId")
-    ).toFuture().map { deleteResult: DeleteResult =>
+    ).toFuture().map {(deleteResult: DeleteResult) =>
       cdsLogger.debug(s"deleted ${deleteResult.getDeletedCount} notifications")
     }
   }
 
-  private def dropInvalidIndexes(): Future[_] = {
-    collection.listIndexes[IndexModel]().toFuture().map { indexes: Seq[IndexModel] =>
-      indexes.find { index: IndexModel =>
+    private def dropInvalidIndexes(): Future[_] = {
+    collection.listIndexes[IndexModel]().toFuture().map { (indexes: Seq[IndexModel]) =>
+      indexes.find { (index: IndexModel) =>
         val indexName = index.getOptions.getName
         val verifyIndexName = indexName.contains("ttlIndexName")
         val verifyIndexExpiry = index.getOptions.getExpireAfter(TimeUnit.SECONDS).toInt != config.ttlInSeconds
         verifyIndexName && verifyIndexExpiry
-      }.map { index =>
+      }.map { (index) =>
         val indexName = index.getOptions.getName
         cdsLogger.debug(s"dropping [$indexName] index as ttl value is incorrect")
         collection.dropIndex(indexName)
@@ -339,5 +339,4 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
         .getOrElse(Future.successful(()))
     }
   }
-
 }

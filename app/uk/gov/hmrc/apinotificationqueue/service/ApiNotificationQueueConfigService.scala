@@ -47,10 +47,10 @@ class ApiNotificationQueueConfigService @Inject()(configValidatedNel: ConfigVali
       notificationEmailAddressNel,
       notificationEmailIntervalNel,
       notificationEmailDelayNel
-    ) mapN EmailConfig
+    ) mapN uk.gov.hmrc.apinotificationqueue.model.EmailConfig.apply
 
   private val validatedConfig =
-    (validatedEmailConfig, apiSubscriptionFieldsServiceUrlNel, ttlInSecondsNel) mapN ApiNotificationQueueConfigImpl
+    (validatedEmailConfig, apiSubscriptionFieldsServiceUrlNel, ttlInSecondsNel) mapN this.ApiNotificationQueueConfigImpl.apply
 
   private val config = validatedConfig.fold({
     nel => // error case exposes nel (a NotEmptyList)

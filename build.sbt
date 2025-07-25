@@ -30,7 +30,7 @@ lazy val microservice = (project in file("."))
   .configs(testConfig: _*)
   .settings(playDefaultPort := 9648)
   .settings(
-    scalaVersion := "2.13.16",
+    scalaVersion := "3.3.6",
     commonSettings,
     unitTestSettings,
     integrationComponentTestSettings,
@@ -39,6 +39,8 @@ lazy val microservice = (project in file("."))
     libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
   )
   .settings(majorVersion := 1)
+  .settings(scalacOptions += "-Wconf:src=routes/.*:s")
+  .settings(scalacOptions += "-Wconf:msg=Flag.*repeatedly:s")
 
 lazy val unitTestSettings =
   inConfig(Test)(Defaults.testTasks) ++
@@ -70,7 +72,5 @@ lazy val scoverageSettings: Seq[Setting[_]] = Seq(
 
 def integrationComponentTestFilter(name: String): Boolean = (name startsWith "integration") || (name startsWith "component")
 def unitTestFilter(name: String): Boolean = name startsWith "unit"
-
-scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
 libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
