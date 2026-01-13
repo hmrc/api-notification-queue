@@ -59,6 +59,7 @@ class QueueSpec extends AnyFeatureSpec
 
   override def beforeEach(): Unit = {
     await(repo.collection.drop().toFuture())
+    await(repo.ensureIndexes())
   }
 
   override def afterEach(): Unit = {
