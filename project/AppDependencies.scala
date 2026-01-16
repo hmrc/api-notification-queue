@@ -2,8 +2,8 @@ import sbt._
 
 object AppDependencies {
 
-  val mongoVersion      = "2.7.0"
-  val bootstrapVersion  = "9.18.0"
+  val mongoVersion      = "2.11.0"
+  val bootstrapVersion  = "10.5.0"
   val playSuffix        = "-play-30"
 
   val compile = Seq(
@@ -14,7 +14,7 @@ object AppDependencies {
 
   val test = Seq(
     "uk.gov.hmrc"          %% s"bootstrap-test$playSuffix"  % bootstrapVersion,
-    "org.wiremock"         %  "wiremock-standalone"         % "3.13.1",
+    "org.wiremock"         %  "wiremock-standalone"         % "3.13.2",
     "org.scalatestplus"    %% "mockito-4-2"                 % "3.2.11.0",
     "uk.gov.hmrc.mongo"    %% s"hmrc-mongo-test$playSuffix" % mongoVersion,
     "com.vladsch.flexmark" %  "flexmark-all"                % "0.64.8",
