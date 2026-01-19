@@ -75,6 +75,7 @@ class NotificationMongoRepository @Inject()(mongo: MongoComponent,
     mongoComponent = mongo,
     collectionName = "notifications",
     domainFormat = ClientNotification.ClientNotificationJF,
+    replaceIndexes = true,
     indexes = Seq(
       IndexModel(
         keys = ascending("clientId"),
