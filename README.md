@@ -27,7 +27,7 @@ The API Notification Queue service can be run locally from Service Manager, usin
 To run the CDS acceptance tests, see [here](https://github.com/hmrc/customs-automation-test).
 
 ### Performance Tests
-To run performance tests, see [here](https://github.com/HMRC/api-notification-pull-performance-test).
+To run performance tests, see [here](https://github.com/hmrc/customs-declaration-performance-test).
 
 
 ## API documentation
