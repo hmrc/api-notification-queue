@@ -95,7 +95,7 @@ These profiles are defined in [service-manager-config](https://github.com/hmrc/s
 For Customs Declarations API documentation, see [here](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/customs-declarations).
 
 ## Endpoints
-All paths are relative to the service root (`http://localhost:9648` when running locally) and need an [authenticated user with the HMRC-CUS-ORG enrolment] ????
+All paths are relative to the service root (`http://localhost:9648` when running locally) and need an [authenticated token with the HMRC-CUS-ORG enrolment](http://localhost:9949/auth-login-stub/gg-sign-in)
 
 | Path                                         | Supported Methods | Description                                                                                                |
 |----------------------------------------------|:-----------------:|------------------------------------------------------------------------------------------------------------|
