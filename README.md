@@ -29,8 +29,6 @@ sm2 --stop API_NOTIFICATION_QUEUE
 sbt run
 ```
 
-To test this service via our frontend service, refer to the [customs-declare-exports-frontend](https://github.com/hmrc/customs-declare-exports-frontend#running-the-service-locally) repository's README.
-
 ## How to Test This Service
 
 ### Local
@@ -41,15 +39,15 @@ sbt test
 ```
 
 #### Integration Tests
-- Run Integration Tests: 
+Run Integration Tests: 
 ```bash
 sbt IntegrationTest/test
 ```
-- Run Unit and Integration Tests:
+Run Unit and Integration Tests:
 ```bash
 sbt test IntegrationTest/test
 ```
-- Run Unit and Integration Tests with coverage report: 
+Run Unit and Integration Tests with coverage report: 
 ```bash
 ./run_all_tests.sh
 ```
@@ -86,11 +84,12 @@ These profiles are defined in [service-manager-config](https://github.com/hmrc/s
 | `CUSTOMS_INVENTORY_LINKING_EXPORTS_ALL` | To run all CDS Inventory Linking Exports related applications. | CUSTOMS_INVENTORY_LINKING_EXPORTS, CUSTOMS_NOTIFICATION, CUSTOMS_NOTIFICATIONS_RECEIVER_STUB, CUSTOMS_NOTIFICATION_GATEWAY, CUSTOMS_API_HODS_STUBS, API_SUBSCRIPTION_FIELDS, API_NOTIFICATION_QUEUE, API_NOTIFICATION_PULL, CUSTOMS_DECLARATIONS_METRICS                                                                                                                                                                                                                 |
 | `CUSTOMS_INVENTORY_LINKING_IMPORTS_ALL` | To run all CDS Inventory Linking Imports related applications.| CUSTOMS_INVENTORY_LINKING_IMPORTS, CUSTOMS_NOTIFICATION, CUSTOMS_NOTIFICATIONS_RECEIVER_STUB, CUSTOMS_NOTIFICATION_GATEWAY, CUSTOMS_API_HODS_STUBS, API_SUBSCRIPTION_FIELDS, API_NOTIFICATION_QUEUE, API_NOTIFICATION_PULL, CUSTOMS_DECLARATIONS_METRICS                                                                                                                                                                                                                 |
 
-| Service                   | Port | Repository                                                                 |
-|---------------------------|------|----------------------------------------------------------------------------|
-| `API-NOTIFICATION-QUEUE`  | 9648 | This service                                                               |
-| `CUSTOMS_NOTIFICATION`    | 9821 | [customs-notification](https://github.com/hmrc/customs-notification)       |
-| `API_NOTIFICATION_PULL`   | 9649 | [api-notification-pull](https://github.com/hmrc/api-notification-pull)     |
+| Service                  | Port | Repository                                                                 |
+|--------------------------|------|----------------------------------------------------------------------------|
+| `API-NOTIFICATION-QUEUE` | 9648 | This service                                                               |
+| `CUSTOMS_DECLARATIONS`   | 9820 | [customs-declarations](https://github.com/hmrc/customs-declarations)       |
+| `CUSTOMS_NOTIFICATION`   | 9821 | [customs-notification](https://github.com/hmrc/customs-notification)       |
+| `API_NOTIFICATION_PULL`  | 9649 | [api-notification-pull](https://github.com/hmrc/api-notification-pull)     |
 
 ## API documentation
 For Customs Declarations API documentation, see [here](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/customs-declarations).
