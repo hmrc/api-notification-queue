@@ -112,7 +112,7 @@ All paths are relative to the service root (`http://localhost:9648` when running
 
 #### Submit and save a notification
 
-`POST /declarations`.
+`POST /queue`.
 
 Example payload:
 
